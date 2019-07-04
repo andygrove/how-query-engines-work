@@ -11,11 +11,10 @@ I will be working on this project in my spare time, which is limited, so progres
 # PoC Status
 
 - [X] README describing project
-- [X] Skeleton protobuf file
+- [X] Define service and minimal query plan in protobuf file
 - [X] Generate code from protobuf file
 - [X] Implement skeleton gRPC server
 - [X] Implement skeleton gRPC client
-- [X] Define service and minimal query plan in protobuf file
 - [X] Client can send query plan
 - [X] Server can receive query plan
 - [ ] CLI to create cluster using Kubernetes
