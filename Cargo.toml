@@ -21,10 +21,10 @@ prost = "0.5"
 tokio = "0.1"
 tower-hyper = "0.1"
 hyper = "0.12"
-#tower-request-modifier = { git = "https://github.com/tower-rs/tower-http" }
-#tower-grpc = { path = "../tower-grpc/tower-grpc", features = ["tower-hyper"] }
+tower-request-modifier = { git = "https://github.com/tower-rs/tower-http" }
+tower-grpc = { path = "../tower-grpc/tower-grpc", features = ["tower-hyper"] }
 tower-service = "0.2"
 tower-util = "0.1"
 
 [build-dependencies]
-#tower-grpc-build = { path = "../tower-grpc/tower-grpc-build", features = ["tower-hyper"] }
+tower-grpc-build = { path = "../tower-grpc/tower-grpc-build", features = ["tower-hyper"] }
