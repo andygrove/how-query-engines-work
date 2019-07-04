@@ -1,7 +1,6 @@
 #![deny(warnings, rust_2018_idioms)]
 
-
-use crate::ballista_proto::{server, ExecuteResponse, ExecuteRequest};
+use crate::ballista_proto::{server, ExecuteRequest, ExecuteResponse};
 
 use futures::{future, Future, Stream};
 use log::error;
@@ -28,7 +27,6 @@ impl server::Executor for Greet {
 
         future::ok(response)
     }
-
 }
 
 pub fn main() {

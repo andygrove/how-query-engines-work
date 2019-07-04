@@ -9,13 +9,18 @@ use tower_util::MakeService;
 use ballista::ballista_proto::client::Executor;
 use ballista::ballista_proto::ExecuteRequest;
 
-use ballista::{LogicalPlan, read_file};
+use ballista::read_file;
 
 pub fn main() {
     let _ = ::env_logger::init();
 
-    let uri: http::Uri = format!("http://[::1]:50051").parse().unwrap();
+    // build simple logical plan to apply a projection to a CSV file
 
+    let file = read_file("/path/to/some/file.csv");
+    let plan = file.projection(vec![0, 1, 2]);
+
+    // send the query to the server
+    let uri: http::Uri = format!("http://[::1]:50051").parse().unwrap();
     let dst = Destination::try_from_uri(uri.clone()).unwrap();
     let connector = util::Connector::new(HttpConnector::new(4));
     let settings = client::Builder::new().http2_only(true).clone();
@@ -25,7 +30,6 @@ pub fn main() {
         .make_service(dst)
         .map_err(|e| panic!("connect error: {:?}", e))
         .and_then(move |conn| {
-
             let conn = tower_request_modifier::Builder::new()
                 .set_origin(uri)
                 .build(conn)
@@ -34,12 +38,9 @@ pub fn main() {
             // Wait until the client is ready...
             Executor::new(conn).ready()
         })
-        .and_then(|mut client| {
-
-            let plan: LogicalPlan = read_file("/path/to/some/file.csv");
-
+        .and_then(move |mut client| {
             client.execute(Request::new(ExecuteRequest {
-                plan: Some(plan.to_proto())
+                plan: Some(plan.to_proto()),
             }))
         })
         .and_then(|response| {
