@@ -1,4 +1,4 @@
-# ballista
+# Ballista
 
 Ballista ~is~ will be a proof-of-concept distributed compute platform based on Kubernetes and the Rust implementation of [Apache Arrow](https://arrow.apache.org/).
 
@@ -25,6 +25,9 @@ I will be working on this project in my spare time, which is limited, so progres
 - [ ] Benchmarks
 - [ ] Implement Flight protocol
 
+# Building
+
+Currently depends on https://github.com/tower-rs/tower-grpc/tree/master/tower-grpc being cloned in a parallel directory.
 
 
 
