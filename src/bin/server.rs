@@ -15,10 +15,10 @@ pub mod hello_world {
 #[derive(Clone, Debug)]
 struct Greet;
 
-impl server::Greeter for Greet {
-    type SayHelloFuture = future::FutureResult<Response<HelloReply>, tower_grpc::Status>;
+impl server::Executor for Greet {
+    type ExecuteFuture = future::FutureResult<Response<HelloReply>, tower_grpc::Status>;
 
-    fn say_hello(&mut self, request: Request<HelloRequest>) -> Self::SayHelloFuture {
+    fn execute(&mut self, request: Request<HelloRequest>) -> Self::ExecuteFuture {
         println!("REQUEST = {:?}", request);
 
         let response = Response::new(HelloReply {
@@ -33,7 +33,7 @@ impl server::Greeter for Greet {
 pub fn main() {
     let _ = ::env_logger::init();
 
-    let new_service = server::GreeterServer::new(Greet);
+    let new_service = server::ExecutorServer::new(Greet);
 
     let mut server = Server::new(new_service);
 

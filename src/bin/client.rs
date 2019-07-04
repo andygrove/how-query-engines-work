@@ -20,11 +20,11 @@ pub fn main() {
     let settings = client::Builder::new().http2_only(true).clone();
     let mut make_client = client::Connect::with_builder(connector, settings);
 
-    let say_hello = make_client
+    let execute = make_client
         .make_service(dst)
         .map_err(|e| panic!("connect error: {:?}", e))
         .and_then(move |conn| {
-            use crate::hello_world::client::Greeter;
+            use crate::hello_world::client::Executor;
 
             let conn = tower_request_modifier::Builder::new()
                 .set_origin(uri)
@@ -32,12 +32,12 @@ pub fn main() {
                 .unwrap();
 
             // Wait until the client is ready...
-            Greeter::new(conn).ready()
+            Executor::new(conn).ready()
         })
         .and_then(|mut client| {
             use crate::hello_world::HelloRequest;
 
-            client.say_hello(Request::new(HelloRequest {
+            client.execute(Request::new(HelloRequest {
                 name: "What is in a name?".to_string(),
             }))
         })
@@ -49,5 +49,5 @@ pub fn main() {
             println!("ERR = {:?}", e);
         });
 
-    tokio::run(say_hello);
+    tokio::run(execute);
 }
