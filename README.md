@@ -29,7 +29,21 @@ I will be working on this project in my spare time, which is limited, so progres
 
 Currently depends on https://github.com/tower-rs/tower-grpc/tree/master/tower-grpc being cloned in a parallel directory.
 
+# Run Example
 
+Open two terminal sessions. In first session, run:
+
+```bash
+cargo run --bin server
+```
+
+In second terminal, run:
+
+```bash
+cargo run --example client
+```
+
+So far, this just sends a logical query plan from the client to the server.
 
 
 
