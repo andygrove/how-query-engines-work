@@ -1,10 +1,10 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "io.grpc.examples.helloworld";
-option java_outer_classname = "HelloWorldProto";
+option java_package = "io.andygrove.ballista";
+option java_outer_classname = "BallistaProto";
 
-package helloworld;
+package ballista;
 
 // copied from GandivaType from Apache Arrow project
 enum ArrowType {
@@ -38,7 +38,7 @@ enum ArrowType {
   MAP = 27;
 }
 
-message Expr {
+message ExprNode {
 
   // literals
   string literal_string = 1;
@@ -52,18 +52,21 @@ message Expr {
 
 
 message BinaryExpr {
-  Expr l = 1;
-  Expr r = 2;
+  ExprNode l = 1;
+  ExprNode r = 2;
   string op = 3;
 }
 
-message LogicalPlan {
-  File file = 1;
-  Projection projection = 2;
-  Selection selection = 3;
-  Limit limit = 4;
+// LogicalPlan is a nested type
+message LogicalPlanNode {
 
-  LogicalPlan input = 100;
+  LogicalPlanNode input = 1;
+
+  File file = 10;
+
+  Projection projection = 20;
+  Selection selection = 21;
+  Limit limit = 22;
 }
 
 message File {
@@ -71,29 +74,25 @@ message File {
 }
 
 message Projection {
-  repeated Expr expr = 1;
+  repeated ExprNode expr = 1;
 }
 
 message Selection {
-  Expr expr = 2;
+  ExprNode expr = 2;
 }
 
 message Limit {
   uint32 limit = 1;
 }
 
-// The greeting service definition.
 service Executor {
-  // Sends a greeting
   rpc execute(ExecuteRequest) returns (ExecuteResponse) {}
 }
 
-// The request message containing the user's name.
 message ExecuteRequest {
-  LogicalPlan plan = 1;
+  LogicalPlanNode plan = 1;
 }
 
-// The response message containing the greetings
 message ExecuteResponse {
   string message = 1;
 }

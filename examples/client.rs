@@ -6,8 +6,13 @@ use tower_grpc::Request;
 use tower_hyper::{client, util};
 use tower_util::MakeService;
 
+use crate::hello_world::client::Executor;
+use crate::hello_world::ExecuteRequest;
+use crate::hello_world::LogicalPlanNode;
+use crate::hello_world::File;
+
 pub mod hello_world {
-    include!(concat!(env!("OUT_DIR"), "/helloworld.rs"));
+    include!(concat!(env!("OUT_DIR"), "/ballista.rs"));
 }
 
 pub fn main() {
@@ -24,7 +29,6 @@ pub fn main() {
         .make_service(dst)
         .map_err(|e| panic!("connect error: {:?}", e))
         .and_then(move |conn| {
-            use crate::hello_world::client::Executor;
 
             let conn = tower_request_modifier::Builder::new()
                 .set_origin(uri)
@@ -35,12 +39,10 @@ pub fn main() {
             Executor::new(conn).ready()
         })
         .and_then(|mut client| {
-            use crate::hello_world::ExecuteRequest;
-            use crate::hello_world::LogicalPlan;
-            use crate::hello_world::File;
+
 
             client.execute(Request::new(ExecuteRequest {
-                plan: Some(LogicalPlan {
+                plan: Some(LogicalPlanNode {
                     file: Some(File { filename: "".to_string() }),
                     input: None,
                     projection: None,

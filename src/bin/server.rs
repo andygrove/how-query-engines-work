@@ -9,7 +9,7 @@ use tower_grpc::{Request, Response};
 use tower_hyper::server::{Http, Server};
 
 pub mod hello_world {
-    include!(concat!(env!("OUT_DIR"), "/helloworld.rs"));
+    include!(concat!(env!("OUT_DIR"), "/ballista.rs"));
 }
 
 #[derive(Clone, Debug)]
