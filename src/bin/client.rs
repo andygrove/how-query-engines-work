@@ -10,7 +10,7 @@
 //    include!(concat!(env!("OUT_DIR"), "/helloworld.rs"));
 //}
 //
-//pub fn main() {
+pub fn main() {
 //    let _ = ::env_logger::init();
 //
 //    let uri: http::Uri = format!("http://[::1]:50051").parse().unwrap();
@@ -50,4 +50,4 @@
 //        });
 //
 //    tokio::run(say_hello);
-//}
+}

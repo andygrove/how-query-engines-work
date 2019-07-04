@@ -30,7 +30,7 @@
 //
 //}
 //
-//pub fn main() {
+pub fn main() {
 //    let _ = ::env_logger::init();
 //
 //    let new_service = server::GreeterServer::new(Greet);
@@ -57,4 +57,4 @@
 //        .map_err(|e| eprintln!("accept error: {}", e));
 //
 //    tokio::run(serve)
-//}
+}
