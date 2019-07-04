@@ -36,9 +36,17 @@ pub fn main() {
         })
         .and_then(|mut client| {
             use crate::hello_world::ExecuteRequest;
+            use crate::hello_world::LogicalPlan;
+            use crate::hello_world::File;
 
             client.execute(Request::new(ExecuteRequest {
-                name: "What is in a name?".to_string(),
+                plan: Some(LogicalPlan {
+                    file: Some(File { filename: "".to_string() }),
+                    input: None,
+                    projection: None,
+                    selection: None,
+                    limit: None
+                }),
             }))
         })
         .and_then(|response| {

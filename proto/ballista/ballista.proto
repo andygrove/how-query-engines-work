@@ -90,7 +90,7 @@ service Executor {
 
 // The request message containing the user's name.
 message ExecuteRequest {
-  string name = 1;
+  LogicalPlan plan = 1;
 }
 
 // The response message containing the greetings

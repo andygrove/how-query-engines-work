@@ -15,11 +15,11 @@ I will be working on this project in my spare time, which is limited, so progres
 - [X] Generate code from protobuf file
 - [X] Implement skeleton gRPC server
 - [X] Implement skeleton gRPC client
-- [ ] Define real service and query plan in protobuf file
+- [X] Define service and minimal query plan in protobuf file
+- [X] Client can send query plan
+- [X] Server can receive query plan
 - [ ] CLI to create cluster using Kubernetes
-- [ ] Example client to create query plan
-- [ ] Client can send query plan
-- [ ] Server can receive query plan
+- [ ] Server can translate protobuf query plan to DataFusion query plan
 - [ ] Server can execute query plan using DataFusion
 - [ ] Server can write results to CSV files
 - [ ] Server can stream Arrow data back to client
