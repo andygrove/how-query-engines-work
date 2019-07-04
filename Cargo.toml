@@ -2,6 +2,9 @@
 name = "ballista"
 description = "Modern distributed compute platform based on Rust, Apache Arrow, and Kubernetes"
 version = "0.1.0"
+license = "Apache-2.0"
+homepage = "https://github.com/andygrove/ballista"
+repository = "https://github.com/andygrove/ballista"
 authors = ["Andy Grove <andygrove73@gmail.com>"]
 edition = "2018"
 build = "build.rs"
