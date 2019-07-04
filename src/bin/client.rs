@@ -35,9 +35,9 @@ pub fn main() {
             Executor::new(conn).ready()
         })
         .and_then(|mut client| {
-            use crate::hello_world::HelloRequest;
+            use crate::hello_world::ExecuteRequest;
 
-            client.execute(Request::new(HelloRequest {
+            client.execute(Request::new(ExecuteRequest {
                 name: "What is in a name?".to_string(),
             }))
         })

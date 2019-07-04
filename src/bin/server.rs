@@ -1,6 +1,6 @@
 #![deny(warnings, rust_2018_idioms)]
 
-use crate::hello_world::{server, HelloReply, HelloRequest};
+use crate::hello_world::{server, ExecuteResponse, ExecuteRequest};
 
 use futures::{future, Future, Stream};
 use log::error;
@@ -16,12 +16,12 @@ pub mod hello_world {
 struct Greet;
 
 impl server::Executor for Greet {
-    type ExecuteFuture = future::FutureResult<Response<HelloReply>, tower_grpc::Status>;
+    type ExecuteFuture = future::FutureResult<Response<ExecuteResponse>, tower_grpc::Status>;
 
-    fn execute(&mut self, request: Request<HelloRequest>) -> Self::ExecuteFuture {
+    fn execute(&mut self, request: Request<ExecuteRequest>) -> Self::ExecuteFuture {
         println!("REQUEST = {:?}", request);
 
-        let response = Response::new(HelloReply {
+        let response = Response::new(ExecuteResponse {
             message: "Zomg, it works!".to_string(),
         });
 

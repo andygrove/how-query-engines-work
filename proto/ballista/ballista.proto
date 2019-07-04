@@ -85,15 +85,15 @@ message Limit {
 // The greeting service definition.
 service Executor {
   // Sends a greeting
-  rpc execute(HelloRequest) returns (HelloReply) {}
+  rpc execute(ExecuteRequest) returns (ExecuteResponse) {}
 }
 
 // The request message containing the user's name.
-message HelloRequest {
+message ExecuteRequest {
   string name = 1;
 }
 
 // The response message containing the greetings
-message HelloReply {
+message ExecuteResponse {
   string message = 1;
 }
