@@ -6,16 +6,10 @@ use tower_grpc::Request;
 use tower_hyper::{client, util};
 use tower_util::MakeService;
 
-use crate::hello_world::client::Executor;
-use crate::hello_world::ExecuteRequest;
-use crate::hello_world::LogicalPlanNode;
-use crate::hello_world::File;
+use ballista::ballista_proto::client::Executor;
+use ballista::ballista_proto::ExecuteRequest;
 
-use crate::read_file;
-
-pub mod hello_world {
-    include!(concat!(env!("OUT_DIR"), "/ballista.rs"));
-}
+use ballista::{LogicalPlan, read_file};
 
 pub fn main() {
     let _ = ::env_logger::init();
@@ -42,11 +36,11 @@ pub fn main() {
         })
         .and_then(|mut client| {
 
-            let plan = read_file("/path/to/some/file.csv");
+            let plan: LogicalPlan = read_file("/path/to/some/file.csv");
 
             client.execute(Request::new(ExecuteRequest {
-                plan: Some(plan)
-            })
+                plan: Some(plan.to_proto())
+            }))
         })
         .and_then(|response| {
             println!("RESPONSE = {:?}", response);

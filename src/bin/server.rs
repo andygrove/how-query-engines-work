@@ -1,6 +1,7 @@
 #![deny(warnings, rust_2018_idioms)]
 
-use crate::hello_world::{server, ExecuteResponse, ExecuteRequest};
+
+use crate::ballista_proto::{server, ExecuteResponse, ExecuteRequest};
 
 use futures::{future, Future, Stream};
 use log::error;
@@ -8,7 +9,7 @@ use tokio::net::TcpListener;
 use tower_grpc::{Request, Response};
 use tower_hyper::server::{Http, Server};
 
-pub mod hello_world {
+pub mod ballista_proto {
     include!(concat!(env!("OUT_DIR"), "/ballista.rs"));
 }
 
