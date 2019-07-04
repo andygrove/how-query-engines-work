@@ -6,6 +6,82 @@ option java_outer_classname = "HelloWorldProto";
 
 package helloworld;
 
+// copied from GandivaType from Apache Arrow project
+enum ArrowType {
+  NONE = 0;     // arrow::Type::NA
+  BOOL = 1;     // arrow::Type::BOOL
+  UINT8 = 2;    // arrow::Type::UINT8
+  INT8 = 3;     // arrow::Type::INT8
+  UINT16 = 4;   // represents arrow::Type fields in src/arrow/type.h
+  INT16 = 5;
+  UINT32 = 6;
+  INT32 = 7;
+  UINT64 = 8;
+  INT64 = 9;
+  HALF_FLOAT = 10;
+  FLOAT = 11;
+  DOUBLE = 12;
+  UTF8 = 13;
+  BINARY = 14;
+  FIXED_SIZE_BINARY = 15;
+  DATE32 = 16;
+  DATE64 = 17;
+  TIMESTAMP = 18;
+  TIME32 = 19;
+  TIME64 = 20;
+  INTERVAL = 21;
+  DECIMAL = 22;
+  LIST = 23;
+  STRUCT = 24;
+  UNION = 25;
+  DICTIONARY = 26;
+  MAP = 27;
+}
+
+message Expr {
+
+  // literals
+  string literal_string = 1;
+  int32 literal_int32 = 2;
+
+  string identifier = 10;
+  uint32 column_index = 11;
+
+  BinaryExpr binary_expr = 20;
+}
+
+
+message BinaryExpr {
+  Expr l = 1;
+  Expr r = 2;
+  string op = 3;
+}
+
+message LogicalPlan {
+  File file = 1;
+  Projection projection = 2;
+  Selection selection = 3;
+  Limit limit = 4;
+
+  LogicalPlan input = 100;
+}
+
+message File {
+  string filename = 1;
+}
+
+message Projection {
+  repeated Expr expr = 1;
+}
+
+message Selection {
+  Expr expr = 2;
+}
+
+message Limit {
+  uint32 limit = 1;
+}
+
 // The greeting service definition.
 service Greeter {
   // Sends a greeting
