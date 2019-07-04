@@ -11,6 +11,8 @@ use crate::hello_world::ExecuteRequest;
 use crate::hello_world::LogicalPlanNode;
 use crate::hello_world::File;
 
+use crate::read_file;
+
 pub mod hello_world {
     include!(concat!(env!("OUT_DIR"), "/ballista.rs"));
 }
@@ -40,16 +42,11 @@ pub fn main() {
         })
         .and_then(|mut client| {
 
+            let plan = read_file("/path/to/some/file.csv");
 
             client.execute(Request::new(ExecuteRequest {
-                plan: Some(LogicalPlanNode {
-                    file: Some(File { filename: "".to_string() }),
-                    input: None,
-                    projection: None,
-                    selection: None,
-                    limit: None
-                }),
-            }))
+                plan: Some(plan)
+            })
         })
         .and_then(|response| {
             println!("RESPONSE = {:?}", response);
