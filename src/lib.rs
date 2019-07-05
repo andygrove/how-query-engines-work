@@ -1,5 +1,5 @@
 /// include the generated protobuf source as a submodule
-pub mod ballista_proto {
+pub mod proto {
     include!(concat!(env!("OUT_DIR"), "/ballista.rs"));
 }
 

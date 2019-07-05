@@ -1,6 +1,6 @@
 #![deny(warnings, rust_2018_idioms)]
 
-use arrow::datatypes::{Schema, Field, DataType};
+use arrow::datatypes::{DataType, Field, Schema};
 use ballista::client::Client;
 use ballista::logical_plan::read_file;
 

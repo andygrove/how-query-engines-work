@@ -1,6 +1,6 @@
 #![deny(warnings, rust_2018_idioms)]
 
-use crate::ballista_proto::{server, ExecuteRequest, ExecuteResponse};
+use crate::proto::{server, ExecuteRequest, ExecuteResponse};
 
 use futures::{future, Future, Stream};
 use log::error;
@@ -8,8 +8,8 @@ use tokio::net::TcpListener;
 use tower_grpc::{Request, Response};
 use tower_hyper::server::{Http, Server};
 
-use ballista::ballista_proto;
 use ballista::execution::create_datafusion_plan;
+use ballista::proto;
 use datafusion::execution::context::ExecutionContext;
 
 #[derive(Clone, Debug)]
@@ -22,32 +22,30 @@ impl server::Executor for BallistaService {
         //println!("REQUEST = {:?}", request);
 
         let response = match &request.get_ref().plan {
-            Some(plan) => {
-                match create_datafusion_plan(plan) {
-                    Ok(df_plan) => {
-                        println!("DataFusion plan: {:?}", df_plan);
+            Some(plan) => match create_datafusion_plan(plan) {
+                Ok(df_plan) => {
+                    println!("DataFusion plan: {:?}", df_plan);
 
-                        let mut context = ExecutionContext::new();
+                    let mut context = ExecutionContext::new();
 
-                        match context.optimize(&df_plan) {
-                            Ok(optimized_plan) => match context.execute(&optimized_plan, 1024) {
-                                Ok(_) => Response::new(ExecuteResponse {
-                                    message: format!("{:?}", df_plan),
-                                }),
-                                Err(e) => Response::new(ExecuteResponse {
-                                    message: format!("Error executing plan: {:?}", e),
-                                }),
-                            }
-                            Err(e) => Response::new(ExecuteResponse {
-                                message: format!("Error optimizing plan: {:?}", e),
+                    match context.optimize(&df_plan) {
+                        Ok(optimized_plan) => match context.execute(&optimized_plan, 1024) {
+                            Ok(_) => Response::new(ExecuteResponse {
+                                message: format!("{:?}", df_plan),
                             }),
-                        }
+                            Err(e) => Response::new(ExecuteResponse {
+                                message: format!("Error executing plan: {:?}", e),
+                            }),
+                        },
+                        Err(e) => Response::new(ExecuteResponse {
+                            message: format!("Error optimizing plan: {:?}", e),
+                        }),
                     }
-                    Err(e) => Response::new(ExecuteResponse {
-                        message: format!("Error converting plan: {:?}", e),
-                    }),
                 }
-            }
+                Err(e) => Response::new(ExecuteResponse {
+                    message: format!("Error converting plan: {:?}", e),
+                }),
+            },
             _ => Response::new(ExecuteResponse {
                 message: "empty request".to_string(),
             }),

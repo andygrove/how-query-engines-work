@@ -6,9 +6,9 @@ use tower_grpc::Request;
 use tower_hyper::{client, util};
 use tower_util::MakeService;
 
-use crate::ballista_proto;
-use crate::ballista_proto::client::Executor;
 use crate::logical_plan::LogicalPlan;
+use crate::proto;
+use crate::proto::client::Executor;
 
 pub struct Client {
     host: String,
@@ -45,7 +45,7 @@ impl Client {
                 Executor::new(conn).ready()
             })
             .and_then(move |mut client| {
-                client.execute(Request::new(ballista_proto::ExecuteRequest {
+                client.execute(Request::new(proto::ExecuteRequest {
                     plan: Some(plan.to_proto()),
                 }))
             })
