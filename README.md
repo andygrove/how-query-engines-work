@@ -17,13 +17,14 @@ I will be working on this project in my spare time, which is limited, so progres
 - [X] Implement skeleton gRPC client
 - [X] Client can send query plan
 - [X] Server can receive query plan
-- [ ] CLI to create cluster using Kubernetes
-- [ ] Server can translate protobuf query plan to DataFusion query plan
-- [ ] Server can execute query plan using DataFusion
+- [X] Server can translate protobuf query plan to DataFusion query plan
+- [X] Server can execute query plan using DataFusion
 - [ ] Server can write results to CSV files
-- [ ] Server can stream Arrow data back to client
+- [ ] CLI to create cluster using Kubernetes
 - [ ] Benchmarks
 - [ ] Implement Flight protocol
+- [ ] Server can stream Arrow data back to client
+- [ ] Implement support for all DataFusion logical plan and expressions
 
 # Building
 
