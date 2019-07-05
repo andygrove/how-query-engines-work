@@ -4,7 +4,7 @@ use crate::ballista_proto;
 use crate::error::{BallistaError, Result};
 
 use arrow::datatypes::{Schema, Field, DataType};
-use datafusion::logicalplan::LogicalPlan as DFPlan;
+use datafusion::logicalplan::{LogicalPlan as DFPlan, Expr};
 
 pub fn create_datafusion_plan(plan: &ballista_proto::LogicalPlanNode) -> Result<DFPlan> {
     if plan.file.is_some() {
@@ -22,9 +22,19 @@ pub fn create_datafusion_plan(plan: &ballista_proto::LogicalPlanNode) -> Result<
             projection: None,
         })
     } else if plan.projection.is_some() {
+
+        let indices: Result<Vec<Expr>> = plan.projection.as_ref().unwrap().expr.iter().map(|expr| {
+            if expr.column_index.is_some() {
+                Ok(Expr::Column(expr.column_index.as_ref().unwrap().index as usize))
+
+            } else {
+                Err(BallistaError::NotImplemented)
+            }
+        }).collect();
+
         if let Some(input) = &plan.input {
             Ok(DFPlan::Projection {
-                expr: vec![],
+                expr: indices?,
                 input: Arc::new(create_datafusion_plan(&input)?),
                 schema: Arc::new(Schema::new(vec![])),
             })
