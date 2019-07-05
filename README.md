@@ -19,6 +19,7 @@ I will be working on this project in my spare time, which is limited, so progres
 - [X] Server can receive query plan
 - [X] Server can translate protobuf query plan to DataFusion query plan
 - [X] Server can execute query plan using DataFusion
+- [X] Create Dockerfile for server
 - [ ] Server can write results to CSV files
 - [ ] CLI to create cluster using Kubernetes
 - [ ] Benchmarks
@@ -28,25 +29,31 @@ I will be working on this project in my spare time, which is limited, so progres
 
 # Building
 
-Currently depends on https://github.com/tower-rs/tower-grpc/tree/master/tower-grpc being cloned in a parallel directory.
+The project currently uses git submodules for the arrow and tower-grpc dependencies.
 
-# Run Example
+```bash
+git submodule update --init
+cargo build
+```
 
-Open two terminal sessions. In first session, run:
+# Run server locally
 
 ```bash
 cargo run --bin server
 ```
 
-In second terminal, run:
+# Run example client
 
 ```bash
 cargo run --example example1
 ```
 
-So far, this just sends a logical query plan from the client to one server and the server executes the plan using DataFusion.
+# Build Docker image for server
 
-Also, the code assumes that data files exist in certain paths... I will write up instructions soon on downloading the files I am using for testing. 
+```bash
+docker build -t ballista .
+```
+
 
 
 

@@ -1,11 +1,22 @@
 FROM rustlang/rust:nightly
 
-RUN mkdir /opt/ballista
+RUN mkdir -p /opt/ballista/arrow/rust
+ADD arrow/rust /opt/ballista/arrow/rust
 
-ADD Cargo.toml /opt/ballista
-ADD src /opt/ballista
-ADD proto /opt/ballista
+RUN mkdir -p /opt/ballista/tower-grpc
+ADD tower-grpc /opt/ballista/tower-grpc
+
+# Copy Ballista sources
+RUN mkdir -p /opt/ballista/src
+RUN mkdir -p /opt/ballista/proto
+COPY Cargo.toml /opt/ballista
+COPY Cargo.lock /opt/ballista
+COPY build.rs /opt/ballista
+COPY src /opt/ballista/src
+COPY proto /opt/ballista/proto
 
 WORKDIR /opt/ballista
 
-RUN cargo build --release
+EXPOSE 50051
+
+CMD cargo run --bin server

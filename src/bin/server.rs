@@ -94,7 +94,7 @@ pub fn main() {
 
     let http = Http::new().http2_only(true).clone();
 
-    let addr = "[::1]:50051".parse().unwrap();
+    let addr = "0.0.0.0:50051".parse().unwrap();
     let bind = TcpListener::bind(&addr).expect("bind");
 
     let serve = bind

@@ -1,7 +1,6 @@
 .idea
 /target
 **/*.rs.bk
-Cargo.lock
 
 # submodules
 arrow
