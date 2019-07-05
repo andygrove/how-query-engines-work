@@ -25,6 +25,7 @@ tower-request-modifier = { git = "https://github.com/tower-rs/tower-http" }
 tower-grpc = { path = "../tower-grpc/tower-grpc", features = ["tower-hyper"] }
 tower-service = "0.2"
 tower-util = "0.1"
+datafusion = { path = "../arrow/rust/datafusion" }
 
 [build-dependencies]
 tower-grpc-build = { path = "../tower-grpc/tower-grpc-build", features = ["tower-hyper"] }
