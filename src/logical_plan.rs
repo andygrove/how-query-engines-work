@@ -1,5 +1,7 @@
 use crate::ballista_proto;
 
+use arrow::datatypes::{Schema, Field, DataType};
+
 pub struct Expr {}
 
 pub struct LogicalPlan {
@@ -43,11 +45,21 @@ fn empty_plan_node() -> Box<ballista_proto::LogicalPlanNode> {
 }
 
 /// Create a logical plan representing a file
-pub fn read_file(filename: &str) -> LogicalPlan {
+pub fn read_file(filename: &str, schema: &Schema) -> LogicalPlan {
+
+    let schema_proto = ballista_proto::Schema {
+        columns: schema.fields().iter().map(|field| ballista_proto::Field {
+            name: field.name().to_string(),
+            arrow_type: 0, // TODO
+            nullable: true,
+            children: vec![]
+        }).collect()
+    };
+
     let mut plan = empty_plan_node();
     plan.file = Some(ballista_proto::File {
         filename: filename.to_string(),
-        schema: None
+        schema: Some(schema_proto)
     });
     LogicalPlan { plan }
 }
