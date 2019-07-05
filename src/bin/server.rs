@@ -13,9 +13,9 @@ use ballista::execution::create_datafusion_plan;
 use datafusion::execution::context::ExecutionContext;
 
 #[derive(Clone, Debug)]
-struct Greet;
+struct BallistaService;
 
-impl server::Executor for Greet {
+impl server::Executor for BallistaService {
     type ExecuteFuture = future::FutureResult<Response<ExecuteResponse>, tower_grpc::Status>;
 
     fn execute(&mut self, request: Request<ExecuteRequest>) -> Self::ExecuteFuture {
@@ -57,7 +57,7 @@ impl server::Executor for Greet {
 pub fn main() {
     let _ = ::env_logger::init();
 
-    let new_service = server::ExecutorServer::new(Greet);
+    let new_service = server::ExecutorServer::new(BallistaService);
 
     let mut server = Server::new(new_service);
 
