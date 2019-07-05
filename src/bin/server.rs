@@ -11,6 +11,7 @@ use tower_hyper::server::{Http, Server};
 use ballista::execution::create_datafusion_plan;
 use ballista::proto;
 use datafusion::execution::context::ExecutionContext;
+use datafusion::logicalplan::LogicalPlan;
 
 #[derive(Clone, Debug)]
 struct BallistaService;
@@ -32,6 +33,8 @@ impl server::Executor for BallistaService {
                         Ok(optimized_plan) => {
                             println!("Optimized plan: {:?}", optimized_plan);
 
+                            register_tables(&mut context, &optimized_plan);
+
                             match context.execute(&optimized_plan, 1024) {
                                 Ok(_) => Response::new(ExecuteResponse {
                                     message: format!("{:?}", df_plan),
@@ -40,7 +43,7 @@ impl server::Executor for BallistaService {
                                     message: format!("Error executing plan: {:?}", e),
                                 }),
                             }
-                        },
+                        }
                         Err(e) => Response::new(ExecuteResponse {
                             message: format!("Error optimizing plan: {:?}", e),
                         }),
@@ -56,6 +59,21 @@ impl server::Executor for BallistaService {
         };
 
         future::ok(response)
+    }
+}
+
+//TODO this is a temporary hack to walk the plan and register tables with the context ... this isn't how it will work long term
+fn register_tables(ctx: &mut ExecutionContext, plan: &LogicalPlan) {
+    match plan {
+        LogicalPlan::TableScan {
+            table_name, schema, ..
+        } => {
+            ctx.register_csv(&table_name, &table_name, schema, true);
+        }
+        LogicalPlan::Projection { input, .. } => {
+            register_tables(ctx, input);
+        }
+        _ => unimplemented!(),
     }
 }
 
