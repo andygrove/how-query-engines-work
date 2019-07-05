@@ -29,13 +29,17 @@ impl server::Executor for BallistaService {
                     let mut context = ExecutionContext::new();
 
                     match context.optimize(&df_plan) {
-                        Ok(optimized_plan) => match context.execute(&optimized_plan, 1024) {
-                            Ok(_) => Response::new(ExecuteResponse {
-                                message: format!("{:?}", df_plan),
-                            }),
-                            Err(e) => Response::new(ExecuteResponse {
-                                message: format!("Error executing plan: {:?}", e),
-                            }),
+                        Ok(optimized_plan) => {
+                            println!("Optimized plan: {:?}", optimized_plan);
+
+                            match context.execute(&optimized_plan, 1024) {
+                                Ok(_) => Response::new(ExecuteResponse {
+                                    message: format!("{:?}", df_plan),
+                                }),
+                                Err(e) => Response::new(ExecuteResponse {
+                                    message: format!("Error executing plan: {:?}", e),
+                                }),
+                            }
                         },
                         Err(e) => Response::new(ExecuteResponse {
                             message: format!("Error optimizing plan: {:?}", e),
