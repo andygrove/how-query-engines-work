@@ -86,6 +86,9 @@ fn register_tables(ctx: &mut ExecutionContext, plan: &LogicalPlan) {
 }
 
 pub fn main() {
+
+    println!("Ballista server");
+
     let _ = ::env_logger::init();
 
     let new_service = server::ExecutorServer::new(BallistaService);

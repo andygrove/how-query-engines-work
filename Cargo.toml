@@ -10,7 +10,7 @@ edition = "2018"
 build = "build.rs"
 
 [[bin]]
-name = "server"
+name = "ballista-server"
 path = "src/bin/server.rs"
 
 [dependencies]
