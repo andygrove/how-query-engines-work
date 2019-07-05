@@ -1,0 +1,6 @@
+[submodule "arrow"]
+	path = arrow
+	url = https://github.com/apache/arrow
+[submodule "tower-grpc"]
+	path = tower-grpc
+	url = https://github.com/tower-rs/tower-grpc
