@@ -68,6 +68,7 @@ message LogicalPlanNode {
 
 message File {
   string filename = 1;
+  Schema schema = 2;
 }
 
 message Projection {
@@ -80,6 +81,19 @@ message Selection {
 
 message Limit {
   uint32 limit = 1;
+}
+
+message Field {
+  // name of the field
+  string name = 1;
+  ArrowType arrow_type = 2;
+  bool nullable = 3;
+  // for complex data types like structs, unions
+  repeated Field children = 4;
+}
+
+message Schema {
+  repeated Field columns = 1;
 }
 
 service Executor {

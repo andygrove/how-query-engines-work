@@ -8,9 +8,12 @@ use datafusion::logicalplan::LogicalPlan as DFPlan;
 
 pub fn create_datafusion_plan(plan: &ballista_proto::LogicalPlanNode) -> Result<DFPlan> {
     if plan.file.is_some() {
+
+        let file = plan.file.as_ref().unwrap();
+
         Ok(DFPlan::TableScan {
-            schema_name: "".to_string(),
-            table_name: "".to_string(),
+            schema_name: "default".to_string(),
+            table_name: file.filename.clone(),
             schema: Arc::new(Schema::new(vec![])),
             projection: None,
         })

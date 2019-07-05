@@ -47,6 +47,7 @@ pub fn read_file(filename: &str) -> LogicalPlan {
     let mut plan = empty_plan_node();
     plan.file = Some(ballista_proto::File {
         filename: filename.to_string(),
+        schema: None
     });
     LogicalPlan { plan }
 }
