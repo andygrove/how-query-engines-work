@@ -1,6 +1,6 @@
 use crate::proto;
 
-use arrow::datatypes::{DataType, Field, Schema};
+use arrow::datatypes::Schema;
 
 pub struct Expr {}
 

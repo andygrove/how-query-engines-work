@@ -8,6 +8,7 @@ use tokio::net::TcpListener;
 use tower_grpc::{Request, Response};
 use tower_hyper::server::{Http, Server};
 
+use ballista::error::Result;
 use ballista::execution::create_datafusion_plan;
 use ballista::proto;
 use datafusion::execution::context::ExecutionContext;
@@ -27,25 +28,12 @@ impl server::Executor for BallistaService {
                 Ok(df_plan) => {
                     println!("DataFusion plan: {:?}", df_plan);
 
-                    let mut context = ExecutionContext::new();
-
-                    match context.optimize(&df_plan) {
-                        Ok(optimized_plan) => {
-                            println!("Optimized plan: {:?}", optimized_plan);
-
-                            register_tables(&mut context, &optimized_plan);
-
-                            match context.execute(&optimized_plan, 1024) {
-                                Ok(_) => Response::new(ExecuteResponse {
-                                    message: format!("{:?}", df_plan),
-                                }),
-                                Err(e) => Response::new(ExecuteResponse {
-                                    message: format!("Error executing plan: {:?}", e),
-                                }),
-                            }
-                        }
+                    match execute_query(&df_plan) {
+                        Ok(count) => Response::new(ExecuteResponse {
+                            message: format!("Query retrieved {} rows", count),
+                        }),
                         Err(e) => Response::new(ExecuteResponse {
-                            message: format!("Error optimizing plan: {:?}", e),
+                            message: format!("Error executing plan: {:?}", e),
                         }),
                     }
                 }
@@ -60,6 +48,26 @@ impl server::Executor for BallistaService {
 
         future::ok(response)
     }
+}
+
+fn execute_query(df_plan: &LogicalPlan) -> Result<usize> {
+    let mut context = ExecutionContext::new();
+
+    let optimized_plan = context.optimize(&df_plan)?;
+    println!("Optimized plan: {:?}", optimized_plan);
+
+    register_tables(&mut context, &optimized_plan);
+
+    let relation = context.execute(&optimized_plan, 1024)?;
+
+    let mut x = relation.borrow_mut();
+
+    let mut count = 0;
+    while let Some(batch) = x.next()? {
+        count += batch.num_rows();
+    }
+
+    Ok(count)
 }
 
 //TODO this is a temporary hack to walk the plan and register tables with the context ... this isn't how it will work long term
