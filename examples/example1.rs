@@ -9,6 +9,6 @@ pub fn main() {
     let plan = file.projection(vec![0, 1, 2]);
 
     // send the plan to a ballista server
-    let client = Client {};
+    let client = Client::new("[::1]".to_string(), 50051);
     client.send(plan);
 }
