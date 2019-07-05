@@ -41,10 +41,12 @@ cargo run --bin server
 In second terminal, run:
 
 ```bash
-cargo run --example client
+cargo run --example example1
 ```
 
-So far, this just sends a logical query plan from the client to the server.
+So far, this just sends a logical query plan from the client to one server and the server executes the plan using DataFusion.
+
+Also, the code assumes that data files exist in certain paths... I will write up instructions soon on downloading the files I am using for testing. 
 
 
 
