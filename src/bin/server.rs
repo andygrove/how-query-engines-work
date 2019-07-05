@@ -10,6 +10,7 @@ use tower_hyper::server::{Http, Server};
 
 use ballista::ballista_proto;
 use ballista::execution::create_datafusion_plan;
+use datafusion::execution::context::ExecutionContext;
 
 #[derive(Clone, Debug)]
 struct Greet;
@@ -18,19 +19,36 @@ impl server::Executor for Greet {
     type ExecuteFuture = future::FutureResult<Response<ExecuteResponse>, tower_grpc::Status>;
 
     fn execute(&mut self, request: Request<ExecuteRequest>) -> Self::ExecuteFuture {
-        println!("REQUEST = {:?}", request);
-        match &request.get_ref().plan {
+        //println!("REQUEST = {:?}", request);
+
+        let response = match &request.get_ref().plan {
             Some(plan) => {
-                let df_plan = create_datafusion_plan(plan);
+                match create_datafusion_plan(plan) {
+                    Ok(df_plan) => {
+                        println!("DataFusion plan: {:?}", df_plan);
 
-                println!("DataFusion plan: {:?}", df_plan);
+                        let mut context = ExecutionContext::new();
+
+                        //TODO optimize plan
+
+                        match context.execute(&df_plan, 1024) {
+                            Ok(_) => Response::new(ExecuteResponse {
+                                message: format!("{:?}", df_plan),
+                            }),
+                            Err(e) => Response::new(ExecuteResponse {
+                                message: format!("{:?}", e),
+                            }),
+                        }
+                    }
+                    Err(e) => Response::new(ExecuteResponse {
+                        message: format!("{:?}", e),
+                    }),
+                }
             }
-            _ => {}
-        }
-
-        let response = Response::new(ExecuteResponse {
-            message: "Zomg, it works!".to_string(),
-        });
+            _ => Response::new(ExecuteResponse {
+                message: "empty request".to_string(),
+            }),
+        };
 
         future::ok(response)
     }

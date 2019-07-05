@@ -4,5 +4,6 @@ pub mod ballista_proto {
 }
 
 pub mod client;
+pub mod error;
 pub mod execution;
 pub mod logical_plan;
