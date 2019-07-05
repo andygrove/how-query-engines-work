@@ -8,9 +8,8 @@ use tokio::net::TcpListener;
 use tower_grpc::{Request, Response};
 use tower_hyper::server::{Http, Server};
 
-pub mod ballista_proto {
-    include!(concat!(env!("OUT_DIR"), "/ballista.rs"));
-}
+use ballista::ballista_proto;
+use ballista::execution::create_datafusion_plan;
 
 #[derive(Clone, Debug)]
 struct Greet;
@@ -20,6 +19,14 @@ impl server::Executor for Greet {
 
     fn execute(&mut self, request: Request<ExecuteRequest>) -> Self::ExecuteFuture {
         println!("REQUEST = {:?}", request);
+        match &request.get_ref().plan {
+            Some(plan) => {
+                let df_plan = create_datafusion_plan(plan);
+
+                println!("DataFusion plan: {:?}", df_plan);
+            }
+            _ => {}
+        }
 
         let response = Response::new(ExecuteResponse {
             message: "Zomg, it works!".to_string(),

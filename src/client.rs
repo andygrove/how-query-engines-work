@@ -12,11 +12,10 @@ use crate::logical_plan::LogicalPlan;
 
 pub struct Client {
     host: String,
-    port: usize
+    port: usize,
 }
 
 impl Client {
-
     pub fn new(host: String, port: usize) -> Self {
         Self { host, port }
     }
@@ -25,7 +24,9 @@ impl Client {
         let _ = ::env_logger::init();
 
         // send the query to the server
-        let uri: http::Uri = format!("http://{}:{}", self.host, self.port).parse().unwrap();
+        let uri: http::Uri = format!("http://{}:{}", self.host, self.port)
+            .parse()
+            .unwrap();
         let dst = Destination::try_from_uri(uri.clone()).unwrap();
         let connector = util::Connector::new(HttpConnector::new(4));
         let settings = client::Builder::new().http2_only(true).clone();
