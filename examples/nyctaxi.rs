@@ -4,6 +4,9 @@ use ballista::logical_plan::read_file;
 
 pub fn main() {
 
+    let _ = ::env_logger::init();
+
+
     // build simple logical plan to apply a projection to a CSV file
     let schema = Schema::new(vec![
         Field::new("VendorID", DataType::Utf8, true),

@@ -1,6 +1,6 @@
 use crate::proto;
 
-use arrow::datatypes::Schema;
+use arrow::datatypes::{Schema, DataType};
 
 pub struct Expr {}
 
@@ -44,6 +44,13 @@ fn empty_plan_node() -> Box<proto::LogicalPlanNode> {
     })
 }
 
+fn to_proto_type(arrow_type: &DataType) -> i32 {
+    match arrow_type {
+        DataType::Utf8 => 3,
+        _ => unimplemented!()
+    }
+}
+
 /// Create a logical plan representing a file
 pub fn read_file(filename: &str, schema: &Schema) -> LogicalPlan {
     let schema_proto = proto::Schema {
@@ -52,7 +59,7 @@ pub fn read_file(filename: &str, schema: &Schema) -> LogicalPlan {
             .iter()
             .map(|field| proto::Field {
                 name: field.name().to_string(),
-                arrow_type: 0, // TODO
+                arrow_type: to_proto_type(field.data_type()),
                 nullable: true,
                 children: vec![],
             })

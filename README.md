@@ -39,13 +39,21 @@ cargo build
 # Run server locally
 
 ```bash
-cargo run --bin server
+cargo run --bin ballista-server
 ```
 
-# Run example client
+# Run NYC Taxi Example
+
+First download the test data:
 
 ```bash
-cargo run --example example1
+./bin/download-yellow-2018.sh
+```
+
+Then run the example. Note that paths are hard-coded in the example.
+
+```bash
+cargo run --example nyctaxi
 ```
 
 # Build Docker image for server
