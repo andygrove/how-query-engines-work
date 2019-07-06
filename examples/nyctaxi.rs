@@ -1,15 +1,14 @@
-#![deny(warnings, rust_2018_idioms)]
-
-use arrow::datatypes::{DataType, Field, Schema, DateUnit};
+use arrow::datatypes::{DataType, Field, Schema};
 use ballista::client::Client;
 use ballista::logical_plan::read_file;
 
 pub fn main() {
+
     // build simple logical plan to apply a projection to a CSV file
     let schema = Schema::new(vec![
         Field::new("VendorID", DataType::Utf8, true),
-        Field::new("tpep_pickup_datetime", DataType::Date64(DateUnit::Day), true),
-        Field::new("tpep_dropoff_datetime", DataType::Date64(DateUnit::Day), true),
+        Field::new("tpep_pickup_datetime", DataType::Utf8, true),
+        Field::new("tpep_dropoff_datetime", DataType::Utf8, true),
         Field::new("passenger_count", DataType::Utf8, true),
         Field::new("trip_distance", DataType::Utf8, true),
         Field::new("RatecodeID", DataType::Utf8, true),
