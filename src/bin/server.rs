@@ -87,7 +87,6 @@ fn register_tables(ctx: &mut ExecutionContext, plan: &LogicalPlan) {
 
 pub fn main() {
 
-    println!("Ballista server");
 
     let _ = ::env_logger::init();
 
@@ -98,6 +97,7 @@ pub fn main() {
     let http = Http::new().http2_only(true).clone();
 
     let addr = "0.0.0.0:50051".parse().unwrap();
+    println!("Ballista server binding to {}", addr);
     let bind = TcpListener::bind(&addr).expect("bind");
 
     let serve = bind
@@ -114,5 +114,6 @@ pub fn main() {
         })
         .map_err(|e| eprintln!("accept error: {}", e));
 
+    println!("Ballista running");
     tokio::run(serve)
 }

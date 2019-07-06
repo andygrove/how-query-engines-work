@@ -4,6 +4,7 @@ pub mod proto {
 }
 
 pub mod client;
+pub mod cluster;
 pub mod error;
 pub mod execution;
 pub mod logical_plan;
