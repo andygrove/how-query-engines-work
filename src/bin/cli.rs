@@ -49,17 +49,24 @@ pub fn main() {
 fn create_cluster(matches: &ArgMatches) {
     let cluster_name = matches.value_of("name").unwrap();
     let exec_node_count= matches.value_of("executors").unwrap().parse::<usize>().unwrap();
+    let namespace = "default";
 
     // create a cluster with 12 pods (one per month)
     for i in 1..=exec_node_count {
         let pod_name = format!("ballista-{}-{}", cluster_name, i);
-        cluster::create_ballista_pod(&pod_name).unwrap();
+        cluster::create_ballista_pod(namespace, &pod_name).unwrap();
     }
 }
 
 fn delete_cluster(matches: &ArgMatches) {
     let cluster_name = matches.value_of("name").unwrap();
+    let pod_name_prefix = format!("ballista-{}-", cluster_name);
+    let namespace = "default";
+    let all_pods = cluster::list_pods(namespace).unwrap();
 
-    unimplemented!();
-
+    for name in all_pods {
+        if name.starts_with(&pod_name_prefix) {
+            cluster::delete_pod(namespace, &name).unwrap();
+        }
+    }
 }
