@@ -29,7 +29,7 @@ pub fn main() {
                         .takes_value(true)
                         .short("i")
                         .help("Docker image containing ballista executor"),
-                ),
+                )
                 .arg(
                     Arg::with_name("executors")
                         .short("e")
@@ -113,6 +113,7 @@ fn delete_cluster(matches: &ArgMatches) {
     for name in all_pods {
         if name.starts_with(&pod_name_prefix) {
             cluster::delete_pod(namespace, &name).unwrap();
+            cluster::delete_service(namespace, &name).unwrap();
         }
     }
 }

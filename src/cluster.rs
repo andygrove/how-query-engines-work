@@ -8,7 +8,7 @@ use k8s_openapi::apimachinery::pkg::util::intstr::IntOrString;
 use k8s_openapi::http;
 use reqwest;
 
-fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, reqwest::Error> {
+fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, BallistaError> {
     let (method, path, body) = {
         let (parts, body) = request.into_parts();
         let mut url: http::uri::Parts = parts.uri.into();
@@ -22,9 +22,9 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, r
 
     let uri = format!("http://localhost:8080{}", path);
 
-    println!("{} {}{}", method, uri, str::from_utf8(&body).unwrap());
-
     let client = reqwest::Client::new();
+
+    println!("Request: {} {}{}", method, uri, str::from_utf8(&body).unwrap());
 
     let mut x = match method {
         http::Method::GET => client.get(&uri).body(body).send()?,
@@ -33,16 +33,23 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, r
         _ => unimplemented!(),
     };
 
-    let body = x.text()?;
+    let response_body = x.text()?;
 
-    println!("Response: {}", body);
+    if x.status().is_success() {
 
-    let response = http::Response::builder()
-        .status(http::StatusCode::OK) //TODO translate status code or is it always OK at this point?
-        .body(body.as_bytes().to_vec())
-        .unwrap();
+        let response = http::Response::builder()
+            .status(http::StatusCode::OK)
+            .body(response_body.as_bytes().to_vec())
+            .unwrap();
 
-    Ok(response)
+        Ok(response)
+
+    } else {
+        println!("Response: {}", response_body);
+
+        Err(BallistaError::General("k8s api returned error".to_string()))
+    }
+
 }
 
 pub fn create_ballista_executor(
@@ -194,6 +201,52 @@ pub fn delete_pod(namespace: &str, pod_name: &str) -> Result<(), BallistaError> 
         }
 
         Ok(api::DeleteNamespacedPodResponse::Accepted(_status)) => {
+            //println!("deleted pod {} ok: accepted status {:?}", pod_name, status);
+            Ok(())
+        }
+
+        // Some unexpected response
+        // (not HTTP 200, but still parsed successfully)
+        Ok(other) => return Err(format!("expected Ok but got {} {:?}", status_code, other).into()),
+
+        // Need more response data.
+        // Read more bytes from the response into the `ResponseBody`
+        Err(k8s_openapi::ResponseError::NeedMoreData) => Err(BallistaError::General(
+            "Need more response data".to_string(),
+        )),
+
+        // Some other error, like the response body being
+        // malformed JSON or invalid UTF-8.
+        Err(err) => return Err(format!("error: {} {:?}", status_code, err).into()),
+    }
+}
+
+pub fn delete_service(namespace: &str, service_name: &str) -> Result<(), BallistaError> {
+    let (request, response_body) =
+        api::Service::delete_namespaced_service(service_name, namespace, Default::default())
+            .expect("couldn't delete service");
+    let response = execute(request).expect("couldn't delete service");
+
+    // Got a status code from executing the request.
+    let status_code: http::StatusCode = response.status();
+
+    let mut response_body = response_body(status_code);
+    response_body.append_slice(&response.body());
+    let response = response_body.parse();
+
+    match response {
+        // Successful response (HTTP 200 and parsed successfully)
+        Ok(api::DeleteNamespacedServiceResponse::OkStatus(_status)) => {
+            //println!("deleted pod {} ok: status {:?}", pod_name, status);
+            Ok(())
+        }
+
+        Ok(api::DeleteNamespacedServiceResponse::OkValue(_value)) => {
+            //println!("deleted pod {} ok: value {:?}", pod_name, value);
+            Ok(())
+        }
+
+        Ok(api::DeleteNamespacedServiceResponse::Accepted(_status)) => {
             //println!("deleted pod {} ok: accepted status {:?}", pod_name, status);
             Ok(())
         }

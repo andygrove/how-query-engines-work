@@ -21,7 +21,7 @@ impl server::Executor for BallistaService {
     type ExecuteFuture = future::FutureResult<Response<ExecuteResponse>, tower_grpc::Status>;
 
     fn execute(&mut self, request: Request<ExecuteRequest>) -> Self::ExecuteFuture {
-        //println!("REQUEST = {:?}", request);
+        println!("REQUEST = {:?}", request);
 
         let response = match &request.get_ref().plan {
             Some(plan) => match create_datafusion_plan(plan) {
