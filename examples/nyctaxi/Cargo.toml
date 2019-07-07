@@ -1,0 +1,11 @@
+[package]
+name = "ballista-nyctaxi"
+description = "Ballista example for NYC Taxi data"
+version = "0.1.0"
+license = "Apache-2.0"
+edition = "2018"
+
+[dependencies]
+ballista = { path = "../../" }
+# Arrow 0.13 doesn't compile with latest nightly Rust so have to do this until 0.14 is released
+arrow = { path = "../../arrow/rust/arrow" }

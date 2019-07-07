@@ -1,13 +1,16 @@
+use std::env;
+
 use arrow::datatypes::{DataType, Field, Schema};
 use ballista::client::Client;
-use ballista::cluster;
 use ballista::logical_plan::read_file;
 
 pub fn main() {
 
-    let _ = ::env_logger::init();
+    for (key, value) in env::vars() {
+        println!("{}: {}", key, value);
+    }
 
-    let max_partitions = 1; // adjust this to the size of the cluster you want to create
+    let max_partitions = 12; // adjust this to the size of the cluster you want to create
 
     let num_months = 12.min(max_partitions);
 
