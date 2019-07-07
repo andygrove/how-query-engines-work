@@ -1,6 +1,6 @@
 # Ballista
 
-Ballista ~is~ will be a proof-of-concept distributed compute platform based on Kubernetes and the Rust implementation of [Apache Arrow](https://arrow.apache.org/).
+Ballista is a proof-of-concept distributed compute platform based on Kubernetes and the Rust implementation of [Apache Arrow](https://arrow.apache.org/).
 
 This is not my first attempt at building something like this. I originally wanted [DataFusion](https://github.com/apache/arrow/tree/master/rust/datafusion) to be a distributed compute platform but this was overly ambitious at the time, and it ended up becoming an in-memory query execution engine for the Rust implementation of Apache Arrow. However, DataFusion now provides a good foundation to have another attempt at building a [modern distributed compute platform](https://andygrove.io/how_to_build_a_modern_distributed_compute_platform/) in Rust.
 
@@ -21,11 +21,15 @@ I will be working on this project in my spare time, which is limited, so progres
 - [X] Server can execute query plan using DataFusion
 - [X] Create Dockerfile for server
 - [ ] Server can write results to CSV files
+- [ ] Server can write results to Parquet files
 - [ ] CLI to create cluster using Kubernetes
 - [ ] Benchmarks
 - [ ] Implement Flight protocol
 - [ ] Server can stream Arrow data back to client
 - [ ] Implement support for all DataFusion logical plan and expressions
+- [ ] Distributed query planner
+- [ ] Support user code as part of distributed query execution
+- [ ] SQL support
 
 # Building
 
