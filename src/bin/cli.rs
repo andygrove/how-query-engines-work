@@ -53,10 +53,10 @@ pub fn main() {
                         .help("Ballista cluster name"),
                 )
                 .arg(
-                    Arg::with_name("image")
+                    Arg::with_name("app")
                         .required(true)
                         .takes_value(true)
-                        .short("i")
+                        .short("a")
                         .help("Docker image containing application"),
                 )
         )
@@ -113,5 +113,7 @@ fn execute(matches: &ArgMatches) {
     let image_name = matches.value_of("image").unwrap();
     let namespace = "default";
 
-    cluster::create_pod(namespace, "ballista-app", image_name).unwrap();
+    let pod_name = format!("ballista-{}-app", cluster_name);
+
+    cluster::create_pod(namespace, &pod_name, image_name).unwrap();
 }

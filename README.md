@@ -47,30 +47,6 @@ I will be working on this project in my spare time, which is limited, so progres
 cargo build
 ```
 
-# Run NYC Taxi Example
-
-First download the test data:
-
-```bash
-./bin/download-yellow-2018.sh
-```
-
-Then run the example. Note that paths are hard-coded in the example.
-
-```bash
-cargo run --example nyctaxi
-```
-
-# Build Docker image for server
-
-```bash
-docker build -t ballista .
-```
-
-
-
-
-
 
 
  
