@@ -21,7 +21,6 @@ impl Client {
     }
 
     pub fn send(&self, plan: LogicalPlan) {
-
         // send the query to the server
         let uri: http::Uri = format!("http://{}:{}", self.host, self.port)
             .parse()

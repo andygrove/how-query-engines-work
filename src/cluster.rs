@@ -1,18 +1,20 @@
 use std::str;
 
-use k8s_openapi::http;
+use crate::error::BallistaError;
+use k8s_openapi;
 use k8s_openapi::api::core::v1 as api;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
-use k8s_openapi;
+use k8s_openapi::http;
 use reqwest;
-use crate::error::BallistaError;
 
 fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, reqwest::Error> {
-
     let (method, path, body) = {
         let (parts, body) = request.into_parts();
         let mut url: http::uri::Parts = parts.uri.into();
-        let path = url.path_and_query.take().expect("request doesn't have path and query");
+        let path = url
+            .path_and_query
+            .take()
+            .expect("request doesn't have path and query");
 
         (parts.method, path, body)
     };
@@ -24,23 +26,10 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, r
     let client = reqwest::Client::new();
 
     let mut x = match method {
-        http::Method::GET => {
-            client.get(&uri)
-                .body(body)
-                .send()?
-        }
-        http::Method::POST => {
-            client.post(&uri)
-                .body(body)
-                .send()?
-        }
-        http::Method::DELETE => {
-            client.delete(&uri)
-                .body(body)
-                .send()?
-        }
-        _ => unimplemented!()
-
+        http::Method::GET => client.get(&uri).body(body).send()?,
+        http::Method::POST => client.post(&uri).body(body).send()?,
+        http::Method::DELETE => client.delete(&uri).body(body).send()?,
+        _ => unimplemented!(),
     };
 
     let body = x.text()?;
@@ -53,13 +42,13 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, r
     Ok(response)
 }
 
-pub fn create_ballista_pod(namespace: &str, name: &str) -> Result<(), BallistaError> {
+pub fn create_pod(namespace: &str, name: &str, image_name: &str) -> Result<(), BallistaError> {
     let mut metadata: ObjectMeta = Default::default();
     metadata.name = Some(name.to_string());
 
     let mut container: api::Container = Default::default();
     container.name = name.to_string();
-    container.image = Some("ballista-server:latest".to_string());
+    container.image = Some(image_name.to_string());
 
     let mut container_port: api::ContainerPort = Default::default();
     container_port.container_port = 50051;
@@ -72,9 +61,11 @@ pub fn create_ballista_pod(namespace: &str, name: &str) -> Result<(), BallistaEr
     let pod = api::Pod {
         metadata: Some(metadata),
         spec: Some(pod_spec),
-        status: None
+        status: None,
     };
-    let (request, response_body) = api::Pod::create_namespaced_pod(namespace, &pod, Default::default()).expect("couldn't create pod");
+    let (request, response_body) =
+        api::Pod::create_namespaced_pod(namespace, &pod, Default::default())
+            .expect("couldn't create pod");
     let response = execute(request).expect("couldn't create pod");
 
     // Got a status code from executing the request.
@@ -93,25 +84,24 @@ pub fn create_ballista_pod(namespace: &str, name: &str) -> Result<(), BallistaEr
 
         // Some unexpected response
         // (not HTTP 200, but still parsed successfully)
-        Ok(other) => return Err(format!(
-            "expected Ok but got {} {:?}",
-            status_code, other).into()),
+        Ok(other) => return Err(format!("expected Ok but got {} {:?}", status_code, other).into()),
 
         // Need more response data.
         // Read more bytes from the response into the `ResponseBody`
-        Err(k8s_openapi::ResponseError::NeedMoreData) => Err(BallistaError::General("Need more response data".to_string())),
+        Err(k8s_openapi::ResponseError::NeedMoreData) => Err(BallistaError::General(
+            "Need more response data".to_string(),
+        )),
 
         // Some other error, like the response body being
         // malformed JSON or invalid UTF-8.
-        Err(err) => return Err(format!(
-            "error: {} {:?}",
-            status_code, err).into()),
+        Err(err) => return Err(format!("error: {} {:?}", status_code, err).into()),
     }
 }
 
 pub fn delete_pod(namespace: &str, pod_name: &str) -> Result<(), BallistaError> {
-
-    let (request, response_body) = api::Pod::delete_namespaced_pod(pod_name, namespace, Default::default()).expect("couldn't delete pod");
+    let (request, response_body) =
+        api::Pod::delete_namespaced_pod(pod_name, namespace, Default::default())
+            .expect("couldn't delete pod");
     let response = execute(request).expect("couldn't delete pod");
 
     // Got a status code from executing the request.
@@ -140,25 +130,23 @@ pub fn delete_pod(namespace: &str, pod_name: &str) -> Result<(), BallistaError> 
 
         // Some unexpected response
         // (not HTTP 200, but still parsed successfully)
-        Ok(other) => return Err(format!(
-            "expected Ok but got {} {:?}",
-            status_code, other).into()),
+        Ok(other) => return Err(format!("expected Ok but got {} {:?}", status_code, other).into()),
 
         // Need more response data.
         // Read more bytes from the response into the `ResponseBody`
-        Err(k8s_openapi::ResponseError::NeedMoreData) => Err(BallistaError::General("Need more response data".to_string())),
+        Err(k8s_openapi::ResponseError::NeedMoreData) => Err(BallistaError::General(
+            "Need more response data".to_string(),
+        )),
 
         // Some other error, like the response body being
         // malformed JSON or invalid UTF-8.
-        Err(err) => return Err(format!(
-            "error: {} {:?}",
-            status_code, err).into()),
+        Err(err) => return Err(format!("error: {} {:?}", status_code, err).into()),
     }
-
 }
 
 pub fn list_pods(namespace: &str) -> Result<Vec<String>, BallistaError> {
-    let (request, response_body) = api::Pod::list_namespaced_pod(namespace, Default::default()).expect("couldn't list pods");
+    let (request, response_body) =
+        api::Pod::list_namespaced_pod(namespace, Default::default()).expect("couldn't list pods");
     let response = execute(request).expect("couldn't list pods");
 
     // Got a status code from executing the request.
@@ -183,19 +171,16 @@ pub fn list_pods(namespace: &str) -> Result<Vec<String>, BallistaError> {
 
         // Some unexpected response
         // (not HTTP 200, but still parsed successfully)
-        Ok(other) => return Err(format!(
-            "expected Ok but got {} {:?}",
-            status_code, other).into()),
+        Ok(other) => return Err(format!("expected Ok but got {} {:?}", status_code, other).into()),
 
         // Need more response data.
         // Read more bytes from the response into the `ResponseBody`
-        Err(k8s_openapi::ResponseError::NeedMoreData) => Err(BallistaError::General("Need more response data".to_string())),
+        Err(k8s_openapi::ResponseError::NeedMoreData) => Err(BallistaError::General(
+            "Need more response data".to_string(),
+        )),
 
         // Some other error, like the response body being
         // malformed JSON or invalid UTF-8.
-        Err(err) => return Err(format!(
-            "error: {} {:?}",
-            status_code, err).into()),
+        Err(err) => return Err(format!("error: {} {:?}", status_code, err).into()),
     }
 }
-

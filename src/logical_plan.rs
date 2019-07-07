@@ -1,6 +1,6 @@
 use crate::proto;
 
-use arrow::datatypes::{Schema, DataType};
+use arrow::datatypes::{DataType, Schema};
 
 pub struct Expr {}
 
@@ -47,7 +47,7 @@ fn empty_plan_node() -> Box<proto::LogicalPlanNode> {
 fn to_proto_type(arrow_type: &DataType) -> i32 {
     match arrow_type {
         DataType::Utf8 => 3,
-        _ => unimplemented!()
+        _ => unimplemented!(),
     }
 }
 
