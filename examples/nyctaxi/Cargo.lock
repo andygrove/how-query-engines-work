@@ -100,7 +100,7 @@ dependencies = [
 
 [[package]]
 name = "ballista"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "arrow 1.0.0-SNAPSHOT (git+https://github.com/apache/arrow)",
  "bytes 0.4.12 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -128,7 +128,7 @@ name = "ballista-nyctaxi"
 version = "0.1.0"
 dependencies = [
  "arrow 1.0.0-SNAPSHOT (git+https://github.com/apache/arrow)",
- "ballista 0.1.0",
+ "ballista 0.1.1",
 ]
 
 [[package]]

@@ -45,7 +45,11 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, r
     Ok(response)
 }
 
-pub fn create_ballista_executor(namespace: &str, name: &str, image_name: &str) -> Result<(), BallistaError> {
+pub fn create_ballista_executor(
+    namespace: &str,
+    name: &str,
+    image_name: &str,
+) -> Result<(), BallistaError> {
     create_pod(namespace, name, image_name)?;
     create_service(namespace, name)
 }
@@ -54,17 +58,17 @@ pub fn create_service(namespace: &str, name: &str) -> Result<(), BallistaError> 
     let mut metadata: ObjectMeta = Default::default();
     metadata.name = Some(name.to_string());
 
-    let mut spec : api::ServiceSpec = Default::default();
+    let mut spec: api::ServiceSpec = Default::default();
     spec.type_ = Some("ClusterIP".to_string());
 
-    let mut port : api::ServicePort = Default::default();
+    let mut port: api::ServicePort = Default::default();
     port.name = Some("grpc".to_string());
     port.port = 9090;
     port.target_port = Some(IntOrString::Int(9090));
 
     spec.ports = Some(vec![port]);
 
-    let mut service : api::Service = Default::default();
+    let mut service: api::Service = Default::default();
     service.metadata = Some(metadata);
     service.spec = Some(spec);
 
@@ -83,7 +87,10 @@ pub fn create_service(namespace: &str, name: &str) -> Result<(), BallistaError> 
     match response {
         // Successful response (HTTP 200 and parsed successfully)
         Ok(api::CreateNamespacedServiceResponse::Ok(service)) => {
-            println!("created service ok: {}", service.metadata.unwrap().name.unwrap());
+            println!(
+                "created service ok: {}",
+                service.metadata.unwrap().name.unwrap()
+            );
             Ok(())
         }
 

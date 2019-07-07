@@ -6,10 +6,9 @@ use ballista::client::Client;
 use ballista::logical_plan::read_file;
 
 pub fn main() {
-
-//    for (key, value) in env::vars() {
-//        println!("{}: {}", key, value);
-//    }
+    //    for (key, value) in env::vars() {
+    //        println!("{}: {}", key, value);
+    //    }
 
     // discover available executors
     let cluster_name = "NYCTAXI"; //TODO should come from env var populated by ballista
@@ -19,8 +18,11 @@ pub fn main() {
         let host_env = format!("BALLISTA_{}_{}_SERVICE_HOST", cluster_name, instance);
         let port_env = format!("BALLISTA_{}_{}_SERVICE_PORT_GRPC", cluster_name, instance);
         match (env::var(&host_env), env::var(&port_env)) {
-            (Ok(host), Ok(port)) => executors.push(Executor {host, port: port.parse::<usize>().unwrap()}),
-            _ => break
+            (Ok(host), Ok(port)) => executors.push(Executor {
+                host,
+                port: port.parse::<usize>().unwrap(),
+            }),
+            _ => break,
         }
         instance += 1;
     }
@@ -51,17 +53,22 @@ pub fn main() {
     // manually create one plan for each partition (month)
     let mut executor_index = 0;
     for month in 0..num_months {
-
-        let filename = format!("/mnt/ssd/nyc_taxis/csv/yellow_tripdata_2018-{:02}.csv", month+1);
+        let filename = format!(
+            "/mnt/ssd/nyc_taxis/csv/yellow_tripdata_2018-{:02}.csv",
+            month + 1
+        );
         let file = read_file(&filename, &schema);
         let plan = file.projection(vec![0, 1, 2]);
 
         // send the plan to a ballista server
-        let executor = &executors[executor_index].clone();
+        let executor = &executors[executor_index];
+
+        let host = executor.host.clone();
+        let port = executor.port;
 
         thread::spawn(move || {
-            println!("Executing query against executor at {}:{}", executor.host, executor.port);
-            let client = Client::new(&executor.host, executor.port);
+            println!("Executing query against executor at {}:{}", host, port);
+            let client = Client::new(&host, port);
             client.send(plan);
         });
 
@@ -70,11 +77,9 @@ pub fn main() {
             executor_index = 0;
         }
     }
-
-
 }
 
 struct Executor {
     host: String,
-    port: usize
+    port: usize,
 }

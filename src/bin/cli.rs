@@ -24,6 +24,13 @@ pub fn main() {
                         .help("Ballista cluster name"),
                 )
                 .arg(
+                    Arg::with_name("image")
+                        .required(true)
+                        .takes_value(true)
+                        .short("i")
+                        .help("Docker image containing ballista executor"),
+                ),
+                .arg(
                     Arg::with_name("executors")
                         .short("e")
                         .required(true)
@@ -58,7 +65,7 @@ pub fn main() {
                         .takes_value(true)
                         .short("a")
                         .help("Docker image containing application"),
-                )
+                ),
         )
         .get_matches();
 
@@ -81,6 +88,7 @@ pub fn main() {
 
 fn create_cluster(matches: &ArgMatches) {
     let cluster_name = matches.value_of("name").unwrap();
+    let image= matches.value_of("image").unwrap();
     let exec_node_count = matches
         .value_of("executors")
         .unwrap()
@@ -91,7 +99,8 @@ fn create_cluster(matches: &ArgMatches) {
     // create a cluster with 12 pods (one per month)
     for i in 1..=exec_node_count {
         let pod_name = format!("ballista-{}-{}", cluster_name, i);
-        cluster::create_ballista_executor(namespace, &pod_name, "andygrove/ballista:0.1.0").unwrap();
+        cluster::create_ballista_executor(namespace, &pod_name, image)
+            .unwrap();
     }
 }
 
