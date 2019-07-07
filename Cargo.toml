@@ -28,6 +28,7 @@ tokio = "0.1"
 tower-hyper = "0.1"
 hyper = "0.12"
 tower-service = "0.2"
+tower-grpc = { version = "0.1.0", features = ["tower-hyper"] }
 tower-util = "0.1"
 k8s-openapi = { version = "0.4.0", features = ["v1_13"] }
 reqwest = "0.9.18"
@@ -35,12 +36,10 @@ clap = "2.33.0"
 
 # TODO figure out how to use released version
 tower-request-modifier = { git = "https://github.com/tower-rs/tower-http" }
-tower-grpc = { path = "tower-grpc/tower-grpc", features = ["tower-hyper"] }
 
 # Arrow 0.13 doesn't compile with latest nightly Rust so have to do this until 0.14 is released
 arrow = { path = "arrow/rust/arrow" }
 datafusion = { path = "arrow/rust/datafusion" }
 
 [build-dependencies]
-# TODO figure out how to use released version
-tower-grpc-build = { path = "tower-grpc/tower-grpc-build", features = ["tower-hyper"] }
+tower-grpc-build = { version = "0.1.0", features = ["tower-hyper"] }
