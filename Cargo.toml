@@ -38,8 +38,8 @@ clap = "2.33.0"
 tower-request-modifier = { git = "https://github.com/tower-rs/tower-http" }
 
 # Arrow 0.13 doesn't compile with latest nightly Rust so have to do this until 0.14 is released
-arrow = { path = "arrow/rust/arrow" }
-datafusion = { path = "arrow/rust/datafusion" }
+arrow = { git = "https://github.com/apache/arrow" }
+datafusion = { git = "https://github.com/apache/arrow" }
 
 [build-dependencies]
 tower-grpc-build = { version = "0.1.0", features = ["tower-hyper"] }
