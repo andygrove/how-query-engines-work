@@ -12,6 +12,12 @@ pub enum BallistaError {
     DataFusionError(ExecutionError),
 }
 
+impl From<String> for BallistaError {
+    fn from(e: String) -> Self {
+        BallistaError::General(e)
+    }
+}
+
 impl From<ExecutionError> for BallistaError {
     fn from(e: ExecutionError) -> Self {
         BallistaError::DataFusionError(e)

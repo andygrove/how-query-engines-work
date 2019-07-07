@@ -1,10 +1,15 @@
 use arrow::datatypes::{DataType, Field, Schema};
 use ballista::client::Client;
+use ballista::cluster;
 use ballista::logical_plan::read_file;
 
 pub fn main() {
 
     let _ = ::env_logger::init();
+
+    let max_partitions = 1; // adjust this to the size of the cluster you want to create
+
+    let num_months = 12.min(max_partitions);
 
 
     // build simple logical plan to apply a projection to a CSV file
@@ -28,10 +33,16 @@ pub fn main() {
         Field::new("total_amount", DataType::Utf8, true),
     ]);
 
-    // manually create one plan for each partition (month)
-    for month in 1..12 {
+    // create a cluster with 12 pods (one per month)
+    for month in 0..num_months {
+        cluster::create_ballista_pod(&format!("ballista-{}", month+1)).unwrap();
+    }
 
-        let filename = format!("/mnt/ssd/nyc_taxis/csv/yellow_tripdata_2018-{:02}.csv", month);
+
+    // manually create one plan for each partition (month)
+    for month in 0..num_months {
+
+        let filename = format!("/mnt/ssd/nyc_taxis/csv/yellow_tripdata_2018-{:02}.csv", month+1);
         let file = read_file(&filename, &schema);
         let plan = file.projection(vec![0, 1, 2]);
 

@@ -6,8 +6,8 @@ use crate::proto;
 use arrow::datatypes::{DataType, Field, Schema};
 use datafusion::logicalplan::{Expr, LogicalPlan as DFPlan};
 
-fn to_arrow_type(protoType: i32) -> DataType {
-    match protoType {
+fn to_arrow_type(proto_type: i32) -> DataType {
+    match proto_type {
         3 => DataType::Utf8,
         _ => unimplemented!()
 //        NONE = 0;     // arrow::Type::NA
