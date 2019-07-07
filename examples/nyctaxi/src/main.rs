@@ -10,10 +10,21 @@ pub fn main() {
         println!("{}: {}", key, value);
     }
 
-    let max_partitions = 12; // adjust this to the size of the cluster you want to create
+    // discover available executors
+    let cluster_name = "nyctaxi"; //TODO should come from env var populated by ballista
+    let mut executors: Vec<Executor> = vec![];
+    let mut instance = 1;
+    loop {
+        let host_env = format!("BALLISTA_{}_{}_SERVICE_HOST", cluster_name, instance);
+        let port_env = format!("BALLISTA_{}_{}_SERVICE_PORT_GRPC", cluster_name, instance);
+        match (env::var(&host_env), env::var(&port_env)) {
+            (Ok(host), Ok(port)) => executors.push(Executor {host, port: port.parse::<usize>().unwrap()}),
+            _ => break
+        }
+        instance += 1;
+    }
 
-    let num_months = 12.min(max_partitions);
-
+    let num_months = 12;
 
     // build simple logical plan to apply a projection to a CSV file
     let schema = Schema::new(vec![
@@ -37,19 +48,29 @@ pub fn main() {
     ]);
 
     // manually create one plan for each partition (month)
+    let mut executor_index = 0;
     for month in 0..num_months {
 
         let filename = format!("/mnt/ssd/nyc_taxis/csv/yellow_tripdata_2018-{:02}.csv", month+1);
         let file = read_file(&filename, &schema);
         let plan = file.projection(vec![0, 1, 2]);
-        let pod_name = format!("ballista-nyctaxi-{}", month + 1);
-
-        println!("Executing query against {}", pod_name);
 
         // send the plan to a ballista server
-        let client = Client::new("localhost".to_string(), 50051);
+        let executor = &executors[executor_index];
+        println!("Executing query against executor at {}:{}", executor.host, executor.port);
+        let client = Client::new(&executor.host, executor.port);
         client.send(plan);
+
+        executor_index += 1;
+        if executor_index == executors.len() {
+            executor_index = 0;
+        }
     }
 
 
+}
+
+struct Executor {
+    host: String,
+    port: usize
 }

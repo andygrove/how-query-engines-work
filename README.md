@@ -22,7 +22,8 @@ I will be working on this project in my spare time, which is limited, so progres
 - [X] Create Dockerfile for server
 - [X] Ballista CLI - create cluster
 - [X] Ballista CLI - delete cluster
-- [ ] Ballista CLI - run application
+- [X] Ballista CLI - run application
+- [X] Simple example application works 
 - [ ] Server can write results to CSV files
 - [ ] Server can write results to Parquet files
 - [ ] Benchmarks
@@ -34,21 +35,6 @@ I will be working on this project in my spare time, which is limited, so progres
 - [ ] SQL support
 - [ ] Java bindings (supporting Java, Kotlin, Scala)
 
-# Prerequisites
 
-- Docker
-- Minikube
-- Kubectl
-
-
-# Building
-
-```bash
-cargo build
-```
-
-
-
- 
 
 

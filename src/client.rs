@@ -16,8 +16,8 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(host: String, port: usize) -> Self {
-        Self { host, port }
+    pub fn new(host: &str, port: usize) -> Self {
+        Self { host: host.to_string(), port }
     }
 
     pub fn send(&self, plan: LogicalPlan) {

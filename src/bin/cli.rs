@@ -91,7 +91,7 @@ fn create_cluster(matches: &ArgMatches) {
     // create a cluster with 12 pods (one per month)
     for i in 1..=exec_node_count {
         let pod_name = format!("ballista-{}-{}", cluster_name, i);
-        cluster::create_pod(namespace, &pod_name, "andygrove/ballista:0.1.0").unwrap();
+        cluster::create_ballista_executor(namespace, &pod_name, "andygrove/ballista:0.1.0").unwrap();
     }
 }
 
@@ -110,7 +110,7 @@ fn delete_cluster(matches: &ArgMatches) {
 
 fn execute(matches: &ArgMatches) {
     let cluster_name = matches.value_of("name").unwrap();
-    let image_name = matches.value_of("image").unwrap();
+    let image_name = matches.value_of("app").unwrap();
     let namespace = "default";
 
     let pod_name = format!("ballista-{}-app", cluster_name);

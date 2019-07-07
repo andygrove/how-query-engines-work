@@ -16,13 +16,20 @@ This tutorial walks through running the included nyc taxi example.
 # Create a Ballista cluster
 
 ```bash
-docker run --network=host -it ballista /ballista create-cluster -n nyctaxi -e 12
+cargo run --bin ballista -- create-cluster -n nyctaxi -e 12
 ```
 
 # Run the app
 
 ```bash
-docker run --network=host -it ballista /ballista run -n nyctaxi -i andygrove/ballista-nyctaxi:0.1.0
+cargo run --bin ballista -- run -n nyctaxi -a andygrove/ballista-nyctaxi:0.1.0
+```
+
+
+# Delete the cluster
+
+```bash
+cargo run --bin ballista -- delete-cluster -n nyctaxi
 ```
 
 
