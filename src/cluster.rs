@@ -59,8 +59,8 @@ pub fn create_service(namespace: &str, name: &str) -> Result<(), BallistaError> 
 
     let mut port : api::ServicePort = Default::default();
     port.name = Some("grpc".to_string());
-    port.port = 50051;
-    port.target_port = Some(IntOrString::Int(50051));
+    port.port = 9090;
+    port.target_port = Some(IntOrString::Int(9090));
 
     spec.ports = Some(vec![port]);
 
@@ -113,7 +113,7 @@ pub fn create_pod(namespace: &str, name: &str, image_name: &str) -> Result<(), B
     container.image_pull_policy = Some("Always".to_string()); //TODO make configurable
 
     let mut container_port: api::ContainerPort = Default::default();
-    container_port.container_port = 50051;
+    container_port.container_port = 9090;
 
     container.ports = Some(vec![container_port]);
 

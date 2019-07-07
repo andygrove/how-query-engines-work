@@ -98,6 +98,6 @@ COPY --from=build /tmp/ballista/target/x86_64-unknown-linux-musl/release/ballist
 COPY --from=build /tmp/ballista/target/x86_64-unknown-linux-musl/release/ballista-server /
 USER 1000
 
-EXPOSE 50051
+EXPOSE 9090
 
 CMD ["/ballista-server"]

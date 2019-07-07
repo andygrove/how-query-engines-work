@@ -1,4 +1,5 @@
 use std::env;
+use std::thread;
 
 use arrow::datatypes::{DataType, Field, Schema};
 use ballista::client::Client;
@@ -6,12 +7,12 @@ use ballista::logical_plan::read_file;
 
 pub fn main() {
 
-    for (key, value) in env::vars() {
-        println!("{}: {}", key, value);
-    }
+//    for (key, value) in env::vars() {
+//        println!("{}: {}", key, value);
+//    }
 
     // discover available executors
-    let cluster_name = "nyctaxi"; //TODO should come from env var populated by ballista
+    let cluster_name = "NYCTAXI"; //TODO should come from env var populated by ballista
     let mut executors: Vec<Executor> = vec![];
     let mut instance = 1;
     loop {
@@ -56,10 +57,13 @@ pub fn main() {
         let plan = file.projection(vec![0, 1, 2]);
 
         // send the plan to a ballista server
-        let executor = &executors[executor_index];
-        println!("Executing query against executor at {}:{}", executor.host, executor.port);
-        let client = Client::new(&executor.host, executor.port);
-        client.send(plan);
+        let executor = &executors[executor_index].clone();
+
+        thread::spawn(move || {
+            println!("Executing query against executor at {}:{}", executor.host, executor.port);
+            let client = Client::new(&executor.host, executor.port);
+            client.send(plan);
+        });
 
         executor_index += 1;
         if executor_index == executors.len() {
