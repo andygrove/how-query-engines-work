@@ -103,6 +103,7 @@ version = "0.1.0"
 dependencies = [
  "arrow 1.0.0-SNAPSHOT",
  "bytes 0.4.12 (registry+https://github.com/rust-lang/crates.io-index)",
+ "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "datafusion 1.0.0-SNAPSHOT",
  "env_logger 0.5.13 (registry+https://github.com/rust-lang/crates.io-index)",
  "futures 0.1.28 (registry+https://github.com/rust-lang/crates.io-index)",

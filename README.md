@@ -20,9 +20,11 @@ I will be working on this project in my spare time, which is limited, so progres
 - [X] Server can translate protobuf query plan to DataFusion query plan
 - [X] Server can execute query plan using DataFusion
 - [X] Create Dockerfile for server
+- [ ] Ballista CLI - create cluster
+- [ ] Ballista CLI - delete cluster
+- [ ] Ballista CLI - deploy driver
 - [ ] Server can write results to CSV files
 - [ ] Server can write results to Parquet files
-- [ ] CLI to create cluster using Kubernetes
 - [ ] Benchmarks
 - [ ] Implement Flight protocol
 - [ ] Server can stream Arrow data back to client
