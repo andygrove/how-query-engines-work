@@ -93,12 +93,11 @@ WORKDIR /tmp/ballista
 RUN cargo build --release --target x86_64-unknown-linux-musl
 
 # Copy the statically-linked binary into a scratch container.
-#FROM scratch
-#RUN apt update && apt -y install bash
-#COPY --from=build /usr/local/cargo/bin/ballista-server /usr/bin
-#COPY --from=build /usr/local/cargo/bin/ballista /usr/bin
-#USER 1000
-#
-#EXPOSE 50051
+FROM scratch
+COPY --from=build /tmp/ballista/target/x86_64-unknown-linux-musl/release/ballista /
+COPY --from=build /tmp/ballista/target/x86_64-unknown-linux-musl/release/ballista-server /
+USER 1000
 
-#CMD ["ballista-server"]
+EXPOSE 50051
+
+CMD ["/ballista-server"]
