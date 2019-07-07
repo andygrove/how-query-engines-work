@@ -20,9 +20,9 @@ I will be working on this project in my spare time, which is limited, so progres
 - [X] Server can translate protobuf query plan to DataFusion query plan
 - [X] Server can execute query plan using DataFusion
 - [X] Create Dockerfile for server
-- [ ] Ballista CLI - create cluster
-- [ ] Ballista CLI - delete cluster
-- [ ] Ballista CLI - deploy driver
+- [X] Ballista CLI - create cluster
+- [X] Ballista CLI - delete cluster
+- [ ] Ballista CLI - run application
 - [ ] Server can write results to CSV files
 - [ ] Server can write results to Parquet files
 - [ ] Benchmarks
@@ -32,20 +32,19 @@ I will be working on this project in my spare time, which is limited, so progres
 - [ ] Distributed query planner
 - [ ] Support user code as part of distributed query execution
 - [ ] SQL support
+- [ ] Java bindings (supporting Java, Kotlin, Scala)
+
+# Prerequisites
+
+- Docker
+- Minikube
+- Kubectl
+
 
 # Building
 
-The project currently uses git submodules for the arrow and tower-grpc dependencies.
-
 ```bash
-git submodule update --init
 cargo build
-```
-
-# Run server locally
-
-```bash
-cargo run --bin ballista-server
 ```
 
 # Run NYC Taxi Example
