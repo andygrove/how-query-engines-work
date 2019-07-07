@@ -53,6 +53,11 @@ pub fn create_ballista_pod(name: &str) -> Result<(), BallistaError> {
     container.name = name.to_string();
     container.image = Some("ballista-server:latest".to_string());
 
+    let mut container_port: api::ContainerPort = Default::default();
+    container_port.container_port = 50051;
+
+    container.ports = Some(vec![container_port]);
+
     let mut pod_spec: api::PodSpec = Default::default();
     pod_spec.containers = vec![container];
 
@@ -93,12 +98,6 @@ pub fn create_ballista_pod(name: &str) -> Result<(), BallistaError> {
         Err(err) => return Err(format!(
             "error: {} {:?}",
             status_code, err).into()),
-
-//        _ => {
-//            println!("nope");
-//            Err(BallistaError::General("Unexpected error".to_string()))
-//        }
-
     }
 }
 

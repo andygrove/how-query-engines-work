@@ -13,6 +13,10 @@ build = "build.rs"
 name = "ballista-server"
 path = "src/bin/server.rs"
 
+[[bin]]
+name = "create-cluster"
+path = "src/bin/create_cluster.rs"
+
 [dependencies]
 futures = "0.1"
 bytes = "0.4"

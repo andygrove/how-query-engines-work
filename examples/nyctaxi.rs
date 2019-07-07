@@ -33,25 +33,19 @@ pub fn main() {
         Field::new("total_amount", DataType::Utf8, true),
     ]);
 
-    // create a cluster with 12 pods (one per month)
-    for month in 0..num_months {
-        cluster::create_ballista_pod(&format!("ballista-{}", month+1)).unwrap();
-    }
-
-
     // manually create one plan for each partition (month)
     for month in 0..num_months {
 
         let filename = format!("/mnt/ssd/nyc_taxis/csv/yellow_tripdata_2018-{:02}.csv", month+1);
         let file = read_file(&filename, &schema);
         let plan = file.projection(vec![0, 1, 2]);
+        let pod_name = format!("ballista-nyctaxi-{}", month + 1);
 
-        println!("Executing query against {}", filename);
+        println!("Executing query against {}", pod_name);
 
         // send the plan to a ballista server
         let client = Client::new("localhost".to_string(), 50051);
         client.send(plan);
-
     }
 
 
