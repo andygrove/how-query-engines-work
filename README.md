@@ -23,17 +23,20 @@ I will be working on this project in my spare time, which is limited, so progres
 - [X] Ballista CLI - create cluster
 - [X] Ballista CLI - delete cluster
 - [X] Ballista CLI - run application
-- [X] Simple example application works 
+- [ ] Simple example application works end to end
+- [ ] Add support for aggregate queries 
+- [ ] Server can stream Arrow data back to application
+- [ ] Write blog post and announce Ballista
 - [ ] Server can write results to CSV files
 - [ ] Server can write results to Parquet files
 - [ ] Benchmarks
 - [ ] Implement Flight protocol
-- [ ] Server can stream Arrow data back to client
 - [ ] Implement support for all DataFusion logical plan and expressions
 - [ ] Distributed query planner
 - [ ] Support user code as part of distributed query execution
 - [ ] SQL support
 - [ ] Java bindings (supporting Java, Kotlin, Scala)
+
 
 
 
