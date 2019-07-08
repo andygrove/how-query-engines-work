@@ -33,13 +33,11 @@ tower-util = "0.1"
 k8s-openapi = { version = "0.4.0", features = ["v1_13"] }
 reqwest = "0.9.18"
 clap = "2.33.0"
+arrow = "0.14.0"
+datafusion = "0.14.0"
 
 # TODO figure out how to use released version
 tower-request-modifier = { git = "https://github.com/tower-rs/tower-http" }
-
-# Arrow 0.13 doesn't compile with latest nightly Rust so have to do this until 0.14 is released
-arrow = { git = "https://github.com/apache/arrow" }
-datafusion = { git = "https://github.com/apache/arrow" }
 
 [build-dependencies]
 tower-grpc-build = { version = "0.1.0", features = ["tower-hyper"] }
