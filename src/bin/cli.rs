@@ -88,7 +88,7 @@ pub fn main() {
 
 fn create_cluster(matches: &ArgMatches) {
     let cluster_name = matches.value_of("name").unwrap();
-    let image= matches.value_of("image").unwrap();
+    let image = matches.value_of("image").unwrap();
     let exec_node_count = matches
         .value_of("executors")
         .unwrap()
@@ -99,8 +99,7 @@ fn create_cluster(matches: &ArgMatches) {
     // create a cluster with 12 pods (one per month)
     for i in 1..=exec_node_count {
         let pod_name = format!("ballista-{}-{}", cluster_name, i);
-        cluster::create_ballista_executor(namespace, &pod_name, image)
-            .unwrap();
+        cluster::create_ballista_executor(namespace, &pod_name, image).unwrap();
     }
 }
 
@@ -125,5 +124,5 @@ fn execute(matches: &ArgMatches) {
 
     let pod_name = format!("ballista-{}-app", cluster_name);
 
-    cluster::create_pod(namespace, &pod_name, image_name).unwrap();
+    cluster::create_driver(namespace, &pod_name, image_name).unwrap();
 }

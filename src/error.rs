@@ -26,7 +26,6 @@ impl From<ExecutionError> for BallistaError {
     }
 }
 
-
 impl From<reqwest::Error> for BallistaError {
     fn from(e: reqwest::Error) -> Self {
         BallistaError::ReqwestError(e)

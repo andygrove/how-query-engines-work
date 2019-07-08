@@ -50,6 +50,8 @@ pub fn main() {
         Field::new("total_amount", DataType::Utf8, true),
     ]);
 
+    let mut threads: Vec<thread::JoinHandle<_>> = vec![];
+
     // manually create one plan for each partition (month)
     let mut executor_index = 0;
     for month in 0..num_months {
@@ -66,17 +68,25 @@ pub fn main() {
         let host = executor.host.clone();
         let port = executor.port;
 
-        thread::spawn(move || {
+        threads.push(thread::spawn(move || {
             println!("Executing query against executor at {}:{}", host, port);
             let client = Client::new(&host, port);
             client.send(plan);
-        });
+        }));
 
         executor_index += 1;
         if executor_index == executors.len() {
             executor_index = 0;
         }
     }
+
+    // wait for threads to complete
+    for handle in threads {
+        handle.join().expect("thread panicked");
+    }
+
+    println!("Finished");
+
 }
 
 struct Executor {

@@ -2,6 +2,7 @@ use std::str;
 
 use crate::error::BallistaError;
 use k8s_openapi;
+use k8s_openapi::api::batch::v1 as batch;
 use k8s_openapi::api::core::v1 as api;
 use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
 use k8s_openapi::apimachinery::pkg::util::intstr::IntOrString;
@@ -24,7 +25,12 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, B
 
     let client = reqwest::Client::new();
 
-    println!("Request: {} {}{}", method, uri, str::from_utf8(&body).unwrap());
+    println!(
+        "Request: {} {}{}",
+        method,
+        uri,
+        str::from_utf8(&body).unwrap()
+    );
 
     let mut x = match method {
         http::Method::GET => client.get(&uri).body(body).send()?,
@@ -36,20 +42,17 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, B
     let response_body = x.text()?;
 
     if x.status().is_success() {
-
         let response = http::Response::builder()
             .status(http::StatusCode::OK)
             .body(response_body.as_bytes().to_vec())
             .unwrap();
 
         Ok(response)
-
     } else {
         println!("Response: {}", response_body);
 
         Err(BallistaError::General("k8s api returned error".to_string()))
     }
-
 }
 
 pub fn create_ballista_executor(
@@ -117,7 +120,10 @@ pub fn create_service(namespace: &str, name: &str) -> Result<(), BallistaError> 
     }
 }
 
-pub fn create_pod(namespace: &str, name: &str, image_name: &str) -> Result<(), BallistaError> {
+pub fn create_driver(namespace: &str, name: &str, image_name: &str) -> Result<(), BallistaError> {
+    let mut pod_spec = create_pod_spec(name, image_name)?;
+    pod_spec.restart_policy = Some("Never".to_string());
+
     let mut metadata: ObjectMeta = Default::default();
     metadata.name = Some(name.to_string());
 
@@ -126,14 +132,59 @@ pub fn create_pod(namespace: &str, name: &str, image_name: &str) -> Result<(), B
     container.image = Some(image_name.to_string());
     container.image_pull_policy = Some("Always".to_string()); //TODO make configurable
 
-    let mut container_port: api::ContainerPort = Default::default();
-    container_port.container_port = 9090;
+    let mut pod_template: api::PodTemplateSpec = Default::default();
+    pod_template.spec = Some(pod_spec);
 
-    container.ports = Some(vec![container_port]);
+    let mut job_spec: batch::JobSpec = Default::default();
+    job_spec.completions = Some(1);
+    job_spec.template = pod_template;
 
-    let mut pod_spec: api::PodSpec = Default::default();
-    pod_spec.containers = vec![container];
+    let pod = batch::Job {
+        metadata: Some(metadata),
+        spec: Some(job_spec),
+        status: None,
+    };
 
+    let (request, response_body) =
+        batch::Job::create_namespaced_job(namespace, &pod, Default::default())
+            .expect("couldn't create job");
+    let response = execute(request).expect("couldn't create job");
+
+    // Got a status code from executing the request.
+    let status_code: http::StatusCode = response.status();
+
+    let mut response_body = response_body(status_code);
+    response_body.append_slice(&response.body());
+    let response = response_body.parse();
+
+    match response {
+        // Successful response (HTTP 200 and parsed successfully)
+        Ok(batch::CreateNamespacedJobResponse::Ok(job)) => {
+            println!("created job ok: {}", job.metadata.unwrap().name.unwrap());
+            Ok(())
+        }
+
+        // Some unexpected response
+        // (not HTTP 200, but still parsed successfully)
+        Ok(other) => return Err(format!("expected Ok but got {} {:?}", status_code, other).into()),
+
+        // Need more response data.
+        // Read more bytes from the response into the `ResponseBody`
+        Err(k8s_openapi::ResponseError::NeedMoreData) => Err(BallistaError::General(
+            "Need more response data".to_string(),
+        )),
+
+        // Some other error, like the response body being
+        // malformed JSON or invalid UTF-8.
+        Err(err) => return Err(format!("error: {} {:?}", status_code, err).into()),
+    }
+}
+
+pub fn create_pod(namespace: &str, name: &str, image_name: &str) -> Result<(), BallistaError> {
+    let mut metadata: ObjectMeta = Default::default();
+    metadata.name = Some(name.to_string());
+
+    let pod_spec = create_pod_spec(name, image_name)?;
     let pod = api::Pod {
         metadata: Some(metadata),
         spec: Some(pod_spec),
@@ -173,6 +224,23 @@ pub fn create_pod(namespace: &str, name: &str, image_name: &str) -> Result<(), B
         // malformed JSON or invalid UTF-8.
         Err(err) => return Err(format!("error: {} {:?}", status_code, err).into()),
     }
+}
+
+pub fn create_pod_spec(name: &str, image_name: &str) -> Result<api::PodSpec, BallistaError> {
+    let mut container: api::Container = Default::default();
+    container.name = name.to_string();
+    container.image = Some(image_name.to_string());
+    container.image_pull_policy = Some("Always".to_string()); //TODO make configurable
+
+    let mut container_port: api::ContainerPort = Default::default();
+    container_port.container_port = 9090;
+
+    container.ports = Some(vec![container_port]);
+
+    let mut pod_spec: api::PodSpec = Default::default();
+    pod_spec.containers = vec![container];
+
+    Ok(pod_spec)
 }
 
 pub fn delete_pod(namespace: &str, pod_name: &str) -> Result<(), BallistaError> {
