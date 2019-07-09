@@ -1,8 +1,7 @@
-use crate::proto;
 use crate::error::{BallistaError, Result};
+use crate::proto;
 
 use arrow::datatypes::{DataType, Schema};
-
 
 pub struct Expr {}
 
@@ -18,7 +17,6 @@ impl LogicalPlan {
 }
 
 impl LogicalPlan {
-
     /// Create a projection onto this relation
     pub fn projection(&self, column_index: Vec<usize>) -> Result<LogicalPlan> {
         // convert indices into expressions
@@ -27,7 +25,7 @@ impl LogicalPlan {
             .map(|i| proto::ExprNode {
                 column_index: Some(proto::ColumnIndex { index: *i as u32 }),
                 binary_expr: None,
-                aggregate_expr: None
+                aggregate_expr: None,
             })
             .collect();
 
@@ -41,7 +39,11 @@ impl LogicalPlan {
         Err(BallistaError::NotImplemented)
     }
 
-    pub fn aggregate(&self, _group_expr: Vec<proto::ExprNode>, _aggr_expr: Vec<proto::ExprNode>) -> Result<LogicalPlan> {
+    pub fn aggregate(
+        &self,
+        _group_expr: Vec<proto::ExprNode>,
+        _aggr_expr: Vec<proto::ExprNode>,
+    ) -> Result<LogicalPlan> {
         Err(BallistaError::NotImplemented)
     }
 
@@ -50,21 +52,35 @@ impl LogicalPlan {
     }
 }
 
-pub fn min(expr: &proto::ExprNode) -> Box<proto::ExprNode> {
-    let mut expr = empty_expr_node();
-//    expr.aggregate_expr = proto::AggregateExpr {
-//        aggr_function: proto::AggregateFunction::Min.value,
-//        expr
-//    };
-    expr
+pub fn column(i: usize) -> proto::ExprNode {
+    let mut zexpr = empty_expr_node();
+    zexpr.column_index = Some(proto::ColumnIndex { index: i as u32 });
+    zexpr
 }
 
-fn empty_expr_node() -> Box<proto::ExprNode> {
-    Box::new(proto::ExprNode {
+pub fn min(expr: &proto::ExprNode) -> proto::ExprNode {
+    let mut zexpr = empty_expr_node();
+    zexpr.aggregate_expr = Some(Box::new(proto::AggregateExpr {
+        aggr_function: 0, //TODO should reference proto::AggregateFunction::Min
+        expr: Some(Box::new(expr.clone())),
+    }));
+    zexpr
+}
+
+pub fn max(expr: &proto::ExprNode) -> proto::ExprNode {
+    let mut zexpr = empty_expr_node();
+    zexpr.aggregate_expr = Some(Box::new(proto::AggregateExpr {
+        aggr_function: 1, //TODO should reference proto::AggregateFunction::Max
+        expr: Some(Box::new(expr.clone())),
+    }));
+    zexpr
+}
+fn empty_expr_node() -> proto::ExprNode {
+    proto::ExprNode {
         column_index: None,
         binary_expr: None,
-        aggregate_expr: None
-    })
+        aggregate_expr: None,
+    }
 }
 fn empty_plan_node() -> Box<proto::LogicalPlanNode> {
     Box::new(proto::LogicalPlanNode {

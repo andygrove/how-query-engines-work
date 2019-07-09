@@ -1,17 +1,15 @@
-use std::env;
 use std::thread;
 
 use arrow::datatypes::{DataType, Field, Schema};
 use ballista::client::Client;
 use ballista::cluster;
-use ballista::logical_plan::read_file;
+use ballista::logical_plan::{column, max, read_file};
 
 pub fn main() {
-
     // discover available executors
     let executors = cluster::get_executors("NYCTAXI").unwrap();
 
-    // build simple logical plan to apply a projection to a CSV file
+    // schema for nyxtaxi csv files
     let schema = Schema::new(vec![
         Field::new("VendorID", DataType::Utf8, true),
         Field::new("tpep_pickup_datetime", DataType::Utf8, true),
@@ -42,8 +40,13 @@ pub fn main() {
             "/mnt/ssd/nyc_taxis/csv/yellow_tripdata_2018-{:02}.csv",
             month + 1
         );
-        let file = read_file(&filename, &schema);
-        let plan = file.projection(vec![0, 1, 2]);
+
+        // build query plan for "SELECT trip_distance, MAX(fare_amount) FROM .. GROUP BY trip_distance LIMIT 10"
+        let plan = read_file(&filename, &schema) //TODO inconsistent API .. read_file should return Result
+            .aggregate(vec![column(3)], vec![max(&column(10))])
+            .unwrap()
+            .limit(10)
+            .unwrap();
 
         // send the plan to a ballista server
         let executor = &executors[executor_index];

@@ -1,8 +1,8 @@
 use std::env;
 use std::fs;
 use std::fs::File;
-use std::str;
 use std::process::Command;
+use std::str;
 
 use crate::error::BallistaError;
 use k8s_openapi;
@@ -95,9 +95,8 @@ pub fn create_ballista_executor(
     name: &str,
     image_name: &str,
 ) -> Result<(), BallistaError> {
-
     let x = ExecutorTemplateVariables {
-        name: name.to_string()
+        name: name.to_string(),
     };
 
     let executor_template = fs::read_to_string(image_name)?;
@@ -119,7 +118,6 @@ pub fn create_ballista_executor(
         .expect("failed to execute process");
 
     Ok(())
-
 }
 
 pub fn create_ballista_application(
@@ -127,9 +125,8 @@ pub fn create_ballista_application(
     name: &str,
     image_name: &str,
 ) -> Result<(), BallistaError> {
-
     let x = ApplicationTemplateVariables {
-        name: name.to_string()
+        name: name.to_string(),
     };
 
     let executor_template = fs::read_to_string(image_name)?;
@@ -151,7 +148,6 @@ pub fn create_ballista_application(
         .expect("failed to execute process");
 
     Ok(())
-
 }
 
 pub fn delete_pod(namespace: &str, pod_name: &str) -> Result<(), BallistaError> {

@@ -72,15 +72,11 @@ pub fn create_datafusion_plan(plan: &proto::LogicalPlanNode) -> Result<DFPlan> {
             projection: None,
         })
     } else if plan.projection.is_some() {
-
         if let Some(input) = &plan.input {
             let df_input = Arc::new(create_datafusion_plan(&input)?);
             let input_schema = df_input.schema();
 
-            let projection_plan = plan
-                .projection
-                .as_ref()
-                .unwrap();
+            let projection_plan = plan.projection.as_ref().unwrap();
 
             let expr: Vec<Expr> = projection_plan
                 .expr
@@ -103,10 +99,7 @@ pub fn create_datafusion_plan(plan: &proto::LogicalPlanNode) -> Result<DFPlan> {
             let df_input = Arc::new(create_datafusion_plan(&input)?);
             let input_schema = df_input.schema();
 
-            let aggregate_plan = plan
-                .aggregate
-                .as_ref()
-                .unwrap();
+            let aggregate_plan = plan.aggregate.as_ref().unwrap();
 
             let group_expr: Vec<Expr> = aggregate_plan
                 .group_expr
@@ -135,8 +128,6 @@ pub fn create_datafusion_plan(plan: &proto::LogicalPlanNode) -> Result<DFPlan> {
         } else {
             Err(BallistaError::NotImplemented)
         }
-
-
     } else {
         Err(BallistaError::NotImplemented)
     }
@@ -144,7 +135,9 @@ pub fn create_datafusion_plan(plan: &proto::LogicalPlanNode) -> Result<DFPlan> {
 
 fn map_expr(expr: &proto::ExprNode) -> Result<Expr> {
     if expr.column_index.is_some() {
-        Ok(Expr::Column(expr.column_index.as_ref().unwrap().index as usize))
+        Ok(Expr::Column(
+            expr.column_index.as_ref().unwrap().index as usize,
+        ))
     } else {
         Err(BallistaError::NotImplemented)
     }
@@ -157,7 +150,6 @@ fn determine_schema(schema: &Schema, projection: &Vec<Expr>) -> Result<Arc<Schem
     let mut fields: Vec<Field> = Vec::with_capacity(projection.len());
 
     for expr in projection {
-
         match expr {
             Expr::Column(i) => {
                 if *i < schema.fields().len() {
@@ -169,7 +161,7 @@ fn determine_schema(schema: &Schema, projection: &Vec<Expr>) -> Result<Arc<Schem
                     )));
                 }
             }
-            _ => unimplemented!()
+            _ => unimplemented!(),
         }
     }
 
