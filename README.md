@@ -12,6 +12,25 @@ This demo shows a Ballista cluster being created in Minikube and then shows the 
 
 [![asciicast](https://asciinema.org/a/nFcsHLXJUo2Mwik4WdZlv4ZBO.svg)](https://asciinema.org/a/nFcsHLXJUo2Mwik4WdZlv4ZBO)
 
+Here are the commands being run, with some explanation:
+
+```bash
+# create a cluster with 12 executors
+cargo run --bin ballista -- create-cluster -n nyctaxi -e 12 -i andygrove/ballista:0.1.1
+
+# check status
+kubectl get pods
+
+# run the nyctaxi example application, that executes queries using the executors
+cargo run --bin ballista -- run -n nyctaxi -a andygrove/ballista-nyctaxi:0.1.1
+
+# check status again to find the name of the application pod
+kubectl get pods
+
+# watch progress of the application
+kubectl logs -f ballista-nyctaxi-app-n5kxl
+```
+
 # PoC Status
 
 - [X] README describing project
