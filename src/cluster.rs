@@ -26,12 +26,12 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, B
 
     let client = reqwest::Client::new();
 
-    println!(
-        "Request: {} {}{}",
-        method,
-        uri,
-        str::from_utf8(&body).unwrap()
-    );
+//    println!(
+//        "Request: {} {}{}",
+//        method,
+//        uri,
+//        str::from_utf8(&body).unwrap()
+//    );
 
     let mut x = match method {
         http::Method::GET => client.get(&uri).body(body).send()?,
@@ -127,7 +127,7 @@ pub fn create_service(namespace: &str, name: &str) -> Result<(), BallistaError> 
 }
 
 pub fn create_driver(namespace: &str, name: &str, image_name: &str) -> Result<(), BallistaError> {
-    let mut pod_spec = create_pod_spec(name, image_name)?;
+    let mut pod_spec = create_pod_spec(name, image_name, false)?;
     pod_spec.restart_policy = Some("Never".to_string());
 
     let mut metadata: ObjectMeta = Default::default();
@@ -197,7 +197,8 @@ pub fn create_pod(namespace: &str, name: &str, image_name: &str) -> Result<(), B
     metadata.name = Some(name.to_string());
     metadata.labels = Some(labels);
 
-    let pod_spec = create_pod_spec(name, image_name)?;
+    let mut pod_spec = create_pod_spec(name, image_name, true)?;
+
     let pod = api::Pod {
         metadata: Some(metadata),
         spec: Some(pod_spec),
@@ -239,11 +240,22 @@ pub fn create_pod(namespace: &str, name: &str, image_name: &str) -> Result<(), B
     }
 }
 
-pub fn create_pod_spec(name: &str, image_name: &str) -> Result<api::PodSpec, BallistaError> {
+pub fn create_pod_spec(name: &str, image_name: &str, executor: bool) -> Result<api::PodSpec, BallistaError> {
     let mut container: api::Container = Default::default();
     container.name = name.to_string();
     container.image = Some(image_name.to_string());
     container.image_pull_policy = Some("Always".to_string()); //TODO make configurable
+
+    if executor {
+
+        //TODO should not hard-code
+        let mut volume_mount: api::VolumeMount = Default::default();
+        volume_mount.name = "nyctaxi".to_string();
+        volume_mount.read_only = Some(true);
+        volume_mount.mount_path = "/mnt/ssd/nyc_taxis/csv".to_string();
+
+        container.volume_mounts = Some(vec![volume_mount]);
+    }
 
     let mut container_port: api::ContainerPort = Default::default();
     container_port.container_port = 9090;
@@ -251,6 +263,19 @@ pub fn create_pod_spec(name: &str, image_name: &str) -> Result<api::PodSpec, Bal
     container.ports = Some(vec![container_port]);
 
     let mut pod_spec: api::PodSpec = Default::default();
+
+    if executor {
+        //TODO should not have hard-coded volume! need templating for this
+        let mut volume: api::Volume = Default::default();
+        volume.name = "nyctaxi".to_string();
+        volume.host_path = Some(api::HostPathVolumeSource {
+            path: "/mnt/ssd/nyc_taxis/csv".to_string(),
+            type_: Some("".to_string())
+        });
+
+        pod_spec.volumes = Some(vec![volume]);
+    }
+
     pod_spec.containers = vec![container];
 
     Ok(pod_spec)
