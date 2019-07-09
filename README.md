@@ -10,7 +10,7 @@ My goal is to use this repo to move fast and try out ideas that eventually can b
 
 This demo shows a Ballista cluster being created in Minikube and then shows the [nyctaxi example](examples/nyctaxi) being executed, causing a distributed query to run in the cluster, with each executor pod performing a projection on one partition of the data.
 
-[![asciicast](https://asciinema.org/a/nFcsHLXJUo2Mwik4WdZlv4ZBO.svg)](https://asciinema.org/a/nFcsHLXJUo2Mwik4WdZlv4ZBO)
+[![asciicast](https://asciinema.org/a/SArI3f8PVFjgc45wHubEQQnca.svg)](https://asciinema.org/a/SArI3f8PVFjgc45wHubEQQnca)
 
 Here are the commands being run, with some explanation:
 
