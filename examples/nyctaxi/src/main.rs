@@ -1,35 +1,15 @@
-use std::env;
 use std::thread;
 
 use arrow::datatypes::{DataType, Field, Schema};
 use ballista::client::Client;
-use ballista::logical_plan::read_file;
+use ballista::cluster;
+use ballista::logical_plan::{column, max, read_file};
 
 pub fn main() {
-    //    for (key, value) in env::vars() {
-    //        println!("{}: {}", key, value);
-    //    }
-
     // discover available executors
-    let cluster_name = "NYCTAXI"; //TODO should come from env var populated by ballista
-    let mut executors: Vec<Executor> = vec![];
-    let mut instance = 1;
-    loop {
-        let host_env = format!("BALLISTA_{}_{}_SERVICE_HOST", cluster_name, instance);
-        let port_env = format!("BALLISTA_{}_{}_SERVICE_PORT_GRPC", cluster_name, instance);
-        match (env::var(&host_env), env::var(&port_env)) {
-            (Ok(host), Ok(port)) => executors.push(Executor {
-                host,
-                port: port.parse::<usize>().unwrap(),
-            }),
-            _ => break,
-        }
-        instance += 1;
-    }
+    let executors = cluster::get_executors("NYCTAXI").unwrap();
 
-    let num_months = 12;
-
-    // build simple logical plan to apply a projection to a CSV file
+    // schema for nyxtaxi csv files
     let schema = Schema::new(vec![
         Field::new("VendorID", DataType::Utf8, true),
         Field::new("tpep_pickup_datetime", DataType::Utf8, true),
@@ -54,13 +34,22 @@ pub fn main() {
 
     // manually create one plan for each partition (month)
     let mut executor_index = 0;
+    let num_months = 12;
     for month in 0..num_months {
         let filename = format!(
             "/mnt/ssd/nyc_taxis/csv/yellow_tripdata_2018-{:02}.csv",
             month + 1
         );
-        let file = read_file(&filename, &schema);
-        let plan = file.projection(vec![0, 1, 2]);
+
+        // simple projection
+        let plan = read_file(&filename, &schema) //TODO inconsistent API .. read_file should return Result
+            .projection(vec![0, 1, 2]).unwrap();
+
+        //TODO aggregate query
+        // build query plan for "SELECT trip_distance, MAX(fare_amount) FROM .. GROUP BY trip_distance LIMIT 10"
+//        let plan = read_file(&filename, &schema) //TODO inconsistent API .. read_file should return Result
+//            .aggregate(vec![column(3)], vec![max(&column(10))])
+//            .unwrap();
 
         // send the plan to a ballista server
         let executor = &executors[executor_index];
@@ -86,9 +75,4 @@ pub fn main() {
     }
 
     println!("Finished");
-}
-
-struct Executor {
-    host: String,
-    port: usize,
 }

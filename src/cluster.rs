@@ -1,7 +1,8 @@
+use std::env;
 use std::fs;
 use std::fs::File;
-use std::str;
 use std::process::Command;
+use std::str;
 
 use crate::error::BallistaError;
 use k8s_openapi;
@@ -66,14 +67,36 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, B
     }
 }
 
+pub struct Executor {
+    pub host: String,
+    pub port: usize,
+}
+
+pub fn get_executors(cluster_name: &str) -> Result<Vec<Executor>, BallistaError> {
+    let mut executors: Vec<Executor> = vec![];
+    let mut instance = 1;
+    loop {
+        let host_env = format!("BALLISTA_{}_{}_SERVICE_HOST", cluster_name, instance);
+        let port_env = format!("BALLISTA_{}_{}_SERVICE_PORT_GRPC", cluster_name, instance);
+        match (env::var(&host_env), env::var(&port_env)) {
+            (Ok(host), Ok(port)) => executors.push(Executor {
+                host,
+                port: port.parse::<usize>().unwrap(),
+            }),
+            _ => break,
+        }
+        instance += 1;
+    }
+    Ok(executors)
+}
+
 pub fn create_ballista_executor(
     _namespace: &str,
     name: &str,
     image_name: &str,
 ) -> Result<(), BallistaError> {
-
     let x = ExecutorTemplateVariables {
-        name: name.to_string()
+        name: name.to_string(),
     };
 
     let executor_template = fs::read_to_string(image_name)?;
@@ -95,7 +118,6 @@ pub fn create_ballista_executor(
         .expect("failed to execute process");
 
     Ok(())
-
 }
 
 pub fn create_ballista_application(
@@ -103,9 +125,8 @@ pub fn create_ballista_application(
     name: &str,
     image_name: &str,
 ) -> Result<(), BallistaError> {
-
     let x = ApplicationTemplateVariables {
-        name: name.to_string()
+        name: name.to_string(),
     };
 
     let executor_template = fs::read_to_string(image_name)?;
@@ -127,7 +148,6 @@ pub fn create_ballista_application(
         .expect("failed to execute process");
 
     Ok(())
-
 }
 
 pub fn delete_pod(namespace: &str, pod_name: &str) -> Result<(), BallistaError> {

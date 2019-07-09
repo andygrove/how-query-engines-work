@@ -43,15 +43,31 @@ message ExprNode {
   ColumnIndex column_index = 11;
 
   BinaryExpr binary_expr = 20;
+  AggregateExpr aggregate_expr = 21;
 }
 
 message ColumnIndex {
   uint32 index = 1;
 }
+
 message BinaryExpr {
   ExprNode l = 1;
   ExprNode r = 2;
   string op = 3;
+}
+
+enum AggregateFunction {
+  MIN = 0;
+  MAX = 1;
+  SUM = 2;
+  AVG = 3;
+  COUNT = 4;
+  COUNT_DISTINCT = 5;
+}
+
+message AggregateExpr {
+  AggregateFunction aggr_function = 1;
+  ExprNode expr = 2;
 }
 
 // LogicalPlan is a nested type
@@ -64,6 +80,7 @@ message LogicalPlanNode {
   Projection projection = 20;
   Selection selection = 21;
   Limit limit = 22;
+  Aggregate aggregate = 23;
 }
 
 message File {
@@ -77,6 +94,11 @@ message Projection {
 
 message Selection {
   ExprNode expr = 2;
+}
+
+message Aggregate {
+  repeated ExprNode group_expr = 1;
+  repeated ExprNode aggr_expr = 2;
 }
 
 message Limit {

@@ -2,8 +2,8 @@ use std::io;
 use std::result;
 
 use datafusion::error::ExecutionError;
-use reqwest;
 use k8s_openapi::http;
+use reqwest;
 
 pub type Result<T> = result::Result<T, BallistaError>;
 
