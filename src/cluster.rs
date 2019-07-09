@@ -1,14 +1,24 @@
+use std::fs;
+use std::fs::File;
 use std::str;
+use std::process::Command;
 
 use crate::error::BallistaError;
 use k8s_openapi;
-use k8s_openapi::api::batch::v1 as batch;
 use k8s_openapi::api::core::v1 as api;
-use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
-use k8s_openapi::apimachinery::pkg::util::intstr::IntOrString;
 use k8s_openapi::http;
 use reqwest;
-use std::collections::BTreeMap;
+use std::io::Write;
+
+#[derive(Gtmpl)]
+struct ApplicationTemplateVariables {
+    name: String,
+}
+
+#[derive(Gtmpl)]
+struct ExecutorTemplateVariables {
+    name: String,
+}
 
 fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, BallistaError> {
     let (method, path, body) = {
@@ -22,6 +32,7 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, B
         (parts.method, path, body)
     };
 
+    //TODO: this is hard-coded for local minikube
     let uri = format!("http://localhost:8080{}", path);
 
     let client = reqwest::Client::new();
@@ -45,8 +56,7 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, B
     if x.status().is_success() {
         let response = http::Response::builder()
             .status(http::StatusCode::OK)
-            .body(response_body.as_bytes().to_vec())
-            .unwrap();
+            .body(response_body.as_bytes().to_vec())?;
 
         Ok(response)
     } else {
@@ -57,228 +67,67 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, B
 }
 
 pub fn create_ballista_executor(
-    namespace: &str,
+    _namespace: &str,
     name: &str,
     image_name: &str,
 ) -> Result<(), BallistaError> {
-    create_pod(namespace, name, image_name)?;
-    create_service(namespace, name)
-}
 
-pub fn create_service(namespace: &str, name: &str) -> Result<(), BallistaError> {
-    let mut metadata: ObjectMeta = Default::default();
-    metadata.name = Some(name.to_string());
-
-    let mut spec: api::ServiceSpec = Default::default();
-    spec.type_ = Some("ClusterIP".to_string());
-
-    let mut labels = BTreeMap::new();
-    labels.insert("ballista-name".to_string(), name.to_string());
-
-    spec.selector = Some(labels);
-
-    let mut port: api::ServicePort = Default::default();
-    port.name = Some("grpc".to_string());
-    port.port = 9090;
-    port.target_port = Some(IntOrString::Int(9090));
-
-    spec.ports = Some(vec![port]);
-
-    let mut service: api::Service = Default::default();
-    service.metadata = Some(metadata);
-    service.spec = Some(spec);
-
-    let (request, response_body) =
-        api::Service::create_namespaced_service(namespace, &service, Default::default())
-            .expect("couldn't create service");
-    let response = execute(request).expect("couldn't create service");
-
-    // Got a status code from executing the request.
-    let status_code: http::StatusCode = response.status();
-
-    let mut response_body = response_body(status_code);
-    response_body.append_slice(&response.body());
-    let response = response_body.parse();
-
-    match response {
-        // Successful response (HTTP 200 and parsed successfully)
-        Ok(api::CreateNamespacedServiceResponse::Ok(service)) => {
-            println!(
-                "created service ok: {}",
-                service.metadata.unwrap().name.unwrap()
-            );
-            Ok(())
-        }
-
-        // Some unexpected response
-        // (not HTTP 200, but still parsed successfully)
-        Ok(other) => return Err(format!("expected Ok but got {} {:?}", status_code, other).into()),
-
-        // Need more response data.
-        // Read more bytes from the response into the `ResponseBody`
-        Err(k8s_openapi::ResponseError::NeedMoreData) => Err(BallistaError::General(
-            "Need more response data".to_string(),
-        )),
-
-        // Some other error, like the response body being
-        // malformed JSON or invalid UTF-8.
-        Err(err) => return Err(format!("error: {} {:?}", status_code, err).into()),
-    }
-}
-
-pub fn create_driver(namespace: &str, name: &str, image_name: &str) -> Result<(), BallistaError> {
-    let mut pod_spec = create_pod_spec(name, image_name, false)?;
-    pod_spec.restart_policy = Some("Never".to_string());
-
-    let mut metadata: ObjectMeta = Default::default();
-    metadata.name = Some(name.to_string());
-
-    let mut container: api::Container = Default::default();
-    container.name = name.to_string();
-    container.image = Some(image_name.to_string());
-    container.image_pull_policy = Some("Always".to_string()); //TODO make configurable
-
-    let mut pod_template: api::PodTemplateSpec = Default::default();
-    pod_template.spec = Some(pod_spec);
-
-    let mut job_spec: batch::JobSpec = Default::default();
-    job_spec.completions = Some(1);
-    job_spec.template = pod_template;
-
-    let pod = batch::Job {
-        metadata: Some(metadata),
-        spec: Some(job_spec),
-        status: None,
+    let x = ExecutorTemplateVariables {
+        name: name.to_string()
     };
 
-    let (request, response_body) =
-        batch::Job::create_namespaced_job(namespace, &pod, Default::default())
-            .expect("couldn't create job");
-    let response = execute(request).expect("couldn't create job");
+    let executor_template = fs::read_to_string(image_name)?;
 
-    // Got a status code from executing the request.
-    let status_code: http::StatusCode = response.status();
+    let executor_yaml = gtmpl::template(&executor_template, x)?;
 
-    let mut response_body = response_body(status_code);
-    response_body.append_slice(&response.body());
-    let response = response_body.parse();
+    //println!("{}", executor_yaml);
 
-    match response {
-        // Successful response (HTTP 200 and parsed successfully)
-        Ok(batch::CreateNamespacedJobResponse::Ok(job)) => {
-            println!("created job ok: {}", job.metadata.unwrap().name.unwrap());
-            Ok(())
-        }
+    //TODO unique filename
+    let mut f = File::create("temp.yaml")?;
+    f.write_all(executor_yaml.as_bytes())?;
 
-        // Some unexpected response
-        // (not HTTP 200, but still parsed successfully)
-        Ok(other) => return Err(format!("expected Ok but got {} {:?}", status_code, other).into()),
+    // shell out to kubectl
+    Command::new("kubectl")
+        .arg("apply")
+        .arg("-f")
+        .arg("temp.yaml")
+        .output()
+        .expect("failed to execute process");
 
-        // Need more response data.
-        // Read more bytes from the response into the `ResponseBody`
-        Err(k8s_openapi::ResponseError::NeedMoreData) => Err(BallistaError::General(
-            "Need more response data".to_string(),
-        )),
+    Ok(())
 
-        // Some other error, like the response body being
-        // malformed JSON or invalid UTF-8.
-        Err(err) => return Err(format!("error: {} {:?}", status_code, err).into()),
-    }
 }
 
-pub fn create_pod(namespace: &str, name: &str, image_name: &str) -> Result<(), BallistaError> {
-    let mut labels = BTreeMap::new();
-    labels.insert("ballista-name".to_string(), name.to_string());
-
-    let mut metadata: ObjectMeta = Default::default();
-    metadata.name = Some(name.to_string());
-    metadata.labels = Some(labels);
-
-    let mut pod_spec = create_pod_spec(name, image_name, true)?;
-
-    let pod = api::Pod {
-        metadata: Some(metadata),
-        spec: Some(pod_spec),
-        status: None,
-    };
-
-    let (request, response_body) =
-        api::Pod::create_namespaced_pod(namespace, &pod, Default::default())
-            .expect("couldn't create pod");
-    let response = execute(request).expect("couldn't create pod");
-
-    // Got a status code from executing the request.
-    let status_code: http::StatusCode = response.status();
-
-    let mut response_body = response_body(status_code);
-    response_body.append_slice(&response.body());
-    let response = response_body.parse();
-
-    match response {
-        // Successful response (HTTP 200 and parsed successfully)
-        Ok(api::CreateNamespacedPodResponse::Ok(pod)) => {
-            println!("created pod ok: {}", pod.metadata.unwrap().name.unwrap());
-            Ok(())
-        }
-
-        // Some unexpected response
-        // (not HTTP 200, but still parsed successfully)
-        Ok(other) => return Err(format!("expected Ok but got {} {:?}", status_code, other).into()),
-
-        // Need more response data.
-        // Read more bytes from the response into the `ResponseBody`
-        Err(k8s_openapi::ResponseError::NeedMoreData) => Err(BallistaError::General(
-            "Need more response data".to_string(),
-        )),
-
-        // Some other error, like the response body being
-        // malformed JSON or invalid UTF-8.
-        Err(err) => return Err(format!("error: {} {:?}", status_code, err).into()),
-    }
-}
-
-pub fn create_pod_spec(
+pub fn create_ballista_application(
+    _namespace: &str,
     name: &str,
     image_name: &str,
-    executor: bool,
-) -> Result<api::PodSpec, BallistaError> {
-    let mut container: api::Container = Default::default();
-    container.name = name.to_string();
-    container.image = Some(image_name.to_string());
-    container.image_pull_policy = Some("Always".to_string()); //TODO make configurable
+) -> Result<(), BallistaError> {
 
-    if executor {
-        //TODO should not hard-code
-        let mut volume_mount: api::VolumeMount = Default::default();
-        volume_mount.name = "nyctaxi".to_string();
-        volume_mount.read_only = Some(true);
-        volume_mount.mount_path = "/mnt/ssd/nyc_taxis/csv".to_string();
+    let x = ApplicationTemplateVariables {
+        name: name.to_string()
+    };
 
-        container.volume_mounts = Some(vec![volume_mount]);
-    }
+    let executor_template = fs::read_to_string(image_name)?;
 
-    let mut container_port: api::ContainerPort = Default::default();
-    container_port.container_port = 9090;
+    let executor_yaml = gtmpl::template(&executor_template, x)?;
 
-    container.ports = Some(vec![container_port]);
+    //println!("{}", executor_yaml);
 
-    let mut pod_spec: api::PodSpec = Default::default();
+    //TODO unique filename
+    let mut f = File::create("temp.yaml")?;
+    f.write_all(executor_yaml.as_bytes())?;
 
-    if executor {
-        //TODO should not have hard-coded volume! need templating for this
-        let mut volume: api::Volume = Default::default();
-        volume.name = "nyctaxi".to_string();
-        volume.host_path = Some(api::HostPathVolumeSource {
-            path: "/mnt/ssd/nyc_taxis/csv".to_string(),
-            type_: Some("".to_string()),
-        });
+    // shell out to kubectl
+    Command::new("kubectl")
+        .arg("apply")
+        .arg("-f")
+        .arg("temp.yaml")
+        .output()
+        .expect("failed to execute process");
 
-        pod_spec.volumes = Some(vec![volume]);
-    }
+    Ok(())
 
-    pod_spec.containers = vec![container];
-
-    Ok(pod_spec)
 }
 
 pub fn delete_pod(namespace: &str, pod_name: &str) -> Result<(), BallistaError> {

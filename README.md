@@ -10,19 +10,19 @@ My goal is to use this repo to move fast and try out ideas that eventually can b
 
 This demo shows a Ballista cluster being created in Minikube and then shows the [nyctaxi example](examples/nyctaxi) being executed, causing a distributed query to run in the cluster, with each executor pod performing a projection on one partition of the data.
 
-[![asciicast](https://asciinema.org/a/nFcsHLXJUo2Mwik4WdZlv4ZBO.svg)](https://asciinema.org/a/nFcsHLXJUo2Mwik4WdZlv4ZBO)
+[![asciicast](https://asciinema.org/a/SArI3f8PVFjgc45wHubEQQnca.svg)](https://asciinema.org/a/SArI3f8PVFjgc45wHubEQQnca)
 
 Here are the commands being run, with some explanation:
 
 ```bash
 # create a cluster with 12 executors
-cargo run --bin ballista -- create-cluster -n nyctaxi -e 12 -i andygrove/ballista:0.1.1
+cargo run --bin ballista -- create-cluster --name nyctaxi --num-executors 12 --template examples/nyctaxi/templates/executor.yaml
 
 # check status
 kubectl get pods
 
 # run the nyctaxi example application, that executes queries using the executors
-cargo run --bin ballista -- run -n nyctaxi -a andygrove/ballista-nyctaxi:0.1.1
+cargo run --bin ballista -- run --name nyctaxi --template examples/nyctaxi/templates/application.yaml
 
 # check status again to find the name of the application pod
 kubectl get pods

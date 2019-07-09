@@ -21,18 +21,21 @@ pub fn main() {
                         .required(true)
                         .takes_value(true)
                         .short("n")
+                        .long("name")
                         .help("Ballista cluster name"),
                 )
                 .arg(
-                    Arg::with_name("image")
+                    Arg::with_name("template")
                         .required(true)
                         .takes_value(true)
-                        .short("i")
-                        .help("Docker image containing ballista executor"),
+                        .short("t")
+                        .long("template")
+                        .help("Kubernetes template for executor pods"),
                 )
                 .arg(
                     Arg::with_name("executors")
                         .short("e")
+                        .long("num-executors")
                         .required(true)
                         .takes_value(true)
                         .help("number of executor pods to create"),
@@ -46,6 +49,7 @@ pub fn main() {
                         .required(true)
                         .takes_value(true)
                         .short("n")
+                        .long("name")
                         .help("Ballista cluster name"),
                 ),
         )
@@ -57,14 +61,16 @@ pub fn main() {
                         .required(true)
                         .takes_value(true)
                         .short("n")
+                        .long("name")
                         .help("Ballista cluster name"),
                 )
                 .arg(
-                    Arg::with_name("app")
+                    Arg::with_name("template")
                         .required(true)
                         .takes_value(true)
-                        .short("a")
-                        .help("Docker image containing application"),
+                        .short("t")
+                        .long("template")
+                        .help("Kubernetes template for application pod"),
                 ),
         )
         .get_matches();
@@ -88,7 +94,7 @@ pub fn main() {
 
 fn create_cluster(matches: &ArgMatches) {
     let cluster_name = matches.value_of("name").unwrap();
-    let image = matches.value_of("image").unwrap();
+    let template = matches.value_of("template").unwrap();
     let exec_node_count = matches
         .value_of("executors")
         .unwrap()
@@ -99,7 +105,7 @@ fn create_cluster(matches: &ArgMatches) {
     // create a cluster with 12 pods (one per month)
     for i in 1..=exec_node_count {
         let pod_name = format!("ballista-{}-{}", cluster_name, i);
-        cluster::create_ballista_executor(namespace, &pod_name, image).unwrap();
+        cluster::create_ballista_executor(namespace, &pod_name, template).unwrap();
     }
 }
 
@@ -119,10 +125,10 @@ fn delete_cluster(matches: &ArgMatches) {
 
 fn execute(matches: &ArgMatches) {
     let cluster_name = matches.value_of("name").unwrap();
-    let image_name = matches.value_of("app").unwrap();
+    let template = matches.value_of("template").unwrap();
     let namespace = "default";
 
     let pod_name = format!("ballista-{}-app", cluster_name);
 
-    cluster::create_driver(namespace, &pod_name, image_name).unwrap();
+    cluster::create_ballista_application(namespace, &pod_name, template).unwrap();
 }
