@@ -84,7 +84,7 @@ pub fn create_ballista_executor(
 
     let executor_yaml = gtmpl::template(&executor_template, x)?;
 
-    println!("{}", executor_yaml);
+    //println!("{}", executor_yaml);
 
     //TODO unique filename
     let mut f = File::create("temp.yaml")?;
@@ -116,7 +116,7 @@ pub fn create_ballista_application(
 
     let executor_yaml = gtmpl::template(&executor_template, x)?;
 
-    println!("{}", executor_yaml);
+    //println!("{}", executor_yaml);
 
     //TODO unique filename
     let mut f = File::create("temp.yaml")?;
