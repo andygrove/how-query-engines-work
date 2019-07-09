@@ -1,6 +1,8 @@
 use crate::proto;
+use crate::error::{BallistaError, Result};
 
 use arrow::datatypes::{DataType, Schema};
+
 
 pub struct Expr {}
 
@@ -16,24 +18,54 @@ impl LogicalPlan {
 }
 
 impl LogicalPlan {
+
     /// Create a projection onto this relation
-    pub fn projection(&self, column_index: Vec<usize>) -> LogicalPlan {
+    pub fn projection(&self, column_index: Vec<usize>) -> Result<LogicalPlan> {
         // convert indices into expressions
         let expr: Vec<proto::ExprNode> = column_index
             .iter()
             .map(|i| proto::ExprNode {
                 column_index: Some(proto::ColumnIndex { index: *i as u32 }),
                 binary_expr: None,
+                aggregate_expr: None
             })
             .collect();
 
         let mut plan = empty_plan_node();
         plan.projection = Some(proto::Projection { expr });
         plan.input = Some(Box::new(self.plan.as_ref().clone()));
-        LogicalPlan { plan }
+        Ok(LogicalPlan { plan })
+    }
+
+    pub fn selection(&self, _expr: &proto::ExprNode) -> Result<LogicalPlan> {
+        Err(BallistaError::NotImplemented)
+    }
+
+    pub fn aggregate(&self, _group_expr: Vec<proto::ExprNode>, _aggr_expr: Vec<proto::ExprNode>) -> Result<LogicalPlan> {
+        Err(BallistaError::NotImplemented)
+    }
+
+    pub fn limit(&self, _limit: usize) -> Result<LogicalPlan> {
+        Err(BallistaError::NotImplemented)
     }
 }
 
+pub fn min(expr: &proto::ExprNode) -> Box<proto::ExprNode> {
+    let mut expr = empty_expr_node();
+//    expr.aggregate_expr = proto::AggregateExpr {
+//        aggr_function: proto::AggregateFunction::Min.value,
+//        expr
+//    };
+    expr
+}
+
+fn empty_expr_node() -> Box<proto::ExprNode> {
+    Box::new(proto::ExprNode {
+        column_index: None,
+        binary_expr: None,
+        aggregate_expr: None
+    })
+}
 fn empty_plan_node() -> Box<proto::LogicalPlanNode> {
     Box::new(proto::LogicalPlanNode {
         file: None,
