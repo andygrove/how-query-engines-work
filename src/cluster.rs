@@ -1,3 +1,4 @@
+use std::fs;
 use std::str;
 
 use crate::error::BallistaError;
@@ -9,6 +10,24 @@ use k8s_openapi::apimachinery::pkg::util::intstr::IntOrString;
 use k8s_openapi::http;
 use reqwest;
 use std::collections::BTreeMap;
+
+#[macro_use]
+extern crate gtmpl;
+#[macro_use]
+extern crate gtmpl_derive;
+extern crate gtmpl_value;
+
+#[derive(Gtmpl)]
+struct ApplicationTemplateVariables {
+    name: String,
+}
+
+#[derive(Gtmpl)]
+struct ExecutorTemplateVariables {
+    name: String,
+}
+
+
 
 fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, BallistaError> {
     let (method, path, body) = {
@@ -22,6 +41,7 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, B
         (parts.method, path, body)
     };
 
+    //TODO: this is hard-coded for local minikube
     let uri = format!("http://localhost:8080{}", path);
 
     let client = reqwest::Client::new();
@@ -61,8 +81,23 @@ pub fn create_ballista_executor(
     name: &str,
     image_name: &str,
 ) -> Result<(), BallistaError> {
-    create_pod(namespace, name, image_name)?;
-    create_service(namespace, name)
+
+    let x = ExecutorTemplateVariables {
+        name
+    };
+
+    let executor_template = fs::read_to_string(image_name)?;
+
+    let executor_yaml = gtmpl::template(&executor_template, x).unwrap();
+
+    //TODO: this is hard-coded for local minikube
+    let uri = format!("http://localhost:8080{}", "/api/");
+
+    let client = reqwest::Client::new();
+    client.post(&uri).body(executor_yaml).send()?;
+
+    Ok(())
+
 }
 
 pub fn create_service(namespace: &str, name: &str) -> Result<(), BallistaError> {

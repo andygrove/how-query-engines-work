@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    ballista-name: {{ .name }}
+  name: {{ .name }}
+  namespace: default
+spec:
+  containers:
+    - image: andygrove/ballista:0.1.1
+      imagePullPolicy: Always
+      name: executor
+      ports:
+        - containerPort: 9090
+          protocol: TCP
+      volumeMounts:
+        - mountPath: /mnt/ssd/nyc_taxis/csv
+          name: nyctaxi
+          readOnly: true
+  volumes:
+    - hostPath:
+        path: /mnt/ssd/nyc_taxis/csv
+      name: nyctaxi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}
+spec:
+  ports:
+    - name: grpc
+      port: 9090
+      protocol: TCP
+      targetPort: 9090
+  selector:
+    ballista-name: {{ .name }}
+  type: ClusterIP

@@ -1,7 +1,9 @@
+use std::io;
 use std::result;
 
 use datafusion::error::ExecutionError;
 use reqwest;
+use k8s_openapi::http;
 
 pub type Result<T> = result::Result<T, BallistaError>;
 
@@ -12,6 +14,8 @@ pub enum BallistaError {
     General(String),
     DataFusionError(ExecutionError),
     ReqwestError(reqwest::Error),
+    IoError(io::Error),
+    HttpError(http::Error),
 }
 
 impl From<String> for BallistaError {
@@ -29,5 +33,17 @@ impl From<ExecutionError> for BallistaError {
 impl From<reqwest::Error> for BallistaError {
     fn from(e: reqwest::Error) -> Self {
         BallistaError::ReqwestError(e)
+    }
+}
+
+impl From<io::Error> for BallistaError {
+    fn from(e: io::Error) -> Self {
+        BallistaError::IoError(e)
+    }
+}
+
+impl From<http::Error> for BallistaError {
+    fn from(e: http::Error) -> Self {
+        BallistaError::HttpError(e)
     }
 }
