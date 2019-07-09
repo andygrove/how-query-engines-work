@@ -41,10 +41,13 @@ impl LogicalPlan {
 
     pub fn aggregate(
         &self,
-        _group_expr: Vec<proto::ExprNode>,
-        _aggr_expr: Vec<proto::ExprNode>,
+        group_expr: Vec<proto::ExprNode>,
+        aggr_expr: Vec<proto::ExprNode>,
     ) -> Result<LogicalPlan> {
-        Err(BallistaError::NotImplemented)
+        let mut plan = empty_plan_node();
+        plan.aggregate = Some(proto::Aggregate { group_expr, aggr_expr });
+        plan.input = Some(Box::new(self.plan.as_ref().clone()));
+        Ok(LogicalPlan { plan })
     }
 
     pub fn limit(&self, _limit: usize) -> Result<LogicalPlan> {

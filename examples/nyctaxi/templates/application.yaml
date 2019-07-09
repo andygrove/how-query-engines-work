@@ -7,6 +7,6 @@ spec:
     spec:
       containers:
         - name: application
-          image: andygrove/ballista-nyctaxi:0.1.1
+          image: andygrove/ballista-nyctaxi:0.1.2
       restartPolicy: Never
   backoffLimit: 1

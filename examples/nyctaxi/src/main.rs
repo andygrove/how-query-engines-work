@@ -44,8 +44,6 @@ pub fn main() {
         // build query plan for "SELECT trip_distance, MAX(fare_amount) FROM .. GROUP BY trip_distance LIMIT 10"
         let plan = read_file(&filename, &schema) //TODO inconsistent API .. read_file should return Result
             .aggregate(vec![column(3)], vec![max(&column(10))])
-            .unwrap()
-            .limit(10)
             .unwrap();
 
         // send the plan to a ballista server

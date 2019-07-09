@@ -100,7 +100,7 @@ dependencies = [
 
 [[package]]
 name = "ballista"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "arrow 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bytes 0.4.12 (registry+https://github.com/rust-lang/crates.io-index)",
