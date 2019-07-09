@@ -8,6 +8,7 @@ use k8s_openapi::apimachinery::pkg::apis::meta::v1::ObjectMeta;
 use k8s_openapi::apimachinery::pkg::util::intstr::IntOrString;
 use k8s_openapi::http;
 use reqwest;
+use std::collections::BTreeMap;
 
 fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, BallistaError> {
     let (method, path, body) = {
@@ -70,6 +71,11 @@ pub fn create_service(namespace: &str, name: &str) -> Result<(), BallistaError> 
 
     let mut spec: api::ServiceSpec = Default::default();
     spec.type_ = Some("ClusterIP".to_string());
+
+    let mut labels = BTreeMap::new();
+    labels.insert("ballista-name".to_string(), name.to_string());
+
+    spec.selector = Some(labels);
 
     let mut port: api::ServicePort = Default::default();
     port.name = Some("grpc".to_string());
@@ -180,9 +186,16 @@ pub fn create_driver(namespace: &str, name: &str, image_name: &str) -> Result<()
     }
 }
 
+
+
 pub fn create_pod(namespace: &str, name: &str, image_name: &str) -> Result<(), BallistaError> {
+
+    let mut labels = BTreeMap::new();
+    labels.insert("ballista-name".to_string(), name.to_string());
+
     let mut metadata: ObjectMeta = Default::default();
     metadata.name = Some(name.to_string());
+    metadata.labels = Some(labels);
 
     let pod_spec = create_pod_spec(name, image_name)?;
     let pod = api::Pod {
