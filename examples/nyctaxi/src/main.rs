@@ -86,7 +86,6 @@ pub fn main() {
     }
 
     println!("Finished");
-
 }
 
 struct Executor {

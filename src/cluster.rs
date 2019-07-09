@@ -26,12 +26,12 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, B
 
     let client = reqwest::Client::new();
 
-//    println!(
-//        "Request: {} {}{}",
-//        method,
-//        uri,
-//        str::from_utf8(&body).unwrap()
-//    );
+    //    println!(
+    //        "Request: {} {}{}",
+    //        method,
+    //        uri,
+    //        str::from_utf8(&body).unwrap()
+    //    );
 
     let mut x = match method {
         http::Method::GET => client.get(&uri).body(body).send()?,
@@ -186,10 +186,7 @@ pub fn create_driver(namespace: &str, name: &str, image_name: &str) -> Result<()
     }
 }
 
-
-
 pub fn create_pod(namespace: &str, name: &str, image_name: &str) -> Result<(), BallistaError> {
-
     let mut labels = BTreeMap::new();
     labels.insert("ballista-name".to_string(), name.to_string());
 
@@ -240,14 +237,17 @@ pub fn create_pod(namespace: &str, name: &str, image_name: &str) -> Result<(), B
     }
 }
 
-pub fn create_pod_spec(name: &str, image_name: &str, executor: bool) -> Result<api::PodSpec, BallistaError> {
+pub fn create_pod_spec(
+    name: &str,
+    image_name: &str,
+    executor: bool,
+) -> Result<api::PodSpec, BallistaError> {
     let mut container: api::Container = Default::default();
     container.name = name.to_string();
     container.image = Some(image_name.to_string());
     container.image_pull_policy = Some("Always".to_string()); //TODO make configurable
 
     if executor {
-
         //TODO should not hard-code
         let mut volume_mount: api::VolumeMount = Default::default();
         volume_mount.name = "nyctaxi".to_string();
@@ -270,7 +270,7 @@ pub fn create_pod_spec(name: &str, image_name: &str, executor: bool) -> Result<a
         volume.name = "nyctaxi".to_string();
         volume.host_path = Some(api::HostPathVolumeSource {
             path: "/mnt/ssd/nyc_taxis/csv".to_string(),
-            type_: Some("".to_string())
+            type_: Some("".to_string()),
         });
 
         pod_spec.volumes = Some(vec![volume]);
