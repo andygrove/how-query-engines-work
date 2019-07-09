@@ -1,4 +1,3 @@
-use std::env;
 use std::fs;
 use std::fs::File;
 use std::str;
@@ -61,8 +60,7 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, B
     if x.status().is_success() {
         let response = http::Response::builder()
             .status(http::StatusCode::OK)
-            .body(response_body.as_bytes().to_vec())
-            .unwrap();
+            .body(response_body.as_bytes().to_vec())?;
 
         Ok(response)
     } else {
@@ -73,7 +71,7 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, B
 }
 
 pub fn create_ballista_executor(
-    namespace: &str,
+    _namespace: &str,
     name: &str,
     image_name: &str,
 ) -> Result<(), BallistaError> {
@@ -84,7 +82,39 @@ pub fn create_ballista_executor(
 
     let executor_template = fs::read_to_string(image_name)?;
 
-    let executor_yaml = gtmpl::template(&executor_template, x).unwrap();
+    let executor_yaml = gtmpl::template(&executor_template, x)?;
+
+    println!("{}", executor_yaml);
+
+    //TODO unique filename
+    let mut f = File::create("temp.yaml")?;
+    f.write_all(executor_yaml.as_bytes())?;
+
+    // shell out to kubectl
+    Command::new("kubectl")
+        .arg("apply")
+        .arg("-f")
+        .arg("temp.yaml")
+        .output()
+        .expect("failed to execute process");
+
+    Ok(())
+
+}
+
+pub fn create_ballista_application(
+    _namespace: &str,
+    name: &str,
+    image_name: &str,
+) -> Result<(), BallistaError> {
+
+    let x = ApplicationTemplateVariables {
+        name: name.to_string()
+    };
+
+    let executor_template = fs::read_to_string(image_name)?;
+
+    let executor_yaml = gtmpl::template(&executor_template, x)?;
 
     println!("{}", executor_yaml);
 
@@ -236,7 +266,7 @@ pub fn create_pod(namespace: &str, name: &str, image_name: &str) -> Result<(), B
     metadata.name = Some(name.to_string());
     metadata.labels = Some(labels);
 
-    let mut pod_spec = create_pod_spec(name, image_name, true)?;
+    let pod_spec = create_pod_spec(name, image_name, true)?;
 
     let pod = api::Pod {
         metadata: Some(metadata),

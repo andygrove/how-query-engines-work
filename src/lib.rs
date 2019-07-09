@@ -3,7 +3,7 @@ pub mod proto {
     include!(concat!(env!("OUT_DIR"), "/ballista.rs"));
 }
 
-#[macro_use]
+//#[macro_use]
 extern crate gtmpl;
 #[macro_use]
 extern crate gtmpl_derive;
