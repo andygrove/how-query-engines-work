@@ -3,31 +3,13 @@ use std::thread;
 
 use arrow::datatypes::{DataType, Field, Schema};
 use ballista::client::Client;
+use ballista::cluster;
 use ballista::logical_plan::read_file;
 
 pub fn main() {
-    //    for (key, value) in env::vars() {
-    //        println!("{}: {}", key, value);
-    //    }
 
     // discover available executors
-    let cluster_name = "NYCTAXI"; //TODO should come from env var populated by ballista
-    let mut executors: Vec<Executor> = vec![];
-    let mut instance = 1;
-    loop {
-        let host_env = format!("BALLISTA_{}_{}_SERVICE_HOST", cluster_name, instance);
-        let port_env = format!("BALLISTA_{}_{}_SERVICE_PORT_GRPC", cluster_name, instance);
-        match (env::var(&host_env), env::var(&port_env)) {
-            (Ok(host), Ok(port)) => executors.push(Executor {
-                host,
-                port: port.parse::<usize>().unwrap(),
-            }),
-            _ => break,
-        }
-        instance += 1;
-    }
-
-    let num_months = 12;
+    let executors = cluster::get_executors("NYCTAXI").unwrap();
 
     // build simple logical plan to apply a projection to a CSV file
     let schema = Schema::new(vec![
@@ -54,6 +36,7 @@ pub fn main() {
 
     // manually create one plan for each partition (month)
     let mut executor_index = 0;
+    let num_months = 12;
     for month in 0..num_months {
         let filename = format!(
             "/mnt/ssd/nyc_taxis/csv/yellow_tripdata_2018-{:02}.csv",
@@ -86,9 +69,4 @@ pub fn main() {
     }
 
     println!("Finished");
-}
-
-struct Executor {
-    host: String,
-    port: usize,
 }

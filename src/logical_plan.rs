@@ -41,6 +41,7 @@ fn empty_plan_node() -> Box<proto::LogicalPlanNode> {
         projection: None,
         selection: None,
         limit: None,
+        aggregate: None,
     })
 }
 

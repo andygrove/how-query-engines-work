@@ -64,6 +64,7 @@ message LogicalPlanNode {
   Projection projection = 20;
   Selection selection = 21;
   Limit limit = 22;
+  Aggregate aggregate = 23;
 }
 
 message File {
@@ -77,6 +78,11 @@ message Projection {
 
 message Selection {
   ExprNode expr = 2;
+}
+
+message Aggregate {
+  repeated ExprNode group_expr = 1;
+  repeated ExprNode aggr_expr = 2;
 }
 
 message Limit {

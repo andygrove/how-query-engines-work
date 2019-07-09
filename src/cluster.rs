@@ -1,3 +1,4 @@
+use std::env;
 use std::fs;
 use std::fs::File;
 use std::str;
@@ -64,6 +65,29 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, B
 
         Err(BallistaError::General("k8s api returned error".to_string()))
     }
+}
+
+pub struct Executor {
+    pub host: String,
+    pub port: usize,
+}
+
+pub fn get_executors(cluster_name: &str) -> Result<Vec<Executor>, BallistaError> {
+    let mut executors: Vec<Executor> = vec![];
+    let mut instance = 1;
+    loop {
+        let host_env = format!("BALLISTA_{}_{}_SERVICE_HOST", cluster_name, instance);
+        let port_env = format!("BALLISTA_{}_{}_SERVICE_PORT_GRPC", cluster_name, instance);
+        match (env::var(&host_env), env::var(&port_env)) {
+            (Ok(host), Ok(port)) => executors.push(Executor {
+                host,
+                port: port.parse::<usize>().unwrap(),
+            }),
+            _ => break,
+        }
+        instance += 1;
+    }
+    Ok(executors)
 }
 
 pub fn create_ballista_executor(
