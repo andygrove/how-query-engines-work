@@ -6,7 +6,11 @@ This is not my first attempt at building something like this. I originally wante
 
 My goal is to use this repo to move fast and try out ideas that eventually can be contributed back to Apache Arrow and to help drive requirements for Apache Arrow and DataFusion.
 
-I will be working on this project in my spare time, which is limited, so progress will likely be slow. 
+# Demo
+
+This demo shows a Ballista cluster being created in Minikube and then shows the [nyctaxi example](examples/nyctaxi) being executed, causing a distributed query to run in the cluster, with each executor pod performing a projection on one partition of the data.
+
+[![asciicast](https://asciinema.org/a/nFcsHLXJUo2Mwik4WdZlv4ZBO.svg)](https://asciinema.org/a/nFcsHLXJUo2Mwik4WdZlv4ZBO)
 
 # PoC Status
 
@@ -23,7 +27,7 @@ I will be working on this project in my spare time, which is limited, so progres
 - [X] Ballista CLI - create cluster
 - [X] Ballista CLI - delete cluster
 - [X] Ballista CLI - run application
-- [ ] Simple example application works end to end
+- [X] Simple example application works end to end
 - [ ] Add support for aggregate queries 
 - [ ] Server can stream Arrow data back to application
 - [ ] Write blog post and announce Ballista
@@ -36,6 +40,7 @@ I will be working on this project in my spare time, which is limited, so progres
 - [ ] Support user code as part of distributed query execution
 - [ ] SQL support
 - [ ] Java bindings (supporting Java, Kotlin, Scala)
+
 
 
 
