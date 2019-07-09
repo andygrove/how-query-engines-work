@@ -41,10 +41,15 @@ pub fn main() {
             month + 1
         );
 
-        // build query plan for "SELECT trip_distance, MAX(fare_amount) FROM .. GROUP BY trip_distance LIMIT 10"
+        // simple projection
         let plan = read_file(&filename, &schema) //TODO inconsistent API .. read_file should return Result
-            .aggregate(vec![column(3)], vec![max(&column(10))])
-            .unwrap();
+            .projection(vec![0, 1, 2]).unwrap();
+
+        //TODO aggregate query
+        // build query plan for "SELECT trip_distance, MAX(fare_amount) FROM .. GROUP BY trip_distance LIMIT 10"
+//        let plan = read_file(&filename, &schema) //TODO inconsistent API .. read_file should return Result
+//            .aggregate(vec![column(3)], vec![max(&column(10))])
+//            .unwrap();
 
         // send the plan to a ballista server
         let executor = &executors[executor_index];
