@@ -1,4 +1,3 @@
-#![deny(warnings, rust_2018_idioms)]
 
 use crate::proto::{server, ExecuteRequest, ExecuteResponse, TableMeta};
 
@@ -8,9 +7,8 @@ use tokio::net::TcpListener;
 use tower_grpc::{Request, Response};
 use tower_hyper::server::{Http, Server};
 
-use arrow::datatypes::{Schema};
 use ballista::error::Result;
-use ballista::execution::create_datafusion_plan;
+use ballista::execution;
 use ballista::proto;
 use datafusion::execution::context::ExecutionContext;
 use datafusion::logicalplan::LogicalPlan;
@@ -26,7 +24,7 @@ impl server::Executor for BallistaService {
         let request = request.get_ref();
 
         let response = match &request.plan {
-            Some(plan) => match create_datafusion_plan(plan) {
+            Some(plan) => match execution::create_datafusion_plan(plan) {
                 Ok(df_plan) => match execute_query(&request.table_meta, df_plan.as_ref().to_logical_plan().as_ref()) {
                     Ok(count) => Response::new(ExecuteResponse {
                         message: format!("Query retrieved {} rows", count),
@@ -50,11 +48,9 @@ impl server::Executor for BallistaService {
 
 fn execute_query(table_meta: &Vec<TableMeta>, df_plan: &LogicalPlan) -> Result<usize> {
     let mut context = ExecutionContext::new();
-
     table_meta.iter().for_each(|table| {
-
-        let schema = Schema::new(vec![]);
-
+        let schema = execution::create_arrow_schema(table.schema.as_ref().unwrap()).unwrap();
+        println!("Registering table {} as filename {}", table.table_name, table.filename);
         context.register_csv(&table.table_name, &table.filename, &schema, true); //TODO has_header should not be hard-coded
 
     });
