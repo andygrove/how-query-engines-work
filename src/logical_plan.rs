@@ -195,8 +195,7 @@ pub fn convert_to_ballista_plan(plan: &DFPlan) -> Result<LogicalPlan> {
 
             println!("table schema has {} columns and projection is {:?}", schema.fields().len(), projection);
 
-            let file = read_file(table_name, schema.as_ref(), projection.as_ref().unwrap().to_vec());
-            Ok(file.projection(projection.as_ref().unwrap().to_vec())?)
+            Ok(read_file(table_name, schema.as_ref(), projection.as_ref().unwrap().to_vec()))
         }
         DFPlan::Aggregate {
             input,
