@@ -37,7 +37,7 @@ impl LogicalPlan {
     }
 
     pub fn selection(&self, _expr: &proto::ExprNode) -> Result<LogicalPlan> {
-        Err(BallistaError::NotImplemented)
+        Err(BallistaError::NotImplemented("selection with expr".to_string()))
     }
 
     pub fn aggregate(
@@ -55,7 +55,7 @@ impl LogicalPlan {
     }
 
     pub fn limit(&self, _limit: usize) -> Result<LogicalPlan> {
-        Err(BallistaError::NotImplemented)
+        Err(BallistaError::NotImplemented("limit".to_string()))
     }
 }
 
@@ -209,7 +209,7 @@ pub fn convert_to_ballista_plan(plan: &DFPlan) -> Result<LogicalPlan> {
                 .collect::<Result<Vec<proto::ExprNode>>>()?;
             input.aggregate(group_expr, aggr_expr)
         }
-        _ => Err(BallistaError::NotImplemented),
+        _ => Err(BallistaError::NotImplemented("convert_to_ballista_plan".to_string())),
     }
 }
 
@@ -217,7 +217,22 @@ pub fn convert_to_ballista_plan(plan: &DFPlan) -> Result<LogicalPlan> {
 fn map_expr(expr: &DFExpr) -> Result<proto::ExprNode> {
     match expr {
         DFExpr::Column(i) => Ok(column(*i)),
-        _ => Err(BallistaError::NotImplemented),
+        DFExpr::AggregateFunction { name, args, .. } => {
+            let mut node = empty_expr_node();
+            node.aggregate_expr = Some(Box::new(proto::AggregateExpr {
+                expr: Some(Box::new(map_expr(&args[0])?)),
+                aggr_function: match name.as_ref() {
+                    "MIN" => 0,
+                    "MAX" => 1,
+                    "SUM" => 2,
+                    "AVG" => 3,
+                    "COUNT" => 4,
+                    _ => return Err(BallistaError::NotImplemented("map_expr aggr".to_string()))
+                },
+            }));
+            Ok(node)
+        },
+        _ => Err(BallistaError::NotImplemented("map_expr".to_string())),
     }
 }
 

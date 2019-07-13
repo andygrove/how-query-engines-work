@@ -10,7 +10,7 @@ pub type Result<T> = result::Result<T, BallistaError>;
 /// Ballista error
 #[derive(Debug)]
 pub enum BallistaError {
-    NotImplemented,
+    NotImplemented(String),
     General(String),
     DataFusionError(ExecutionError),
     ReqwestError(reqwest::Error),
