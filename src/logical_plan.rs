@@ -130,6 +130,43 @@ pub fn read_file(filename: &str, schema: &Schema) -> LogicalPlan {
     LogicalPlan { plan }
 }
 
+/// Convert a DataFusion plan into a Ballista protobuf plan
 pub fn convert_to_ballista_plan(plan: &DFPlan) -> Result<LogicalPlan> {
-    unimplemented!()
+    match plan {
+        DFPlan::TableScan {
+            table_name,
+            schema,
+            projection,
+            ..
+        } => {
+            let file = read_file(table_name, schema.as_ref());
+            Ok(file.projection(projection.as_ref().unwrap().to_vec())?)
+        }
+        DFPlan::Aggregate {
+            input,
+            group_expr,
+            aggr_expr,
+            ..
+        } => {
+            let input = convert_to_ballista_plan(input)?;
+            let group_expr: Vec<proto::ExprNode> = group_expr
+                .iter()
+                .map(|expr| map_expr(expr))
+                .collect::<Result<Vec<proto::ExprNode>>>()?;
+            let aggr_expr: Vec<proto::ExprNode> = aggr_expr
+                .iter()
+                .map(|expr| map_expr(expr))
+                .collect::<Result<Vec<proto::ExprNode>>>()?;
+            input.aggregate(group_expr, aggr_expr)
+        }
+        _ => Err(BallistaError::NotImplemented),
+    }
+}
+
+/// map DataFusion expression to Ballista expression
+fn map_expr(expr: &DFExpr) -> Result<proto::ExprNode> {
+    match expr {
+        DFExpr::Column(i) => Ok(column(*i)),
+        _ => Err(BallistaError::NotImplemented),
+    }
 }
