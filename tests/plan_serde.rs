@@ -1,0 +1,75 @@
+extern crate ballista;
+
+#[macro_use]
+extern crate log;
+
+use arrow::datatypes::{DataType, Field, Schema};
+use datafusion::execution::context::ExecutionContext;
+use datafusion::logicalplan::LogicalPlan;
+use ballista::proto;
+use ballista::logical_plan;
+use ballista::execution;
+use ballista::error::Result;
+
+use std::sync::Arc;
+
+#[test]
+fn test_aggregate_roundtrip() -> Result<()> {
+
+    let _ = ::env_logger::init();
+
+    // schema for nyxtaxi csv files
+    let schema = Schema::new(vec![
+        Field::new("VendorID", DataType::Utf8, true),
+        Field::new("tpep_pickup_datetime", DataType::Utf8, true),
+        Field::new("tpep_dropoff_datetime", DataType::Utf8, true),
+        Field::new("passenger_count", DataType::Utf8, true),
+        Field::new("trip_distance", DataType::Utf8, true),
+        Field::new("RatecodeID", DataType::Utf8, true),
+        Field::new("store_and_fwd_flag", DataType::Utf8, true),
+        Field::new("PULocationID", DataType::Utf8, true),
+        Field::new("DOLocationID", DataType::Utf8, true),
+        Field::new("payment_type", DataType::Utf8, true),
+        Field::new("fare_amount", DataType::Utf8, true),
+        Field::new("extra", DataType::Utf8, true),
+        Field::new("mta_tax", DataType::Utf8, true),
+        Field::new("tip_amount", DataType::Utf8, true),
+        Field::new("tolls_amount", DataType::Utf8, true),
+        Field::new("improvement_surcharge", DataType::Utf8, true),
+        Field::new("total_amount", DataType::Utf8, true),
+    ]);
+
+    let month = 0;
+
+    let filename = format!(
+        "/mnt/ssd/nyc_taxis/csv/yellow_tripdata_2018-{:02}.csv",
+        month + 1
+    );
+
+    // create DataFusion query plan to execute on each partition
+    let mut ctx = ExecutionContext::new();
+    ctx.register_csv("tripdata", &filename, &schema, true);
+    let logical_plan = ctx.create_logical_plan(
+        "SELECT trip_distance, MIN(fare_amount), MAX(fare_amount) \
+            FROM tripdata GROUP BY trip_distance").unwrap();
+    println!("Logical plan: {:?}", logical_plan);
+
+//    let logical_plan = ctx.optimize(&logical_plan)?;
+//    println!("Optimized plan: {:?}", logical_plan);
+
+    // convert
+    let plan = round_trip(&logical_plan)?;
+
+    assert_eq!(format!("{:?}", logical_plan), format!("{:?}", plan));
+
+    Ok(())
+}
+
+fn round_trip(plan: &LogicalPlan) -> Result<Arc<LogicalPlan>> {
+    // convert to ballista plan
+    let ballista_plan = logical_plan::convert_to_ballista_plan(plan)?;
+    // convert back to DataFusion plan
+    let table = execution::create_datafusion_plan(&ballista_plan.to_proto())?;
+
+    Ok(table.to_logical_plan())
+}
