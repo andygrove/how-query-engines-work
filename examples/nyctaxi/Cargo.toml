@@ -6,5 +6,6 @@ license = "Apache-2.0"
 edition = "2018"
 
 [dependencies]
-arrow = "0.14.0"
+arrow = { git = "https://github.com/andygrove/arrow", branch = "ARROW-5945" }
+datafusion = { git = "https://github.com/andygrove/arrow", branch = "ARROW-5945" }
 ballista = { path = "../../" }

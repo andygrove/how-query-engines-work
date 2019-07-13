@@ -25,18 +25,14 @@ impl server::Executor for BallistaService {
 
         let response = match &request.get_ref().plan {
             Some(plan) => match create_datafusion_plan(plan) {
-                Ok(df_plan) => {
-                    println!("DataFusion plan: {:?}", df_plan);
-
-                    match execute_query(&df_plan) {
-                        Ok(count) => Response::new(ExecuteResponse {
-                            message: format!("Query retrieved {} rows", count),
-                        }),
-                        Err(e) => Response::new(ExecuteResponse {
-                            message: format!("Error executing plan: {:?}", e),
-                        }),
-                    }
-                }
+                Ok(df_plan) => match execute_query(df_plan.as_ref().to_logical_plan().as_ref()) {
+                    Ok(count) => Response::new(ExecuteResponse {
+                        message: format!("Query retrieved {} rows", count),
+                    }),
+                    Err(e) => Response::new(ExecuteResponse {
+                        message: format!("Error executing plan: {:?}", e),
+                    }),
+                },
                 Err(e) => Response::new(ExecuteResponse {
                     message: format!("Error converting plan: {:?}", e),
                 }),

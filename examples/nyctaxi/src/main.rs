@@ -1,6 +1,7 @@
 use std::thread;
 
 use arrow::datatypes::{DataType, Field, Schema};
+use datafusion::execution::context::ExecutionContext;
 use ballista::client::Client;
 use ballista::cluster;
 use ballista::logical_plan::{column, max, read_file};
@@ -41,15 +42,13 @@ pub fn main() {
             month + 1
         );
 
-        // simple projection
-        let plan = read_file(&filename, &schema) //TODO inconsistent API .. read_file should return Result
-            .projection(vec![0, 1, 2]).unwrap();
+        // create DataFusion query plan to execute on each partition
+        let mut ctx = ExecutionContext::new();
+        ctx.register_csv("tripdata", "", &schema, true);
+        let logical_plan = ctx.create_logical_plan("SELECT trip_distance, MAX(fare_amount) FROM tripdata GROUP BY trip_distance");
 
-        //TODO aggregate query
-        // build query plan for "SELECT trip_distance, MAX(fare_amount) FROM .. GROUP BY trip_distance LIMIT 10"
-//        let plan = read_file(&filename, &schema) //TODO inconsistent API .. read_file should return Result
-//            .aggregate(vec![column(3)], vec![max(&column(10))])
-//            .unwrap();
+        // convert DataFusion plan to Ballista protobuf
+        let plan = convert_to_ballista(&logical_plan);
 
         // send the plan to a ballista server
         let executor = &executors[executor_index];

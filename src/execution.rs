@@ -4,7 +4,9 @@ use crate::error::{BallistaError, Result};
 use crate::proto;
 
 use arrow::datatypes::{DataType, Field, Schema};
+use datafusion::execution::table_impl::TableImpl;
 use datafusion::logicalplan::{Expr, LogicalPlan as DFPlan};
+use datafusion::table::Table;
 
 fn to_arrow_type(proto_type: i32) -> DataType {
     match proto_type {
@@ -46,7 +48,7 @@ fn to_arrow_type(proto_type: i32) -> DataType {
     }
 }
 
-pub fn create_datafusion_plan(plan: &proto::LogicalPlanNode) -> Result<DFPlan> {
+pub fn create_datafusion_plan(plan: &proto::LogicalPlanNode) -> Result<Arc<dyn Table>> {
     if plan.file.is_some() {
         let file = plan.file.as_ref().unwrap();
 
@@ -65,81 +67,87 @@ pub fn create_datafusion_plan(plan: &proto::LogicalPlanNode) -> Result<DFPlan> {
             })
             .collect();
 
-        Ok(DFPlan::TableScan {
+        Ok(Arc::new(TableImpl::new(Arc::new(DFPlan::TableScan {
             schema_name: "default".to_string(),
             table_name: file.filename.clone(),
             schema: Arc::new(Schema::new(columns)),
             projection: None,
-        })
+        }))))
     } else if plan.projection.is_some() {
         if let Some(input) = &plan.input {
-            let df_input = Arc::new(create_datafusion_plan(&input)?);
-            let input_schema = df_input.schema();
+            let table = create_datafusion_plan(&input)?;
 
             let projection_plan = plan.projection.as_ref().unwrap();
 
             let expr: Vec<Expr> = projection_plan
                 .expr
                 .iter()
-                .map(|expr| map_expr(expr))
+                .map(|expr| map_expr(table.as_ref(), expr))
                 .collect::<Result<Vec<Expr>>>()?;
 
-            let schema = determine_schema(input_schema, &expr)?;
-
-            Ok(DFPlan::Projection {
-                expr,
-                input: df_input.clone(),
-                schema,
-            })
+            Ok(table.select(expr)?)
         } else {
             Err(BallistaError::NotImplemented)
         }
-    } else if plan.aggregate.is_some() {
-        if let Some(input) = &plan.input {
-            let df_input = Arc::new(create_datafusion_plan(&input)?);
-            let input_schema = df_input.schema();
-
-            let aggregate_plan = plan.aggregate.as_ref().unwrap();
-
-            let group_expr: Vec<Expr> = aggregate_plan
-                .group_expr
-                .iter()
-                .map(|expr| map_expr(expr))
-                .collect::<Result<Vec<Expr>>>()?;
-
-            let aggr_expr: Vec<Expr> = aggregate_plan
-                .aggr_expr
-                .iter()
-                .map(|expr| map_expr(expr))
-                .collect::<Result<Vec<Expr>>>()?;
-
-            let mut combined = vec![];
-            combined.extend_from_slice(&group_expr);
-            combined.extend_from_slice(&aggr_expr);
-
-            let schema = determine_schema(input_schema, &combined)?;
-
-            Ok(DFPlan::Aggregate {
-                group_expr,
-                aggr_expr,
-                input: df_input.clone(),
-                schema,
-            })
-        } else {
-            Err(BallistaError::NotImplemented)
-        }
+    //    } else if plan.aggregate.is_some() {
+    //        if let Some(input) = &plan.input {
+    //            let df_input = Arc::new(create_datafusion_plan(&input)?);
+    //            let input_schema = df_input.schema();
+    //
+    //            let aggregate_plan = plan.aggregate.as_ref().unwrap();
+    //
+    //            let group_expr: Vec<Expr> = aggregate_plan
+    //                .group_expr
+    //                .iter()
+    //                .map(|expr| map_expr(expr))
+    //                .collect::<Result<Vec<Expr>>>()?;
+    //
+    //            let aggr_expr: Vec<Expr> = aggregate_plan
+    //                .aggr_expr
+    //                .iter()
+    //                .map(|expr| map_expr(expr))
+    //                .collect::<Result<Vec<Expr>>>()?;
+    //
+    //            let mut combined = vec![];
+    //            combined.extend_from_slice(&group_expr);
+    //            combined.extend_from_slice(&aggr_expr);
+    //
+    //            let schema = determine_schema(input_schema, &combined)?;
+    //
+    //            Ok(DFPlan::Aggregate {
+    //                group_expr,
+    //                aggr_expr,
+    //                input: df_input.clone(),
+    //                schema,
+    //            })
+    //        } else {
+    //            Err(BallistaError::General("aggregate without input".to_string()))
+    //        }
     } else {
-        Err(BallistaError::NotImplemented)
+        Err(BallistaError::General("unsupported plan".to_string()))
     }
 }
 
-fn map_expr(expr: &proto::ExprNode) -> Result<Expr> {
+fn map_expr(table: &dyn Table, expr: &proto::ExprNode) -> Result<Expr> {
     if expr.column_index.is_some() {
         Ok(Expr::Column(
             expr.column_index.as_ref().unwrap().index as usize,
         ))
+    } else if expr.aggregate_expr.is_some() {
+        let name = match expr.aggregate_expr.as_ref().unwrap().aggr_function {
+            0 => Ok("MIN"),
+            1 => Ok("MAX"),
+            _ => Err(BallistaError::General(
+                "unsupported aggregate function".to_string(),
+            )),
+        }?;
+        Ok(Expr::AggregateFunction {
+            name: name.to_string(),
+            args: vec![],
+            return_type: DataType::Float64, //TODO
+        })
     } else {
-        Err(BallistaError::NotImplemented)
+        Err(BallistaError::General("unsupported expr".to_string()))
     }
 }
 

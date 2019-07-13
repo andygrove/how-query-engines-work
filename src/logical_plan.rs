@@ -45,7 +45,10 @@ impl LogicalPlan {
         aggr_expr: Vec<proto::ExprNode>,
     ) -> Result<LogicalPlan> {
         let mut plan = empty_plan_node();
-        plan.aggregate = Some(proto::Aggregate { group_expr, aggr_expr });
+        plan.aggregate = Some(proto::Aggregate {
+            group_expr,
+            aggr_expr,
+        });
         plan.input = Some(Box::new(self.plan.as_ref().clone()));
         Ok(LogicalPlan { plan })
     }
