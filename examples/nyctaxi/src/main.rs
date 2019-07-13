@@ -4,7 +4,7 @@ use arrow::datatypes::{DataType, Field, Schema};
 use datafusion::execution::context::ExecutionContext;
 use ballista::client::Client;
 use ballista::cluster;
-use ballista::logical_plan::{column, max, read_file};
+use ballista::logical_plan::convert_to_ballista_plan;
 
 pub fn main() {
     // discover available executors
@@ -44,11 +44,11 @@ pub fn main() {
 
         // create DataFusion query plan to execute on each partition
         let mut ctx = ExecutionContext::new();
-        ctx.register_csv("tripdata", "", &schema, true);
-        let logical_plan = ctx.create_logical_plan("SELECT trip_distance, MIN(fare_amount), MAX(fare_amount) FROM tripdata GROUP BY trip_distance");
+        ctx.register_csv("tripdata", &filename, &schema, true);
+        let logical_plan = ctx.create_logical_plan("SELECT trip_distance, MIN(fare_amount), MAX(fare_amount) FROM tripdata GROUP BY trip_distance").unwrap();
 
         // convert DataFusion plan to Ballista protobuf
-        let plan = convert_to_ballista(&logical_plan);
+        let plan = convert_to_ballista_plan(&logical_plan).unwrap();
 
         // send the plan to a ballista server
         let executor = &executors[executor_index];

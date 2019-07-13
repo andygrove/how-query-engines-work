@@ -2,6 +2,7 @@ use crate::error::{BallistaError, Result};
 use crate::proto;
 
 use arrow::datatypes::{DataType, Schema};
+use datafusion::logicalplan::{Expr as DFExpr, LogicalPlan as DFPlan};
 
 pub struct Expr {}
 
@@ -127,4 +128,8 @@ pub fn read_file(filename: &str, schema: &Schema) -> LogicalPlan {
         schema: Some(schema_proto),
     });
     LogicalPlan { plan }
+}
+
+pub fn convert_to_ballista_plan(plan: &DFPlan) -> Result<LogicalPlan> {
+    unimplemented!()
 }
