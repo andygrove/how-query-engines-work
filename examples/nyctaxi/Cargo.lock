@@ -133,6 +133,8 @@ dependencies = [
  "arrow 1.0.0-SNAPSHOT (git+https://github.com/andygrove/arrow?branch=ARROW-5945)",
  "ballista 0.1.2",
  "datafusion 1.0.0-SNAPSHOT (git+https://github.com/andygrove/arrow?branch=ARROW-5945)",
+ "env_logger 0.5.13 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

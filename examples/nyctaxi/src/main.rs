@@ -7,7 +7,13 @@ use ballista::cluster;
 use ballista::proto;
 use ballista::logical_plan;
 
+#[macro_use]
+extern crate log;
+
 pub fn main() {
+
+    let _ = ::env_logger::init();
+
     // discover available executors
     let executors = cluster::get_executors("NYCTAXI").unwrap();
 
@@ -46,7 +52,11 @@ pub fn main() {
         // create DataFusion query plan to execute on each partition
         let mut ctx = ExecutionContext::new();
         ctx.register_csv("tripdata", &filename, &schema, true);
-        let logical_plan = ctx.create_logical_plan("SELECT trip_distance, MIN(fare_amount), MAX(fare_amount) FROM tripdata GROUP BY trip_distance").unwrap();
+        let logical_plan = ctx.create_logical_plan(
+            "SELECT trip_distance, MIN(fare_amount), MAX(fare_amount) \
+            FROM tripdata GROUP BY trip_distance").unwrap();
+        let logical_plan = ctx.optimize(&logical_plan).unwrap();
+        info!("Optimized plan: {:?}", logical_plan);
 
         // convert DataFusion plan to Ballista protobuf
         let table_meta = vec![proto::TableMeta {

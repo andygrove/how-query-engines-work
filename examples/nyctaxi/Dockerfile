@@ -89,4 +89,7 @@ FROM scratch
 COPY --from=build /tmp/ballista/examples/nyctaxi/target/x86_64-unknown-linux-musl/release/ballista-nyctaxi /
 USER 1000
 
+ENV RUST_LOG=debug
+ENV RUST_BACKTRACE=1
+
 CMD ["/ballista-nyctaxi"]

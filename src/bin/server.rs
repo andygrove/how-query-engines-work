@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate log;
 
 use crate::proto::{server, ExecuteRequest, ExecuteResponse, TableMeta};
 
@@ -20,7 +22,7 @@ impl server::Executor for BallistaService {
     type ExecuteFuture = future::FutureResult<Response<ExecuteResponse>, tower_grpc::Status>;
 
     fn execute(&mut self, request: Request<ExecuteRequest>) -> Self::ExecuteFuture {
-        println!("REQUEST = {:?}", request);
+        info!("REQUEST = {:?}", request);
         let request = request.get_ref();
 
         let response = match &request.plan {
@@ -50,13 +52,13 @@ fn execute_query(table_meta: &Vec<TableMeta>, df_plan: &LogicalPlan) -> Result<u
     let mut context = ExecutionContext::new();
     table_meta.iter().for_each(|table| {
         let schema = execution::create_arrow_schema(table.schema.as_ref().unwrap()).unwrap();
-        println!("Registering table {} as filename {}", table.table_name, table.filename);
+        info!("Registering table {} as filename {}", table.table_name, table.filename);
         context.register_csv(&table.table_name, &table.filename, &schema, true); //TODO has_header should not be hard-coded
 
     });
 
     let optimized_plan = context.optimize(&df_plan)?;
-    println!("Optimized plan: {:?}", optimized_plan);
+    info!("Optimized plan: {:?}", optimized_plan);
 
 
     let relation = context.execute(&optimized_plan, 1024)?;
@@ -82,7 +84,7 @@ pub fn main() {
     let http = Http::new().http2_only(true).clone();
 
     let addr = "0.0.0.0:9090".parse().unwrap();
-    println!("Ballista server binding to {}", addr);
+    info!("Ballista server binding to {}", addr);
     let bind = TcpListener::bind(&addr).expect("bind");
 
     let serve = bind
@@ -97,8 +99,8 @@ pub fn main() {
 
             Ok(())
         })
-        .map_err(|e| eprintln!("accept error: {}", e));
+        .map_err(|e| error!("accept error: {}", e));
 
-    println!("Ballista running");
+    info!("Ballista running");
     tokio::run(serve)
 }
