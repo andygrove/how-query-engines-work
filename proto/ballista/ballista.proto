@@ -86,6 +86,7 @@ message LogicalPlanNode {
 message File {
   string filename = 1;
   Schema schema = 2;
+  repeated uint32 projection = 3;
 }
 
 message Projection {

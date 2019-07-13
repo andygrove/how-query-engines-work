@@ -64,16 +64,21 @@ pub fn create_arrow_schema(schema: &proto::Schema) -> Result<Schema> {
 pub fn create_datafusion_plan(plan: &proto::LogicalPlanNode) -> Result<Arc<dyn Table>> {
     if plan.file.is_some() {
         let file = plan.file.as_ref().unwrap();
+
         let schema = create_arrow_schema(file
             .schema
             .as_ref()
             .unwrap())?;
 
+        let projection: Vec<usize> = file.projection.iter().map(|i| *i as usize).collect();
+
+        println!("created table scan with schema {:?} and projection {:?}", schema, projection);
+
         Ok(Arc::new(TableImpl::new(Arc::new(DFPlan::TableScan {
             schema_name: "default".to_string(),
             table_name: file.filename.clone(),
             schema: Arc::new(schema),
-            projection: None,
+            projection: Some(projection),
         }))))
     } else if plan.projection.is_some() {
         if let Some(input) = &plan.input {
@@ -86,6 +91,8 @@ pub fn create_datafusion_plan(plan: &proto::LogicalPlanNode) -> Result<Arc<dyn T
                 .iter()
                 .map(|expr| map_expr(table.as_ref(), expr))
                 .collect::<Result<Vec<Expr>>>()?;
+
+            println!("projection: {:?}", expr);
 
             Ok(table.select(expr)?)
         } else {

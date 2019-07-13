@@ -6,6 +6,7 @@ use datafusion::logicalplan::{Expr as DFExpr, LogicalPlan as DFPlan};
 
 pub struct Expr {}
 
+#[derive(Debug)]
 pub struct LogicalPlan {
     plan: Box<proto::LogicalPlanNode>,
 }
@@ -108,7 +109,7 @@ fn to_proto_type(arrow_type: &DataType) -> i32 {
 }
 
 /// Create a logical plan representing a file
-pub fn read_file(filename: &str, schema: &Schema) -> LogicalPlan {
+pub fn read_file(filename: &str, schema: &Schema, projection: Vec<usize>) -> LogicalPlan {
     let schema_proto = proto::Schema {
         columns: schema
             .fields()
@@ -126,6 +127,7 @@ pub fn read_file(filename: &str, schema: &Schema) -> LogicalPlan {
     plan.file = Some(proto::File {
         filename: filename.to_string(),
         schema: Some(schema_proto),
+        projection: projection.iter().map(|i| *i as u32).collect()
     });
     LogicalPlan { plan }
 }
@@ -182,6 +184,7 @@ pub fn create_ballista_schema(schema: &Schema) -> Result<proto::Schema> {
 
 /// Convert a DataFusion plan into a Ballista protobuf plan
 pub fn convert_to_ballista_plan(plan: &DFPlan) -> Result<LogicalPlan> {
+    println!("convert_to_ballista_plan(): {:?}", plan);
     match plan {
         DFPlan::TableScan {
             table_name,
@@ -189,7 +192,10 @@ pub fn convert_to_ballista_plan(plan: &DFPlan) -> Result<LogicalPlan> {
             projection,
             ..
         } => {
-            let file = read_file(table_name, schema.as_ref());
+
+            println!("table schema has {} columns and projection is {:?}", schema.fields().len(), projection);
+
+            let file = read_file(table_name, schema.as_ref(), projection.as_ref().unwrap().to_vec());
             Ok(file.projection(projection.as_ref().unwrap().to_vec())?)
         }
         DFPlan::Aggregate {

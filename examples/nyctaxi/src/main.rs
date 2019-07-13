@@ -55,8 +55,8 @@ pub fn main() {
         let logical_plan = ctx.create_logical_plan(
             "SELECT trip_distance, MIN(fare_amount), MAX(fare_amount) \
             FROM tripdata GROUP BY trip_distance").unwrap();
-        let logical_plan = ctx.optimize(&logical_plan).unwrap();
-        info!("Optimized plan: {:?}", logical_plan);
+
+        info!("Logical plan: {:?}", logical_plan);
 
         // convert DataFusion plan to Ballista protobuf
         let table_meta = vec![proto::TableMeta {

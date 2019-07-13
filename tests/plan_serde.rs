@@ -23,20 +23,20 @@ fn test_aggregate_roundtrip() -> Result<()> {
         Field::new("VendorID", DataType::Utf8, true),
         Field::new("tpep_pickup_datetime", DataType::Utf8, true),
         Field::new("tpep_dropoff_datetime", DataType::Utf8, true),
-        Field::new("passenger_count", DataType::Utf8, true),
-        Field::new("trip_distance", DataType::Utf8, true),
+        Field::new("passenger_count", DataType::UInt32, true),
+        Field::new("trip_distance", DataType::Float64, true),
         Field::new("RatecodeID", DataType::Utf8, true),
         Field::new("store_and_fwd_flag", DataType::Utf8, true),
         Field::new("PULocationID", DataType::Utf8, true),
         Field::new("DOLocationID", DataType::Utf8, true),
         Field::new("payment_type", DataType::Utf8, true),
-        Field::new("fare_amount", DataType::Utf8, true),
-        Field::new("extra", DataType::Utf8, true),
-        Field::new("mta_tax", DataType::Utf8, true),
-        Field::new("tip_amount", DataType::Utf8, true),
-        Field::new("tolls_amount", DataType::Utf8, true),
-        Field::new("improvement_surcharge", DataType::Utf8, true),
-        Field::new("total_amount", DataType::Utf8, true),
+        Field::new("fare_amount", DataType::Float64, true),
+        Field::new("extra", DataType::Float64, true),
+        Field::new("mta_tax", DataType::Float64, true),
+        Field::new("tip_amount", DataType::Float64, true),
+        Field::new("tolls_amount", DataType::Float64, true),
+        Field::new("improvement_surcharge", DataType::Float64, true),
+        Field::new("total_amount", DataType::Float64, true),
     ]);
 
     let month = 0;
@@ -50,12 +50,16 @@ fn test_aggregate_roundtrip() -> Result<()> {
     let mut ctx = ExecutionContext::new();
     ctx.register_csv("tripdata", &filename, &schema, true);
     let logical_plan = ctx.create_logical_plan(
-        "SELECT trip_distance, MIN(fare_amount), MAX(fare_amount) \
+        "SELECT passenger_count, MIN(fare_amount), MAX(fare_amount) \
             FROM tripdata GROUP BY trip_distance").unwrap();
     println!("Logical plan: {:?}", logical_plan);
 
-//    let logical_plan = ctx.optimize(&logical_plan)?;
-//    println!("Optimized plan: {:?}", logical_plan);
+    // execute query just to be sure the plan is valid
+    let result = ctx.execute(&logical_plan, 1024)?;
+    let mut result = result.borrow_mut();
+    while let Ok(Some(batch)) = result.next() {
+        println!("Fetched {} rows x {} columns", batch.num_rows(), batch.num_columns());
+    }
 
     // convert
     let plan = round_trip(&logical_plan)?;
@@ -68,6 +72,8 @@ fn test_aggregate_roundtrip() -> Result<()> {
 fn round_trip(plan: &LogicalPlan) -> Result<Arc<LogicalPlan>> {
     // convert to ballista plan
     let ballista_plan = logical_plan::convert_to_ballista_plan(plan)?;
+    //println!("ballista: {:?}", ballista_plan);
+
     // convert back to DataFusion plan
     let table = execution::create_datafusion_plan(&ballista_plan.to_proto())?;
 
