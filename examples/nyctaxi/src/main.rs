@@ -45,7 +45,7 @@ pub fn main() {
         // create DataFusion query plan to execute on each partition
         let mut ctx = ExecutionContext::new();
         ctx.register_csv("tripdata", "", &schema, true);
-        let logical_plan = ctx.create_logical_plan("SELECT trip_distance, MAX(fare_amount) FROM tripdata GROUP BY trip_distance");
+        let logical_plan = ctx.create_logical_plan("SELECT trip_distance, MIN(fare_amount), MAX(fare_amount) FROM tripdata GROUP BY trip_distance");
 
         // convert DataFusion plan to Ballista protobuf
         let plan = convert_to_ballista(&logical_plan);
