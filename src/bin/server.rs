@@ -1,6 +1,6 @@
 #![deny(warnings, rust_2018_idioms)]
 
-use crate::proto::{server, ExecuteRequest, ExecuteResponse};
+use crate::proto::{server, ExecuteRequest, ExecuteResponse, TableMeta};
 
 use futures::{future, Future, Stream};
 use log::error;
@@ -8,6 +8,7 @@ use tokio::net::TcpListener;
 use tower_grpc::{Request, Response};
 use tower_hyper::server::{Http, Server};
 
+use arrow::datatypes::{Schema};
 use ballista::error::Result;
 use ballista::execution::create_datafusion_plan;
 use ballista::proto;
@@ -22,10 +23,11 @@ impl server::Executor for BallistaService {
 
     fn execute(&mut self, request: Request<ExecuteRequest>) -> Self::ExecuteFuture {
         println!("REQUEST = {:?}", request);
+        let request = request.get_ref();
 
-        let response = match &request.get_ref().plan {
+        let response = match &request.plan {
             Some(plan) => match create_datafusion_plan(plan) {
-                Ok(df_plan) => match execute_query(df_plan.as_ref().to_logical_plan().as_ref()) {
+                Ok(df_plan) => match execute_query(&request.table_meta, df_plan.as_ref().to_logical_plan().as_ref()) {
                     Ok(count) => Response::new(ExecuteResponse {
                         message: format!("Query retrieved {} rows", count),
                     }),
@@ -46,13 +48,20 @@ impl server::Executor for BallistaService {
     }
 }
 
-fn execute_query(df_plan: &LogicalPlan) -> Result<usize> {
+fn execute_query(table_meta: &Vec<TableMeta>, df_plan: &LogicalPlan) -> Result<usize> {
     let mut context = ExecutionContext::new();
+
+    table_meta.iter().for_each(|table| {
+
+        let schema = Schema::new(vec![]);
+
+        context.register_csv(&table.table_name, &table.filename, &schema, true); //TODO has_header should not be hard-coded
+
+    });
 
     let optimized_plan = context.optimize(&df_plan)?;
     println!("Optimized plan: {:?}", optimized_plan);
 
-    register_tables(&mut context, &optimized_plan);
 
     let relation = context.execute(&optimized_plan, 1024)?;
 
@@ -66,20 +75,6 @@ fn execute_query(df_plan: &LogicalPlan) -> Result<usize> {
     Ok(count)
 }
 
-//TODO this is a temporary hack to walk the plan and register tables with the context ... this isn't how it will work long term
-fn register_tables(ctx: &mut ExecutionContext, plan: &LogicalPlan) {
-    match plan {
-        LogicalPlan::TableScan {
-            table_name, schema, ..
-        } => {
-            ctx.register_csv(&table_name, &table_name, schema, true);
-        }
-        LogicalPlan::Projection { input, .. } => {
-            register_tables(ctx, input);
-        }
-        _ => unimplemented!(),
-    }
-}
 
 pub fn main() {
     let _ = ::env_logger::init();

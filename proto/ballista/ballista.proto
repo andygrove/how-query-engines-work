@@ -118,12 +118,20 @@ message Schema {
   repeated Field columns = 1;
 }
 
+message TableMeta {
+  string table_name = 1;
+  string filename = 2;
+  string file_type = 3;
+  Schema schema = 4;
+}
+
 service Executor {
   rpc execute(ExecuteRequest) returns (ExecuteResponse) {}
 }
 
 message ExecuteRequest {
   LogicalPlanNode plan = 1;
+  repeated TableMeta table_meta = 2;
 }
 
 message ExecuteResponse {

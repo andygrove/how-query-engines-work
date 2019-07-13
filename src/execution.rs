@@ -46,29 +46,33 @@ fn to_arrow_type(proto_type: i32) -> Result<DataType> {
     }
 }
 
+/// Convert Ballista schema to Arrow Schema
+pub fn create_arrow_schema(schema: &proto::Schema) -> Result<Schema> {
+    Ok(Schema::new(schema
+        .columns
+        .iter()
+        .map(|column| {
+            Field::new(
+                &column.name.to_string(),
+                to_arrow_type(column.arrow_type).unwrap(),
+                true,
+            )
+        })
+        .collect()))
+}
+
 pub fn create_datafusion_plan(plan: &proto::LogicalPlanNode) -> Result<Arc<dyn Table>> {
     if plan.file.is_some() {
         let file = plan.file.as_ref().unwrap();
-
-        let columns = file
+        let schema = create_arrow_schema(file
             .schema
             .as_ref()
-            .unwrap()
-            .columns
-            .iter()
-            .map(|column| {
-                Field::new(
-                    &column.name.to_string(),
-                    to_arrow_type(column.arrow_type).unwrap(),
-                    true,
-                )
-            })
-            .collect();
+            .unwrap())?;
 
         Ok(Arc::new(TableImpl::new(Arc::new(DFPlan::TableScan {
             schema_name: "default".to_string(),
             table_name: file.filename.clone(),
-            schema: Arc::new(Schema::new(columns)),
+            schema: Arc::new(schema),
             projection: None,
         }))))
     } else if plan.projection.is_some() {

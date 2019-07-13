@@ -4,7 +4,8 @@ use arrow::datatypes::{DataType, Field, Schema};
 use datafusion::execution::context::ExecutionContext;
 use ballista::client::Client;
 use ballista::cluster;
-use ballista::logical_plan::convert_to_ballista_plan;
+use ballista::proto;
+use ballista::logical_plan;
 
 pub fn main() {
     // discover available executors
@@ -48,7 +49,13 @@ pub fn main() {
         let logical_plan = ctx.create_logical_plan("SELECT trip_distance, MIN(fare_amount), MAX(fare_amount) FROM tripdata GROUP BY trip_distance").unwrap();
 
         // convert DataFusion plan to Ballista protobuf
-        let plan = convert_to_ballista_plan(&logical_plan).unwrap();
+        let table_meta = vec![proto::TableMeta {
+            table_name: "tripdata".to_string(),
+            filename,
+            file_type: "csv".to_string(),
+            schema: Some(logical_plan::create_ballista_schema(&schema).unwrap())
+        }];
+        let plan = logical_plan::convert_to_ballista_plan(&logical_plan).unwrap();
 
         // send the plan to a ballista server
         let executor = &executors[executor_index];
@@ -59,7 +66,7 @@ pub fn main() {
         threads.push(thread::spawn(move || {
             println!("Executing query against executor at {}:{}", host, port);
             let client = Client::new(&host, port);
-            client.send(plan);
+            client.send(plan, table_meta);
         }));
 
         executor_index += 1;

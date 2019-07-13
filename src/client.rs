@@ -23,7 +23,7 @@ impl Client {
         }
     }
 
-    pub fn send(&self, plan: LogicalPlan) {
+    pub fn send(&self, plan: LogicalPlan, table_meta: Vec<proto::TableMeta>) {
         // send the query to the server
         let uri: http::Uri = format!("http://{}:{}", self.host, self.port)
             .parse()
@@ -48,6 +48,7 @@ impl Client {
             .and_then(move |mut client| {
                 client.execute(Request::new(proto::ExecuteRequest {
                     plan: Some(plan.to_proto()),
+                    table_meta
                 }))
             })
             .and_then(|response| {

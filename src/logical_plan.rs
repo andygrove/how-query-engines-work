@@ -129,6 +129,56 @@ pub fn read_file(filename: &str, schema: &Schema) -> LogicalPlan {
     });
     LogicalPlan { plan }
 }
+fn from_arrow_type(arrow_type: &DataType) -> Result<i32> {
+    match arrow_type {
+        DataType::Boolean => Ok(1),
+        DataType::UInt8 => Ok(2),
+        DataType::Int8 => Ok(3),
+        DataType::UInt16 => Ok(4),
+        DataType::Int16 => Ok(5),
+        DataType::UInt32 => Ok(6),
+        DataType::Int32 => Ok(7),
+        DataType::UInt64 => Ok(8),
+        DataType::Int64 => Ok(9),
+        DataType::Float32 => Ok(10),
+        DataType::Float64 => Ok(11),
+        DataType::Utf8 => Ok(12),
+        _ => Err(BallistaError::General(format!(
+            "No conversion for data type {:?}",
+            arrow_type
+        ))),
+        //TODO add others
+        // 0 => NONE
+        //        HALF_FLOAT = 10;
+        //        BINARY = 14;
+        //        FIXED_SIZE_BINARY = 15;
+        //        DATE32 = 16;
+        //        DATE64 = 17;
+        //        TIMESTAMP = 18;
+        //        TIME32 = 19;
+        //        TIME64 = 20;
+        //        INTERVAL = 21;
+        //        DECIMAL = 22;
+        //        LIST = 23;
+        //        STRUCT = 24;
+        //        UNION = 25;
+        //        DICTIONARY = 26;
+        //        MAP = 27;
+    }
+}
+
+
+pub fn create_ballista_schema(schema: &Schema) -> Result<proto::Schema> {
+    let fields = schema.fields().iter().map(|field| {
+        proto::Field {
+            name: field.name().clone(),
+            arrow_type: from_arrow_type(field.data_type()).unwrap(),
+            nullable: true,
+            children: vec![]
+        }
+    }).collect();
+    Ok(proto::Schema { columns: fields })
+}
 
 /// Convert a DataFusion plan into a Ballista protobuf plan
 pub fn convert_to_ballista_plan(plan: &DFPlan) -> Result<LogicalPlan> {
@@ -170,3 +220,4 @@ fn map_expr(expr: &DFExpr) -> Result<proto::ExprNode> {
         _ => Err(BallistaError::NotImplemented),
     }
 }
+
