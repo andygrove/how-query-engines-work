@@ -10,7 +10,7 @@ use tower_grpc::{Request, Response};
 use tower_hyper::server::{Http, Server};
 
 use arrow::datatypes::DataType;
-use arrow::array::{UInt32Array, Float64Array};
+use arrow::array;
 use arrow::record_batch::RecordBatch;
 use ballista::error::{BallistaError, Result};
 use ballista::execution;
@@ -100,19 +100,51 @@ fn serialize_batch(batch: &RecordBatch) -> Result<proto::RecordBatch> {
                 .as_any();
 
             match batch.schema().field(j).data_type() {
-//                DataType::Utf8 => {
-//                    let col = col.downcast_ref::<BinaryArray>().unwrap();
-//                    data.push_str(&format!("{}", col.value(i)));
-//                }
+                DataType::Utf8 => {
+                    let col = col.downcast_ref::<array::BinaryArray>().unwrap();
+                    data.push_str(&format!("{:?}", col.value(i)));
+                }
+                DataType::UInt8 => {
+                    let col = col.downcast_ref::<array::UInt8Array>().unwrap();
+                    data.push_str(&format!("{}", col.value(i)));
+                }
+                DataType::UInt16 => {
+                    let col = col.downcast_ref::<array::UInt16Array>().unwrap();
+                    data.push_str(&format!("{}", col.value(i)));
+                }
                 DataType::UInt32 => {
-                    let col = col.downcast_ref::<UInt32Array>().unwrap();
+                    let col = col.downcast_ref::<array::UInt32Array>().unwrap();
+                    data.push_str(&format!("{}", col.value(i)));
+                }
+                DataType::UInt64 => {
+                    let col = col.downcast_ref::<array::UInt64Array>().unwrap();
+                    data.push_str(&format!("{}", col.value(i)));
+                }
+                DataType::Int8 => {
+                    let col = col.downcast_ref::<array::Int8Array>().unwrap();
+                    data.push_str(&format!("{}", col.value(i)));
+                }
+                DataType::Int16 => {
+                    let col = col.downcast_ref::<array::Int16Array>().unwrap();
+                    data.push_str(&format!("{}", col.value(i)));
+                }
+                DataType::Int32 => {
+                    let col = col.downcast_ref::<array::Int32Array>().unwrap();
+                    data.push_str(&format!("{}", col.value(i)));
+                }
+                DataType::Int64 => {
+                    let col = col.downcast_ref::<array::Int64Array>().unwrap();
+                    data.push_str(&format!("{}", col.value(i)));
+                }
+                DataType::Float32 => {
+                    let col = col.downcast_ref::<array::Float32Array>().unwrap();
                     data.push_str(&format!("{}", col.value(i)));
                 }
                 DataType::Float64 => {
-                    let col = col.downcast_ref::<Float64Array>().unwrap();
+                    let col = col.downcast_ref::<array::Float64Array>().unwrap();
                     data.push_str(&format!("{}", col.value(i)));
                 }
-                _ => return Err(BallistaError::NotImplemented("Unsupported result data type".to_string()))
+                other => return Err(BallistaError::NotImplemented(format!("Unsupported result data type: {:?}", other)))
             }
         }
         data.push_str("\n");

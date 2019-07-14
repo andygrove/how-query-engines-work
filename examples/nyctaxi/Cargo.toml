@@ -1,7 +1,7 @@
 [package]
 name = "ballista-nyctaxi"
 description = "Ballista example for NYC Taxi data"
-version = "0.1.2"
+version = "0.1.3"
 license = "Apache-2.0"
 edition = "2018"
 

@@ -26,9 +26,9 @@ cargo run --bin ballista -- delete-cluster --name nyctaxi
 # Notes
 
 ```bash
-docker tag ballista-nyctaxi:latest andygrove/ballista-nyctaxi:0.1.2
-docker push andygrove/ballista-nyctaxi:0.1.2
+docker tag ballista-nyctaxi:latest andygrove/ballista-nyctaxi:0.1.3
+docker push andygrove/ballista-nyctaxi:0.1.3
 
-docker tag ballista:latest andygrove/ballista:0.1.2
-docker push andygrove/ballista:0.1.2
+docker tag ballista:latest andygrove/ballista:0.1.3
+docker push andygrove/ballista:0.1.3
 ```
