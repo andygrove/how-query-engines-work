@@ -9,7 +9,10 @@ use tokio::net::TcpListener;
 use tower_grpc::{Request, Response};
 use tower_hyper::server::{Http, Server};
 
-use ballista::error::Result;
+use arrow::datatypes::DataType;
+use arrow::array::{UInt32Array, Float64Array};
+use arrow::record_batch::RecordBatch;
+use ballista::error::{BallistaError, Result};
 use ballista::execution;
 use ballista::proto;
 use datafusion::execution::context::ExecutionContext;
@@ -28,19 +31,23 @@ impl server::Executor for BallistaService {
         let response = match &request.plan {
             Some(plan) => match execution::create_datafusion_plan(plan) {
                 Ok(df_plan) => match execute_query(&request.table_meta, df_plan.as_ref().to_logical_plan().as_ref()) {
-                    Ok(count) => Response::new(ExecuteResponse {
-                        message: format!("Query retrieved {} rows", count),
+                    Ok(batches) => Response::new(ExecuteResponse {
+                        message: "SUCCESS".to_string(),
+                        batch: batches
                     }),
                     Err(e) => Response::new(ExecuteResponse {
                         message: format!("Error executing plan: {:?}", e),
+                        batch: vec![]
                     }),
                 },
                 Err(e) => Response::new(ExecuteResponse {
                     message: format!("Error converting plan: {:?}", e),
+                    batch: vec![]
                 }),
             },
             _ => Response::new(ExecuteResponse {
                 message: "empty request".to_string(),
+                batch: vec![]
             }),
         };
 
@@ -48,7 +55,7 @@ impl server::Executor for BallistaService {
     }
 }
 
-fn execute_query(table_meta: &Vec<TableMeta>, df_plan: &LogicalPlan) -> Result<usize> {
+fn execute_query(table_meta: &Vec<TableMeta>, df_plan: &LogicalPlan) -> Result<Vec<proto::RecordBatch>> {
     let mut context = ExecutionContext::new();
     table_meta.iter().for_each(|table| {
         let schema = execution::create_arrow_schema(table.schema.as_ref().unwrap()).unwrap();
@@ -68,13 +75,51 @@ fn execute_query(table_meta: &Vec<TableMeta>, df_plan: &LogicalPlan) -> Result<u
 
     let mut x = relation.borrow_mut();
 
-    let mut count = 0;
+    let mut batches = vec![];
     while let Some(batch) = x.next()? {
         println!("Reading batch with {} rows x {} columns", batch.num_rows(), batch.num_columns());
-        count += batch.num_rows();
+        batches.push(serialize_batch(&batch)?);
     }
 
-    Ok(count)
+    Ok(batches)
+}
+
+fn serialize_batch(batch: &RecordBatch) -> Result<proto::RecordBatch> {
+    // this just serializes to CSV for now but needs to use IPC encoding instead
+    let mut data = String::new();
+    for i in 0..batch.num_rows() {
+
+        for j in 0..batch.num_columns() {
+
+            if j>0 {
+                data.push_str(",");
+            }
+
+            let col = batch
+                .column(j)
+                .as_any();
+
+            match batch.schema().field(j).data_type() {
+//                DataType::Utf8 => {
+//                    let col = col.downcast_ref::<BinaryArray>().unwrap();
+//                    data.push_str(&format!("{}", col.value(i)));
+//                }
+                DataType::UInt32 => {
+                    let col = col.downcast_ref::<UInt32Array>().unwrap();
+                    data.push_str(&format!("{}", col.value(i)));
+                }
+                DataType::Float64 => {
+                    let col = col.downcast_ref::<Float64Array>().unwrap();
+                    data.push_str(&format!("{}", col.value(i)));
+                }
+                _ => return Err(BallistaError::NotImplemented("Unsupported result data type".to_string()))
+            }
+        }
+        data.push_str("\n");
+    }
+    Ok(proto::RecordBatch {
+        data
+    })
 }
 
 
