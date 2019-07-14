@@ -57,16 +57,20 @@ fn execute_query(table_meta: &Vec<TableMeta>, df_plan: &LogicalPlan) -> Result<u
 
     });
 
-    let optimized_plan = context.optimize(&df_plan)?;
-    info!("Optimized plan: {:?}", optimized_plan);
+    // the plan is already optimized by the client!
 
+//    let optimized_plan = context.optimize(&df_plan)?;
+//    info!("Optimized plan: {:?}", optimized_plan);
 
-    let relation = context.execute(&optimized_plan, 1024)?;
+    println!("Executing: {:?}", df_plan);
+
+    let relation = context.execute(&df_plan, 1024)?;
 
     let mut x = relation.borrow_mut();
 
     let mut count = 0;
     while let Some(batch) = x.next()? {
+        println!("Reading batch with {} rows x {} columns", batch.num_rows(), batch.num_columns());
         count += batch.num_rows();
     }
 
