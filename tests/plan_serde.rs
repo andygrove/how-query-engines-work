@@ -6,7 +6,6 @@ extern crate log;
 use arrow::datatypes::{DataType, Field, Schema};
 use datafusion::execution::context::ExecutionContext;
 use datafusion::logicalplan::LogicalPlan;
-use ballista::proto;
 use ballista::logical_plan;
 use ballista::execution;
 use ballista::error::Result;
@@ -23,7 +22,7 @@ fn test_aggregate_roundtrip() -> Result<()> {
         Field::new("VendorID", DataType::Utf8, true),
         Field::new("tpep_pickup_datetime", DataType::Utf8, true),
         Field::new("tpep_dropoff_datetime", DataType::Utf8, true),
-        Field::new("passenger_count", DataType::UInt32, true),
+        Field::new("passenger_count", DataType::Utf8, true),
         Field::new("trip_distance", DataType::Float64, true),
         Field::new("RatecodeID", DataType::Utf8, true),
         Field::new("store_and_fwd_flag", DataType::Utf8, true),
@@ -51,20 +50,19 @@ fn test_aggregate_roundtrip() -> Result<()> {
     ctx.register_csv("tripdata", &filename, &schema, true);
     let logical_plan = ctx.create_logical_plan(
         "SELECT passenger_count, MIN(fare_amount), MAX(fare_amount) \
-            FROM tripdata GROUP BY trip_distance").unwrap();
+            FROM tripdata GROUP BY passenger_count").unwrap();
     println!("Logical plan: {:?}", logical_plan);
 
     // execute query just to be sure the plan is valid
-    let result = ctx.execute(&logical_plan, 1024)?;
-    let mut result = result.borrow_mut();
-    while let Ok(Some(batch)) = result.next() {
-        println!("Fetched {} rows x {} columns", batch.num_rows(), batch.num_columns());
-    }
+    //execute(&mut ctx, &logical_plan)?;
 
     // convert
     let plan = round_trip(&logical_plan)?;
 
     assert_eq!(format!("{:?}", logical_plan), format!("{:?}", plan));
+
+    // execute query just to be sure the plan is valid
+    //execute(&mut ctx, &plan)?;
 
     Ok(())
 }
@@ -78,4 +76,15 @@ fn round_trip(plan: &LogicalPlan) -> Result<Arc<LogicalPlan>> {
     let table = execution::create_datafusion_plan(&ballista_plan.to_proto())?;
 
     Ok(table.to_logical_plan())
+}
+
+fn execute(ctx: &mut ExecutionContext, logical_plan: &LogicalPlan) -> Result<()> {
+    println!("Executing query: {:?}", logical_plan);
+    let result = ctx.execute(logical_plan, 1024)?;
+    let mut result = result.borrow_mut();
+    while let Some(batch)= result.next()? {
+        println!("Fetched {} rows x {} columns", batch.num_rows(), batch.num_columns());
+    }
+    println!("End of results");
+    Ok(())
 }
