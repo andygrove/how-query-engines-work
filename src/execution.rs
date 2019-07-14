@@ -72,12 +72,15 @@ pub fn create_datafusion_plan(plan: &proto::LogicalPlanNode) -> Result<Arc<dyn T
 
         let projection: Vec<usize> = file.projection.iter().map(|i| *i as usize).collect();
 
+        let projected_schema = Schema::new(projection.iter().map(|i| schema.field(*i).clone()).collect());
+
         println!("created table scan with schema {:?} and projection {:?}", schema, projection);
 
         Ok(Arc::new(TableImpl::new(Arc::new(DFPlan::TableScan {
             schema_name: "default".to_string(),
             table_name: file.filename.clone(),
-            schema: Arc::new(schema),
+            table_schema: Arc::new(schema.clone()),
+            projected_schema: Arc::new(projected_schema),
             projection: Some(projection),
         }))))
     } else if plan.projection.is_some() {

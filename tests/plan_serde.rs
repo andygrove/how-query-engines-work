@@ -51,6 +51,7 @@ fn test_aggregate_roundtrip() -> Result<()> {
     let logical_plan = ctx.create_logical_plan(
         "SELECT passenger_count, MIN(fare_amount), MAX(fare_amount) \
             FROM tripdata GROUP BY passenger_count").unwrap();
+
     println!("Logical plan: {:?}", logical_plan);
 
     // execute query just to be sure the plan is valid
@@ -58,8 +59,13 @@ fn test_aggregate_roundtrip() -> Result<()> {
 
     // convert
     let plan = round_trip(&logical_plan)?;
+    println!("Logical plan after serde: {:?}", logical_plan);
 
-    assert_eq!(format!("{:?}", logical_plan), format!("{:?}", plan));
+    let original_plan_str = format!("{:?}", logical_plan);
+    let new_plan_str = format!("{:?}", plan);
+
+
+    assert_eq!(original_plan_str, new_plan_str);
 
     // execute query just to be sure the plan is valid
     //execute(&mut ctx, &plan)?;

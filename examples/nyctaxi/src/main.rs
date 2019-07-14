@@ -53,8 +53,8 @@ pub fn main() {
         let mut ctx = ExecutionContext::new();
         ctx.register_csv("tripdata", &filename, &schema, true);
         let logical_plan = ctx.create_logical_plan(
-            "SELECT trip_distance, MIN(fare_amount), MAX(fare_amount) \
-            FROM tripdata GROUP BY trip_distance").unwrap();
+            "SELECT passenger_count, MIN(fare_amount), MAX(fare_amount) \
+            FROM tripdata GROUP BY passenger_count").unwrap();
 
         info!("Logical plan: {:?}", logical_plan);
 

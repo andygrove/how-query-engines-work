@@ -181,14 +181,14 @@ pub fn convert_to_ballista_plan(plan: &DFPlan) -> Result<LogicalPlan> {
     match plan {
         DFPlan::TableScan {
             table_name,
-            schema,
+            table_schema,
             projection,
             ..
         } => {
 
-            println!("table schema has {} columns and projection is {:?}", schema.fields().len(), projection);
+            println!("table schema has {} columns and projection is {:?}", table_schema.fields().len(), projection);
 
-            Ok(read_file(table_name, schema.as_ref(), projection.as_ref().unwrap().to_vec()))
+            Ok(read_file(table_name, table_schema.as_ref(), projection.as_ref().unwrap().to_vec()))
         }
         DFPlan::Aggregate {
             input,
