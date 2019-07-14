@@ -8,5 +8,6 @@ spec:
       containers:
         - name: application
           image: andygrove/ballista-nyctaxi:0.1.2
+          imagePullPolicy: Always
       restartPolicy: Never
   backoffLimit: 1

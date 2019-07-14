@@ -100,4 +100,7 @@ USER 1000
 
 EXPOSE 9090
 
+ENV RUST_LOG=debug
+ENV RUST_BACKTRACE=1
+
 CMD ["/ballista-server"]

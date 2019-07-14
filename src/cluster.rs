@@ -34,7 +34,7 @@ fn execute(request: http::Request<Vec<u8>>) -> Result<http::Response<Vec<u8>>, B
     };
 
     //TODO: this is hard-coded for local minikube
-    let uri = format!("http://localhost:8080{}", path);
+    let uri = format!("http://localhost:8001{}", path);
 
     let client = reqwest::Client::new();
 

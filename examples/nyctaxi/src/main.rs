@@ -1,11 +1,19 @@
 use std::thread;
 
 use arrow::datatypes::{DataType, Field, Schema};
+use datafusion::execution::context::ExecutionContext;
 use ballista::client::Client;
 use ballista::cluster;
-use ballista::logical_plan::{column, max, read_file};
+use ballista::proto;
+use ballista::logical_plan;
+
+#[macro_use]
+extern crate log;
 
 pub fn main() {
+
+    let _ = ::env_logger::init();
+
     // discover available executors
     let executors = cluster::get_executors("NYCTAXI").unwrap();
 
@@ -14,20 +22,20 @@ pub fn main() {
         Field::new("VendorID", DataType::Utf8, true),
         Field::new("tpep_pickup_datetime", DataType::Utf8, true),
         Field::new("tpep_dropoff_datetime", DataType::Utf8, true),
-        Field::new("passenger_count", DataType::Utf8, true),
+        Field::new("passenger_count", DataType::UInt32, true),
         Field::new("trip_distance", DataType::Utf8, true),
         Field::new("RatecodeID", DataType::Utf8, true),
         Field::new("store_and_fwd_flag", DataType::Utf8, true),
         Field::new("PULocationID", DataType::Utf8, true),
         Field::new("DOLocationID", DataType::Utf8, true),
         Field::new("payment_type", DataType::Utf8, true),
-        Field::new("fare_amount", DataType::Utf8, true),
-        Field::new("extra", DataType::Utf8, true),
-        Field::new("mta_tax", DataType::Utf8, true),
-        Field::new("tip_amount", DataType::Utf8, true),
-        Field::new("tolls_amount", DataType::Utf8, true),
-        Field::new("improvement_surcharge", DataType::Utf8, true),
-        Field::new("total_amount", DataType::Utf8, true),
+        Field::new("fare_amount", DataType::Float64, true),
+        Field::new("extra", DataType::Float64, true),
+        Field::new("mta_tax", DataType::Float64, true),
+        Field::new("tip_amount", DataType::Float64, true),
+        Field::new("tolls_amount", DataType::Float64, true),
+        Field::new("improvement_surcharge", DataType::Float64, true),
+        Field::new("total_amount", DataType::Float64, true),
     ]);
 
     let mut threads: Vec<thread::JoinHandle<_>> = vec![];
@@ -41,15 +49,23 @@ pub fn main() {
             month + 1
         );
 
-        // simple projection
-        let plan = read_file(&filename, &schema) //TODO inconsistent API .. read_file should return Result
-            .projection(vec![0, 1, 2]).unwrap();
+        // create DataFusion query plan to execute on each partition
+        let mut ctx = ExecutionContext::new();
+        ctx.register_csv("tripdata", &filename, &schema, true);
+        let logical_plan = ctx.create_logical_plan(
+            "SELECT passenger_count, MIN(fare_amount), MAX(fare_amount) \
+            FROM tripdata GROUP BY passenger_count").unwrap();
 
-        //TODO aggregate query
-        // build query plan for "SELECT trip_distance, MAX(fare_amount) FROM .. GROUP BY trip_distance LIMIT 10"
-//        let plan = read_file(&filename, &schema) //TODO inconsistent API .. read_file should return Result
-//            .aggregate(vec![column(3)], vec![max(&column(10))])
-//            .unwrap();
+        info!("Logical plan: {:?}", logical_plan);
+
+        // convert DataFusion plan to Ballista protobuf
+        let table_meta = vec![proto::TableMeta {
+            table_name: "tripdata".to_string(),
+            filename,
+            file_type: "csv".to_string(),
+            schema: Some(logical_plan::create_ballista_schema(&schema).unwrap())
+        }];
+        let plan = logical_plan::convert_to_ballista_plan(&logical_plan).unwrap();
 
         // send the plan to a ballista server
         let executor = &executors[executor_index];
@@ -60,7 +76,7 @@ pub fn main() {
         threads.push(thread::spawn(move || {
             println!("Executing query against executor at {}:{}", host, port);
             let client = Client::new(&host, port);
-            client.send(plan);
+            client.send(plan, table_meta);
         }));
 
         executor_index += 1;

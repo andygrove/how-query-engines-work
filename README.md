@@ -47,9 +47,12 @@ kubectl logs -f ballista-nyctaxi-app-n5kxl
 - [X] Ballista CLI - delete cluster
 - [X] Ballista CLI - run application
 - [X] Simple example application works end to end
-- [ ] Add support for aggregate queries 
+- [X] Add support for aggregate queries 
 - [ ] Server can stream Arrow data back to application
 - [ ] Write blog post and announce Ballista
+
+# v1.0.0 Plan 
+
 - [ ] Server can write results to CSV files
 - [ ] Server can write results to Parquet files
 - [ ] Benchmarks
