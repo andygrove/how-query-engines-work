@@ -116,7 +116,7 @@ fn delete_cluster(matches: &ArgMatches) {
     let all_pods = cluster::list_pods(namespace).unwrap();
 
     for name in all_pods {
-        if name.starts_with(&pod_name_prefix) {
+        if name.starts_with(&pod_name_prefix) && !name.contains("app") {
             cluster::delete_pod(namespace, &name).unwrap();
             cluster::delete_service(namespace, &name).unwrap();
         }
