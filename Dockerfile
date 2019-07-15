@@ -94,13 +94,12 @@ RUN cargo build --release --target x86_64-unknown-linux-musl
 
 # Copy the statically-linked binary into a scratch container.
 FROM scratch
-COPY --from=build /tmp/ballista/target/x86_64-unknown-linux-musl/release/ballista /
 COPY --from=build /tmp/ballista/target/x86_64-unknown-linux-musl/release/ballista-server /
 USER 1000
 
 EXPOSE 9090
 
-ENV RUST_LOG=debug
+ENV RUST_LOG=info
 ENV RUST_BACKTRACE=1
 
 CMD ["/ballista-server"]

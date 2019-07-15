@@ -126,6 +126,12 @@ message TableMeta {
   Schema schema = 4;
 }
 
+// for now this is just CSV data so I can get the end to end PoC working quickly but this needs to be
+// IPC format eventually
+message RecordBatch {
+  string data = 1;
+}
+
 service Executor {
   rpc execute(ExecuteRequest) returns (ExecuteResponse) {}
 }
@@ -137,4 +143,5 @@ message ExecuteRequest {
 
 message ExecuteResponse {
   string message = 1;
+  repeated RecordBatch batch = 2;
 }

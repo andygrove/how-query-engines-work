@@ -7,7 +7,7 @@ metadata:
   namespace: default
 spec:
   containers:
-    - image: andygrove/ballista:0.1.2
+    - image: andygrove/ballista:0.1.3
       imagePullPolicy: Always
       name: executor
       ports:

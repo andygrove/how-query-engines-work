@@ -48,7 +48,8 @@ kubectl logs -f ballista-nyctaxi-app-n5kxl
 - [X] Ballista CLI - run application
 - [X] Simple example application works end to end
 - [X] Add support for aggregate queries 
-- [ ] Server can stream Arrow data back to application
+- [X] Server can return Arrow data back to the application (in CSV format for now)
+- [ ] Example application can aggregate the aggregate results from each partition/node
 - [ ] Write blog post and announce Ballista
 
 # v1.0.0 Plan 
@@ -61,6 +62,7 @@ kubectl logs -f ballista-nyctaxi-app-n5kxl
 - [ ] Distributed query planner
 - [ ] Support user code as part of distributed query execution
 - [ ] SQL support
+- [ ] REPL
 - [ ] Java bindings (supporting Java, Kotlin, Scala)
 
 
