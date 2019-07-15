@@ -21,6 +21,7 @@ From the root of this project, run these commands:
 cargo run --bin ballista -- create-cluster --name nyctaxi --num-executors 12 --template examples/nyctaxi/templates/executor.yaml
 cargo run --bin ballista -- run --name nyctaxi --template examples/nyctaxi/templates/application.yaml
 cargo run --bin ballista -- delete-cluster --name nyctaxi
+kubectl delete job ballista-nyctaxi-app 
 ```
 
 # Notes
