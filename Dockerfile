@@ -68,16 +68,6 @@ ENV OPENSSL_DIR=/usr/local/musl/ \
     LIBZ_SYS_STATIC=1 \
     TARGET=musl
 
-## fake build to cache dependencies
-##WORKDIR /tmp
-##RUN USER=root cargo new --bin ballista
-##WORKDIR /tmp/ballista
-##COPY Cargo.fake ./
-##COPY Cargo.lock ./
-##RUN cp Cargo.fake Cargo.toml
-##RUN cargo build --release --target x86_64-unknown-linux-musl
-##RUN rm -rf src
-
 # Copy Ballista sources
 RUN mkdir -p /tmp/ballista/src
 RUN mkdir -p /tmp/ballista/proto
@@ -95,7 +85,11 @@ RUN cargo build --release --target x86_64-unknown-linux-musl
 # Copy the statically-linked binary into a scratch container.
 FROM scratch
 COPY --from=build /tmp/ballista/target/x86_64-unknown-linux-musl/release/ballista-server /
-USER 1000
+#USER 1000
+
+RUN apk update && \
+    apk upgrade && \
+    apk add bash
 
 EXPOSE 9090
 
