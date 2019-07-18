@@ -3,7 +3,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Version](https://img.shields.io/crates/v/ballista.svg)](https://crates.io/crates/ballista)
-[![Build Status](https://travis-ci.org/andygrove/ballista.svg?branch=master)](https://travis-ci.org/andygrove/ballista)
+[![Build Status](https://travis-ci.com/andygrove/ballista.svg?branch=master)](https://travis-ci.com/andygrove/ballista)
 [![Gitter Chat](https://badges.gitter.im/ballista-rs/community.svg)](https://gitter.im/ballista-rs/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Ballista is a proof-of-concept distributed compute platform based on Kubernetes and the Rust implementation of [Apache Arrow](https://arrow.apache.org/).
