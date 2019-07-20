@@ -1,6 +1,5 @@
 extern crate ballista;
 
-#[macro_use]
 extern crate log;
 
 use arrow::datatypes::{DataType, Field, Schema};
@@ -14,7 +13,7 @@ use std::sync::Arc;
 
 #[test]
 fn test_aggregate_roundtrip() -> Result<()> {
-    let _ = ::env_logger::init();
+    ::env_logger::init();
 
     // schema for nyxtaxi csv files
     let schema = Schema::new(vec![
@@ -47,11 +46,10 @@ fn test_aggregate_roundtrip() -> Result<()> {
     // create DataFusion query plan to execute on each partition
     let mut ctx = ExecutionContext::new();
     ctx.register_csv("tripdata", &filename, &schema, true);
-    let logical_plan = ctx
-        .create_logical_plan(
-            "SELECT passenger_count, MIN(fare_amount), MAX(fare_amount) \
-             FROM tripdata GROUP BY passenger_count",
-        )?;
+    let logical_plan = ctx.create_logical_plan(
+        "SELECT passenger_count, MIN(fare_amount), MAX(fare_amount) \
+         FROM tripdata GROUP BY passenger_count",
+    )?;
     let logical_plan = ctx.optimize(&logical_plan)?;
 
     println!("Logical plan: {:?}", logical_plan);
@@ -85,6 +83,7 @@ fn round_trip(plan: &LogicalPlan) -> Result<Arc<LogicalPlan>> {
     Ok(table.to_logical_plan())
 }
 
+#[allow(dead_code)]
 fn execute(ctx: &mut ExecutionContext, logical_plan: &LogicalPlan) -> Result<()> {
     println!("Executing query: {:?}", logical_plan);
     let result = ctx.execute(logical_plan, 1024)?;

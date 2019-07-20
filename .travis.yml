@@ -2,3 +2,10 @@ language: rust
 rust:
   - nightly
 cache: cargo
+before_script:
+  - rustup component add rustfmt clippy
+script:
+  - cargo fmt --all -- --check
+  - cargo clippy --all
+  - cargo build
+  - cargo test
