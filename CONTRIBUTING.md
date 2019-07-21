@@ -8,18 +8,20 @@ There is also a [wiki](https://github.com/andygrove/ballista/wiki) with a list o
 
 This project depends on some existing technologies, so it is a good idea to learn a little about those too:
 
-- Apache Arrow
-- DataFusion
-- Kubernetes
-- gRPC
+- [Apache Arrow](https://arrow.apache.org/)
+- [DataFusion](https://github.com/apache/arrow/tree/master/rust/datafusion)
+- [Kubernetes](https://kubernetes.io/)
+- [gRPC](https://grpc.io/)
 
-# Introduce yourself!
+# Introduce Yourself!
 
 We have a [Gitter IM room](https://gitter.im/ballista-rs/community) for discussing this project. 
 
 # Issues
 
 See https://github.com/andygrove/ballista/issues for a list of open issues. I recommend starting here when contributing because there is a plan in place for delivering useful point solutions along the way as the project heads towards a v1.0 release. For example, working on a distributed query planner is fun but doesn't make sense until we have the ability to execute a hand-written plan, and Ballista has value even if users have to hand-write plans.
+
+Note that many of the issues are for research tasks right now given the early nature of this project.
 
 # Creating Pull Requests
 
