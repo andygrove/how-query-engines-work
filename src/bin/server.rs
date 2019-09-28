@@ -71,7 +71,8 @@ fn execute_query(
             "Registering table {} as filename {}",
             table.table_name, table.filename
         );
-        context.register_csv(&table.table_name, &table.filename, &schema, true); //TODO has_header should not be hard-coded
+        context.register_csv(&table.table_name, &table.filename, &schema, true);
+        //TODO has_header should not be hard-coded
     });
 
     // the plan is already optimized by the client!

@@ -27,7 +27,6 @@ use datafusion::execution::table_impl::TableImpl;
 use datafusion::logicalplan::{Expr, LogicalPlan as DFPlan};
 use datafusion::table::Table;
 
-
 /// Convert a Ballista protobuf data type to an Arrow DataType
 fn to_arrow_type(proto_type: i32) -> Result<DataType> {
     match proto_type {
