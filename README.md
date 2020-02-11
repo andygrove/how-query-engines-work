@@ -9,7 +9,7 @@
 
 Ballista is a proof-of-concept distributed compute platform based on [Kubernetes](https://kubernetes.io/) and [Apache Arrow](https://arrow.apache.org/). 
 
-Note that the project has pivoted since the original PoC and is currently being re-implemented. The most significant change is that this is no longer a pure Rust project. I still believe that Rust is a great language for this project, but it can't be the only language. One of the key benefits of Arrow is that it supports multiple languages, including C, C++, C#, Go, Java, JavaScript, MATLAB, Python, R, Ruby, and Rust. It should therefore be possible for the Ballista architecture to support more than one language. User's need the ability to execute custom code as part of a distributed compute job and likely have existing code. User's are also likely to want compatibility with more traditional data science languages such as Python or R, as well as Java.
+Note that the project has pivoted since the original PoC and is currently being re-implemented. The most significant change is that this is no longer a pure Rust project. I still believe that Rust is a great language for this project, but it can't be the only language. One of the key benefits of Arrow is that it supports multiple languages, including C, C++, C#, Go, Java, JavaScript, MATLAB, Python, R, Ruby, and Rust. It should therefore be possible for the Ballista architecture to support more than one language. Users need the ability to execute custom code as part of a distributed compute job and likely have existing code. Users are also likely to want compatibility with more traditional data science languages such as Python or R, as well as Java.
 
 # Ballista Goals
 
