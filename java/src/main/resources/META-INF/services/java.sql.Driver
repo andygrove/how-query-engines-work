@@ -1,1 +1,1 @@
-org.apache.arrow.jdbc.Driver
+io.andygrove.ballista.jdbc.Driver

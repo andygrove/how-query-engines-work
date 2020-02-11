@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.arrow.jdbc;
+package io.andygrove.ballista.jdbc;
 
 import static org.junit.Assert.*;
 
