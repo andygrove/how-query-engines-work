@@ -8,3 +8,7 @@
  */
 
 rootProject.name = "ballista"
+
+include("jdbc")
+include("spark")
+
