@@ -14,7 +14,7 @@ Note that the project has pivoted since the original PoC and is currently being 
 # Ballista Goals
 
 - Define a logical query plan in protobuf format. See [ballista.proto](proto/ballista.proto)
-- Provide DataFrame style interfaces for JVM (Java, Kotlin, Scala), Rust, and Python
+- Provide DataFrame style interfaces for JVM (Java, [Kotlin](jvm/client/src/main/kotlin/DataFrame.kt), Scala), [Rust](rust/src/dataframe.rs), and Python
 - Use Apache Flight for sending query plans between nodes, and streaming results between nodes
 - Allow clusters to be created, consisting of executors implemented in any language that supports Flight
 - Distributed compute jobs should be capable of invoking code in more than one language (with some performance trade-offs for IPC overhead)
