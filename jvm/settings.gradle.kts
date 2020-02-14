@@ -9,6 +9,7 @@
 
 rootProject.name = "ballista"
 
+include("client")
 include("jdbc")
 include("spark")
 

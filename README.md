@@ -7,17 +7,18 @@
 
 # Overview
 
-Ballista is an experimental distributed compute platform based on [Kubernetes](https://kubernetes.io/) and [Apache Arrow](https://arrow.apache.org/) that I am developing in my spare time for educational purposes only. 
+Ballista is an experimental distributed compute platform based on [Kubernetes](https://kubernetes.io/) and [Apache Arrow](https://arrow.apache.org/) that I am developing in my spare time for fun. 
 
 Note that the project has pivoted since the original PoC and is currently being re-implemented. The most significant change is that this is no longer a pure Rust project. I still believe that Rust is a great language for this project, but it can't be the only language. One of the key benefits of Arrow is that it supports multiple languages, including C, C++, C#, Go, Java, JavaScript, MATLAB, Python, R, Ruby, and Rust. It should therefore be possible for the Ballista architecture to support more than one language. Users need the ability to execute custom code as part of a distributed compute job and likely have existing code. Users are also likely to want compatibility with more traditional data science languages such as Python or R, as well as Java.
 
 # Ballista Goals
 
-- Define a physical query plan in protobuf format. See [ballista.proto](proto/ballista.proto)
+- Define a logical query plan in protobuf format. See [ballista.proto](proto/ballista.proto)
+- Provide DataFrame style interfaces for JVM (Java, Kotlin, Scala), Rust, and Python
 - Use Apache Flight for sending query plans between nodes, and streaming results between nodes
 - Allow clusters to be created, consisting of executors implemented in any language that supports Flight
 - Distributed compute jobs should be capable of invoking code in more than one language (with some performance trade-offs for IPC overhead)
-- Provide clients and connectors for Java, Rust, Python, and Apache Spark
+- Provide integrations with Apache Spark (e.g. Spark V2 Data Source allowing Spark to interact with Ballista)
 
 # Ballista Anti Goals
 
@@ -25,7 +26,7 @@ Note that the project has pivoted since the original PoC and is currently being 
 
 # Status
 
-I learned a lot from the initial PoC (see below for a demo and more info) but have decided to start the project again due to the changes in scope mentioned above.
+I learned a lot from the initial PoC (see below for a demo and more info) but have decided to start the project again due to the changes in scope mentioned above so the project is currently in a state of flux and nothing works right now. 
 
 # PoC #1
 
