@@ -27,7 +27,16 @@ Note that the project has pivoted since the original PoC and is currently being 
 
 # Status
 
-I learned a lot from the initial PoC (see below for a demo and more info) but have decided to start the project again due to the changes in scope mentioned above so the project is currently in a state of flux and nothing works right now. 
+I learned a lot from the initial PoC (see below for a demo and more info) but have decided to start the project again due to the changes in scope mentioned above so the project is currently in a state of flux and nothing works right now but I am in the process of building a second PoC.
+
+Here is a rough plan for delivering PoC #2:
+
+- [ ] Implement a Rust server implementing Flight protocol that can receive a logical plan and validate it and execute it (in progress)
+- [ ] Implement a Kotlin DataFrame client that can build a plan and execute it against the Rust server (in progress)
+- [ ] Implement a Rust DataFrame client that can build a plan and execute it against the Rust server (in progress)
+- [ ] Implement a JDBC driver that can execute a SQL statement against the Rust server (in progress)
+- [ ] Implement a Scala server implementing the Flight protocol that can receive a logical plan and translate it to Spark and execute it
+- [ ] Build a benchmark client in Kotlin that can run against the Rust and Scala servers
 
 # PoC #1
 
