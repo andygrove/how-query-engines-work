@@ -47,6 +47,7 @@ sealed class LogicalPlan {
     class Aggregate(val groupBy: List<Expr>, aggregates: List<AggregateExpr>) : LogicalPlan()
     class Offset(val n: Int): LogicalPlan()
     class Limit(val n: Int): LogicalPlan()
+    class ScanParquet(val filename: String): LogicalPlan()
 }
 
 class DefaultDataFrame : DataFrame {

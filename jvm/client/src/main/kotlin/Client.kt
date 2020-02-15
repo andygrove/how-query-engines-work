@@ -2,8 +2,7 @@ package io.andygrove.ballista.client
 
 //import io.andygrove.ballista.
 
-import io.andygrove.ballista.ColumnIndex
-import io.andygrove.ballista.ExprNode
+import io.andygrove.ballista.*
 import org.apache.arrow.flight.CallOptions
 import org.apache.arrow.flight.FlightClient
 import org.apache.arrow.flight.Location
@@ -28,18 +27,24 @@ class Client(val host: String, val port: Int) {
 
     fun execute(plan: LogicalPlan) {
 
+        val protoBuf = toProto(plan)
 
-//        var ticket = Ticket(query.toByteArray())
-//
-//        var stream = client.getStream(ticket, callOptions)
+        var ticket = Ticket(protoBuf.toByteArray())
+
+        var stream = client.getStream(ticket, callOptions)
 
     }
 
     /** Convert a Kotlin LogicalPlan to a protobuf LogicalPlan */
-    fun toProto(plan: LogicalPlan) {
-        when (plan) {
-            is LogicalPlan.Projection -> plan.expr
-
+    fun toProto(plan: LogicalPlan): LogicalPlanNode {
+        return when (plan) {
+            is LogicalPlan.Projection -> {
+                LogicalPlanNode.newBuilder()
+                        .setProjection(Projection.newBuilder()
+                            .addAllExpr(plan.expr.map { toProto(it) }).build())
+                        .build()
+            }
+            else -> throw IllegalStateException()
         }
     }
 
@@ -49,9 +54,7 @@ class Client(val host: String, val port: Int) {
             is Expr.ColumnIndex -> {
                 ExprNode.newBuilder().setColumnIndex(ColumnIndex.newBuilder().setIndex(expr.i).build()).build()
             }
-            else -> {
-                throw IllegalStateException()
-            }
+            else -> throw IllegalStateException()
         }
     }
 
