@@ -23,9 +23,11 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
     testImplementation("junit:junit:4.12")
+    
+    compile(project(":protobuf"))
 
-    implementation("org.apache.arrow:flight-core:1.0.0-SNAPSHOT")
-    implementation("org.apache.arrow:flight-grpc:1.0.0-SNAPSHOT")
+    implementation("org.apache.arrow:flight-core:0.16.0")
+    implementation("org.apache.arrow:flight-grpc:0.16.0")
 
 }
 

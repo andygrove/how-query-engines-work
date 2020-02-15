@@ -9,7 +9,7 @@ interface DataFrame {
     fun filter(expr: Expr): DataFrame
 
     /** Read a parquet data source at the given path */
-    fun parquet(filename: String)
+    fun parquet(filename: String): DataFrame
 
     /** Execute the query and collect the results */
     fun collect(): Iterator<RecordBatch>
@@ -22,12 +22,15 @@ interface RecordBatch {
 
 
 sealed class Expr {
-    class Column(val name: String)
-    class LiteralLong(val n: Long)
+    class Column(val name: String): Expr()
+    class ColumnIndex(val i: Int): Expr()
+    class LiteralInt(val n: Int): Expr()
     class Add(val expr: Expr) : Expr()
     class Subtract(val expr: Expr) : Expr()
     class Multiply(val expr: Expr) : Expr()
     class Divide(val expr: Expr) : Expr()
+    class Eq(val l: Expr, val r: Expr) : Expr()
+    class And(val l: Expr, val r: Expr) : Expr()
 }
 
 sealed class AggregateExpr {
@@ -56,7 +59,7 @@ class DefaultDataFrame : DataFrame {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
-    override fun parquet(filename: String) {
+    override fun parquet(filename: String): DataFrame {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
@@ -65,6 +68,3 @@ class DefaultDataFrame : DataFrame {
     }
 }
 
-object BallistaContext {
-
-}
