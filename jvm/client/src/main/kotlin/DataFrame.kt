@@ -45,3 +45,26 @@ sealed class LogicalPlan {
     class Offset(val n: Int): LogicalPlan()
     class Limit(val n: Int): LogicalPlan()
 }
+
+class DefaultDataFrame : DataFrame {
+
+    override fun select(expr: List<Expr>): DataFrame {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun filter(expr: Expr): DataFrame {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun parquet(filename: String) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
+    override fun collect(): Iterator<RecordBatch> {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+}
+
+object BallistaContext {
+
+}

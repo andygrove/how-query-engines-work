@@ -11,5 +11,6 @@ rootProject.name = "ballista"
 
 include("client")
 include("jdbc")
+include("protobuf")
 include("spark")
 

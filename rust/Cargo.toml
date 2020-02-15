@@ -19,3 +19,6 @@ arrow = { git = "https://github.com/andygrove/arrow", branch = "master" }
 arrow-flight = { git = "https://github.com/andygrove/arrow", branch = "master" }
 datafusion = { git = "https://github.com/andygrove/arrow", branch = "master" }
 
+[[bin]]
+name = "executor"
+path = "src/bin/executor.rs"

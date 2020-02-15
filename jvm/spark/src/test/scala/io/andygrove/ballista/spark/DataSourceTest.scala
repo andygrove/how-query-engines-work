@@ -1,10 +1,11 @@
 package io.andygrove.ballista.spark
 
-import org.junit.Test
+import org.junit.{Ignore, Test}
 import org.apache.spark.sql.SparkSession
 
 class DataSourceTest {
 
+  @Ignore
   @Test
   def testSomething() {
 
