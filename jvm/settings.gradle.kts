@@ -9,6 +9,11 @@
 
 rootProject.name = "ballista"
 
+// kotlin-query
+include("datasource")
+include("logical-plan")
+
+// ballista
 include("client")
 include("jdbc")
 include("protobuf")
