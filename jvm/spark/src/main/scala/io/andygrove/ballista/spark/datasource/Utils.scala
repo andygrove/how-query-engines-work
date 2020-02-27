@@ -1,4 +1,4 @@
-package io.andygrove.ballista.spark
+package io.andygrove.ballista.spark.datasource
 
 import java.util.Optional
 
