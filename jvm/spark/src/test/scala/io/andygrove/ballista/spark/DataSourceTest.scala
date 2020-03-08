@@ -6,6 +6,7 @@ import org.apache.spark.sql.SparkSession
 class DataSourceTest {
 
   @Test
+  @Ignore
   def testSomething() {
 
     val spark = SparkSession.builder()
