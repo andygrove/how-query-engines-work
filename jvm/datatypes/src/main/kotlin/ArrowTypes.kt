@@ -1,4 +1,4 @@
-package org.ballistacompute.datasource
+package org.ballistacompute.datatypes
 
 //TODO
 

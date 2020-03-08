@@ -10,6 +10,7 @@
 rootProject.name = "ballista"
 
 // Ballista JVM Query Engine
+include("datatypes")
 include("datasource")
 include("logical-plan")
 include("optimizer")

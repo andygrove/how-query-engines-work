@@ -1,5 +1,7 @@
 package org.ballistacompute.datasource
 
+import org.ballistacompute.datatypes.RecordBatch
+
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.IntVector
 import org.apache.arrow.vector.VectorSchemaRoot
@@ -13,7 +15,7 @@ import org.apache.parquet.hadoop.ParquetFileReader
 import org.apache.parquet.hadoop.util.HadoopInputFile
 import org.apache.parquet.io.ColumnIOFactory
 import org.apache.parquet.io.RecordReader
-import org.apache.parquet.schema.PrimitiveType
+import org.ballistacompute.datatypes.ArrowFieldVector
 
 class ParquetDataSource(private val filename: String) : DataSource {
 

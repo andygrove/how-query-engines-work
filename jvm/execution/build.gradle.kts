@@ -4,6 +4,7 @@ plugins {
 
 
 dependencies {
+    implementation(project(":datatypes"))
     implementation(project(":datasource"))
     implementation(project(":logical-plan"))
     implementation(project(":physical-plan"))

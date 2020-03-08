@@ -1,6 +1,11 @@
 package org.ballistacompute.physical
 
-import org.ballistacompute.datasource.*
+import org.ballistacompute.datatypes.RecordBatch
+import org.ballistacompute.datatypes.ColumnVector
+import org.ballistacompute.datatypes.ArrowFieldVector
+import org.ballistacompute.datatypes.LiteralValueVector
+import org.ballistacompute.datatypes.ArrowVectorBuilder
+
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.*
 import org.apache.arrow.vector.types.pojo.ArrowType

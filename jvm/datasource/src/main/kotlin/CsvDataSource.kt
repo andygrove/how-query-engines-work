@@ -1,5 +1,7 @@
 package org.ballistacompute.datasource
 
+import org.ballistacompute.datatypes.RecordBatch
+
 import com.github.doyaaaaaken.kotlincsv.client.CsvFileReader
 import com.github.doyaaaaaken.kotlincsv.client.CsvReader
 import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
@@ -9,6 +11,7 @@ import org.apache.arrow.vector.VectorSchemaRoot
 import org.apache.arrow.vector.types.pojo.ArrowType
 import org.apache.arrow.vector.types.pojo.Field
 import org.apache.arrow.vector.types.pojo.Schema
+import org.ballistacompute.datatypes.ArrowFieldVector
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader

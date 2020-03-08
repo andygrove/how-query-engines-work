@@ -1,4 +1,4 @@
-package org.ballistacompute.datasource
+package org.ballistacompute.datatypes
 
 import org.apache.arrow.vector.VarCharVector
 import org.apache.arrow.vector.VectorSchemaRoot

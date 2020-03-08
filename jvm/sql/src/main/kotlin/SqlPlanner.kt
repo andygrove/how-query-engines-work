@@ -79,25 +79,28 @@ class SqlPlanner {
             is SqlString -> LiteralString(expr.value)
             is SqlLong -> LiteralLong(expr.value)
             is SqlDouble -> LiteralDouble(expr.value)
-            is SqlBinaryExpr -> when(expr.op) {
-                // comparison operators
-                "=" -> Eq(createLogicalExpr(expr.l, input), createLogicalExpr(expr.r, input))
-                "!=" -> Neq(createLogicalExpr(expr.l, input), createLogicalExpr(expr.r, input))
-                ">" -> Gt(createLogicalExpr(expr.l, input), createLogicalExpr(expr.r, input))
-                ">=" -> GtEq(createLogicalExpr(expr.l, input), createLogicalExpr(expr.r, input))
-                "<" -> Lt(createLogicalExpr(expr.l, input), createLogicalExpr(expr.r, input))
-                "<=" -> LtEq(createLogicalExpr(expr.l, input), createLogicalExpr(expr.r, input))
-                // boolean operators
-                "AND" -> And(createLogicalExpr(expr.l, input), createLogicalExpr(expr.r, input))
-                "OR" -> Or(createLogicalExpr(expr.l, input), createLogicalExpr(expr.r, input))
-                // math operators
-                "+" -> Add(createLogicalExpr(expr.l, input), createLogicalExpr(expr.r, input))
-                "-" -> Subtract(createLogicalExpr(expr.l, input), createLogicalExpr(expr.r, input))
-                "*" -> Multiply(createLogicalExpr(expr.l, input), createLogicalExpr(expr.r, input))
-                "/" -> Divide(createLogicalExpr(expr.l, input), createLogicalExpr(expr.r, input))
-                "%" -> Modulus(createLogicalExpr(expr.l, input), createLogicalExpr(expr.r, input))
-                //TODO add other math operations
-                else -> TODO("Binary operator ${expr.op}")
+            is SqlBinaryExpr -> {
+                val l = createLogicalExpr(expr.l, input)
+                val r = createLogicalExpr(expr.r, input)
+                when(expr.op) {
+                    // comparison operators
+                    "=" -> Eq(l, r)
+                    "!=" -> Neq(l, r)
+                    ">" -> Gt(l, r)
+                    ">=" -> GtEq(l, r)
+                    "<" -> Lt(l, r)
+                    "<=" -> LtEq(l, r)
+                    // boolean operators
+                    "AND" -> And(l, r)
+                    "OR" -> Or(l, r)
+                    // math operators
+                    "+" -> Add(l, r)
+                    "-" -> Subtract(l, r)
+                    "*" -> Multiply(l, r)
+                    "/" -> Divide(l, r)
+                    "%" -> Modulus(l, r)
+                    else -> throw SQLException("Invalid operator ${expr.op}")
+                }
             }
             //is SqlUnaryExpr -> when (expr.op) {
             //"NOT" -> Not(createLogicalExpr(expr.l, input))

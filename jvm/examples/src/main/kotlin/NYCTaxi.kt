@@ -1,11 +1,15 @@
+package org.ballistacompute.examples;
+
 import org.ballistacompute.execution.ExecutionContext
 import org.ballistacompute.logical.Max
 import org.ballistacompute.logical.cast
 import org.ballistacompute.logical.col
 import org.ballistacompute.logical.format
 import org.ballistacompute.optimizer.Optimizer
+
 import org.apache.arrow.vector.types.FloatingPointPrecision
 import org.apache.arrow.vector.types.pojo.ArrowType
+
 import kotlin.system.measureTimeMillis
 
 

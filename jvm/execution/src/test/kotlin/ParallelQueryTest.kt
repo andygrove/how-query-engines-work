@@ -2,7 +2,11 @@ package org.ballistacompute.execution
 
 //import kotlinx.coroutines.*
 import org.ballistacompute.physical.*
-import org.ballistacompute.datasource.RecordBatch
+import org.ballistacompute.datatypes.RecordBatch
+import org.ballistacompute.datatypes.ColumnVector
+import org.ballistacompute.datatypes.ArrowFieldVector
+import org.ballistacompute.datatypes.LiteralValueVector
+import org.ballistacompute.datatypes.ArrowVectorBuilder
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
