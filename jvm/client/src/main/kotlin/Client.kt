@@ -1,10 +1,10 @@
-package io.andygrove.ballista.client
+package org.ballistacompute.client
 
 import io.andygrove.ballista.*
-import io.andygrove.kquery.logical.Column as KQColumn
-import io.andygrove.kquery.logical.LogicalExpr
-import io.andygrove.kquery.logical.LogicalPlan
-import io.andygrove.kquery.logical.Projection as KQProjection
+import org.ballistacompute.logical.Column as KQColumn
+import org.ballistacompute.logical.LogicalExpr
+import org.ballistacompute.logical.LogicalPlan
+import org.ballistacompute.logical.Projection as KQProjection
 import org.apache.arrow.flight.CallOptions
 import org.apache.arrow.flight.FlightClient
 import org.apache.arrow.flight.Location

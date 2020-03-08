@@ -1,13 +1,17 @@
-package io.andygrove.kquery.datasource
+package org.ballistacompute.datasource
 
+import com.github.doyaaaaaken.kotlincsv.client.CsvFileReader
 import com.github.doyaaaaaken.kotlincsv.client.CsvReader
+import com.github.doyaaaaaken.kotlincsv.dsl.csvReader
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.VarCharVector
 import org.apache.arrow.vector.VectorSchemaRoot
 import org.apache.arrow.vector.types.pojo.ArrowType
 import org.apache.arrow.vector.types.pojo.Field
 import org.apache.arrow.vector.types.pojo.Schema
+import java.io.BufferedReader
 import java.io.File
+import java.io.FileReader
 import java.util.logging.Logger
 
 /**
@@ -16,34 +20,85 @@ import java.util.logging.Logger
  * Note that this implementation loads the entire CSV file into memory so is not scalable. I plan on implementing
  * a streaming version later on.
  */
-class CsvDataSource(filename: String, private val batchSize: Int) : DataSource {
+class CsvDataSource(private val filename: String, private val batchSize: Int) : DataSource {
 
     private val logger = Logger.getLogger(CsvDataSource::class.simpleName)
 
-    private val rows: List<List<String>> = CsvReader().readAll(File(filename))
-
-    private val schema = Schema(rows[0].map { Field.nullable(it, ArrowType.Utf8()) })
-
     override fun schema(): Schema {
+        logger.fine("schema()")
+        val b = BufferedReader(FileReader(filename))
+        val header = b.readLine().split(",")
+        val schema = Schema(header.map { Field.nullable(it, ArrowType.Utf8()) })
         return schema
     }
 
-    override fun scan(columns: List<Int>): Iterable<RecordBatch> {
-        logger.info("scan()")
+    override fun scan(projection: List<String>): Sequence<RecordBatch> {
+        logger.fine("scan() projection=$projection")
 
-        //TODO don't ignore projection
+        val b = BufferedReader(FileReader(filename))
+        val header = b.readLine().split(",")
+        val fileColumns = header.map { Field.nullable(it, ArrowType.Utf8()) }.toList()
 
-        val withoutHeader = rows.asSequence()
-                .drop(1)
+        val projectionIndices = projection.map { name -> fileColumns.indexOfFirst { it.name == name } }
 
-        return withoutHeader
-                .chunked(batchSize)
-                .map { createBatch(it) }
-                .asIterable()
+        val schema = when (projectionIndices.size) {
+            0 -> Schema(fileColumns)
+            else -> Schema(projectionIndices.map { fileColumns[it] })
+        }
+
+        return ReaderAsSequence(schema, projectionIndices, b, batchSize)
+    }
+
+}
+
+class ReaderAsSequence(private val schema: Schema,
+                       private val projectionIndices: List<Int>,
+                       private val r: BufferedReader,
+                       private val batchSize: Int) : Sequence<RecordBatch> {
+    override fun iterator(): Iterator<RecordBatch> {
+        return ReaderIterator(schema, projectionIndices, r, batchSize)
+    }
+}
+
+class ReaderIterator(private val schema: Schema,
+                     private val projectionIndices: List<Int>,
+                     private val r: BufferedReader,
+                     private val batchSize: Int) : Iterator<RecordBatch> {
+
+    private val logger = Logger.getLogger(CsvDataSource::class.simpleName)
+
+    private var rows: List<List<String>> = listOf()
+
+    override fun hasNext(): Boolean {
+        var list = mutableListOf<List<String>>()
+        var line = r.readLine()
+        while (line != null) {
+            list.add(parseLine(line, projectionIndices))
+            if (list.size == batchSize) {
+                break
+            }
+            line = r.readLine()
+        }
+        rows = list.toList()
+        return rows.size > 0
+    }
+
+    override fun next(): RecordBatch {
+        return createBatch(rows)
+    }
+
+    private fun parseLine(line: String, projection: List<Int>) : List<String> {
+        if (projection.isEmpty()) {
+            return line.split(",")
+        } else {
+            //TODO this could be implemented more efficiently
+            val splitLine = line.split(",")
+            return projection.map { splitLine[it] }.toList()
+        }
     }
 
     private fun createBatch(rows: List<List<String>>) : RecordBatch {
-        logger.info("createBatch() rows=$rows")
+        logger.fine("createBatch() rows=$rows")
 
         val root = VectorSchemaRoot.create(schema, RootAllocator(Long.MAX_VALUE))
         root.allocateNew()
@@ -62,9 +117,8 @@ class CsvDataSource(filename: String, private val batchSize: Int) : DataSource {
 
         val batch = RecordBatch(schema, root.fieldVectors.map { ArrowFieldVector(it) })
 
-        logger.info("Created batch:\n${batch.toCSV()}")
+        logger.fine("Created batch:\n${batch.toCSV()}")
 
         return batch
     }
 }
-

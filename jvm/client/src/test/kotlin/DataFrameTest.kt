@@ -1,6 +1,7 @@
-import io.andygrove.ballista.client.Client
-import io.andygrove.kquery.datasource.CsvDataSource
-import io.andygrove.kquery.logical.*
+package org.ballistacompute.client
+
+import org.ballistacompute.datasource.CsvDataSource
+import org.ballistacompute.logical.*
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance

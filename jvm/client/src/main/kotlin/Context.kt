@@ -1,4 +1,4 @@
-package io.andygrove.ballista.client
+package org.ballistacompute.client
 
 class Context(endpoint: Endpoint) {
     val client = Client(endpoint.host, endpoint.port)

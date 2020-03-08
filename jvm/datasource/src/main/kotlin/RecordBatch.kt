@@ -1,4 +1,4 @@
-package io.andygrove.kquery.datasource
+package org.ballistacompute.datasource
 
 import org.apache.arrow.vector.VarCharVector
 import org.apache.arrow.vector.VectorSchemaRoot

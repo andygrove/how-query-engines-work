@@ -1,4 +1,4 @@
-package io.andygrove.kquery.datasource
+package org.ballistacompute.datasource
 
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.IntVector
@@ -23,7 +23,7 @@ class ParquetDataSource(private val filename: String) : DataSource {
         }
     }
 
-    override fun scan(columns: List<Int>): Iterable<RecordBatch> {
+    override fun scan(columns: List<String>): Sequence<RecordBatch> {
         return ParquetScan(filename, columns)
     }
 
@@ -32,7 +32,7 @@ class ParquetDataSource(private val filename: String) : DataSource {
 /**
  * Based on blog post at https://www.arm64.ca/post/reading-parquet-files-java/
  */
-class ParquetScan(filename: String, private val columns: List<Int>) : AutoCloseable, Iterable<RecordBatch> {
+class ParquetScan(filename: String, private val columns: List<String>) : AutoCloseable, Sequence<RecordBatch> {
 
     private val reader = ParquetFileReader.open(HadoopInputFile.fromPath(Path(filename), Configuration()))
     val schema = reader.footer.fileMetaData.schema
@@ -46,13 +46,13 @@ class ParquetScan(filename: String, private val columns: List<Int>) : AutoClosea
     }
 }
 
-class ParquetIterator(private val reader: ParquetFileReader, private val projectedColumns: List<Int>) : Iterator<RecordBatch> {
+class ParquetIterator(private val reader: ParquetFileReader, private val projectedColumns: List<String>) : Iterator<RecordBatch> {
 
     val schema = reader.footer.fileMetaData.schema
 
     val arrowSchema = SchemaConverter().fromParquet(schema).arrowSchema
 
-    val projectedArrowSchema = Schema(projectedColumns.map { arrowSchema.fields[it] })
+    val projectedArrowSchema = Schema(projectedColumns.map { name -> arrowSchema.fields.find { it.name == name } })
 
     var batch: RecordBatch? = null
 
@@ -92,18 +92,17 @@ class ParquetIterator(private val reader: ParquetFileReader, private val project
         for (rowIndex in 0 until rows) {
             val group: Group = recordReader.read()
             for (projectionIndex in 0 until projectedColumns.size) {
-                val fieldIndex = projectedColumns[projectionIndex]
-                val primitiveTypeName = schema.columns[fieldIndex].primitiveType.primitiveTypeName
-                println("column $fieldIndex : $primitiveTypeName")
-
-                if (group.getFieldRepetitionCount(fieldIndex) == 1) {
-                    when (primitiveTypeName) {
-                        PrimitiveType.PrimitiveTypeName.INT32 -> {
-                            (root.fieldVectors[projectionIndex] as IntVector).set(rowIndex, group.getInteger(fieldIndex, 0))
-                        }
-                        else -> println("unsupported type $primitiveTypeName")
-                    }
-                }
+//                val primitiveTypeName = projectedArrowSchema.fields[fieldIndex].type.primitiveTypeName
+//                println("column $fieldIndex : $primitiveTypeName")
+//
+//                if (group.getFieldRepetitionCount(fieldIndex) == 1) {
+//                    when (primitiveTypeName) {
+//                        PrimitiveType.PrimitiveTypeName.INT32 -> {
+//                            (root.fieldVectors[projectionIndex] as IntVector).set(rowIndex, group.getInteger(fieldIndex, 0))
+//                        }
+//                        else -> println("unsupported type $primitiveTypeName")
+//                    }
+//                }
 
             }
         }

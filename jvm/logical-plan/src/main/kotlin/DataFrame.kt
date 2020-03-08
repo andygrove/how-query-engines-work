@@ -1,4 +1,4 @@
-package io.andygrove.kquery.logical
+package org.ballistacompute.logical
 
 interface DataFrame {
 
@@ -26,14 +26,14 @@ class DataFrameImpl(private val plan: LogicalPlan) : DataFrame {
         return DataFrameImpl(Selection(plan, expr))
     }
 
-    override fun aggregate(groupBy: List<LogicalExpr>, aggregateExpr: List<AggregateExpr>): DataFrame {
+    override fun aggregate(groupBy: List<LogicalExpr>,
+                           aggregateExpr: List<AggregateExpr>): DataFrame {
         return DataFrameImpl(Aggregate(plan, groupBy, aggregateExpr))
     }
 
     override fun logicalPlan(): LogicalPlan {
         return plan
     }
-
 
 }
 

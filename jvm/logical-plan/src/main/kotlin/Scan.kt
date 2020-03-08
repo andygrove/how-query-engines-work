@@ -1,13 +1,19 @@
-package io.andygrove.kquery.logical
+package org.ballistacompute.logical
 
-import io.andygrove.kquery.datasource.DataSource
+import org.ballistacompute.datasource.DataSource
 import org.apache.arrow.vector.types.pojo.Schema
 
 /** Represents a scan of a data source */
-class Scan(val name: String, val dataSource: DataSource, val projection: List<Int>): LogicalPlan {
+class Scan(val name: String, val dataSource: DataSource, val projection: List<String>): LogicalPlan {
+
 
     override fun schema(): Schema {
-        return dataSource.schema()
+        val schema = dataSource.schema()
+        if (projection.isEmpty()) {
+            return schema
+        } else {
+            return Schema(projection.map { name -> schema.fields.findLast { it.name == name } })
+        }
     }
 
     override fun children(): List<LogicalPlan> {
@@ -18,7 +24,7 @@ class Scan(val name: String, val dataSource: DataSource, val projection: List<In
         return if (projection.isEmpty()) {
             "Scan: $name; projection=None"
         } else {
-            "Scan: $name; projection=${ projection.map { "#$it" }.joinToString { "," } }"
+            "Scan: $name; projection=$projection"
         }
     }
 }

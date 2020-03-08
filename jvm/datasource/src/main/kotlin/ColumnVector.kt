@@ -1,8 +1,6 @@
-package io.andygrove.kquery.datasource
+package org.ballistacompute.datasource
 
-import org.apache.arrow.vector.FieldVector
-import org.apache.arrow.vector.IntVector
-import org.apache.arrow.vector.VarCharVector
+import org.apache.arrow.vector.*
 import java.lang.IndexOutOfBoundsException
 
 interface ColumnVector {
@@ -22,6 +20,7 @@ class ArrowFieldVector(val field: FieldVector) : ColumnVector {
         return when (field) {
             is VarCharVector -> field.get(i)
             is IntVector -> field.get(i)
+            is Float8Vector -> field.get(i)
             else -> TODO(field.javaClass.name)
         }
     }
@@ -66,6 +65,17 @@ class ArrowVectorBuilder(val fieldVector: FieldVector) {
                     fieldVector.set(i, value.toInt())
                 } else if (value is String) {
                     fieldVector.set(i, value.toInt())
+                } else {
+                    TODO()
+                }
+            }
+            is Float8Vector -> {
+                if (value == null) {
+                    fieldVector.setNull(i)
+                } else if (value is Number) {
+                    fieldVector.set(i, value.toDouble())
+                } else if (value is String) {
+                    fieldVector.set(i, value.toDouble())
                 } else {
                     TODO()
                 }

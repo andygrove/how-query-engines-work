@@ -1,6 +1,6 @@
-package io.andygrove.kquery.logical
+package org.ballistacompute.logical
 
-import io.andygrove.kquery.datasource.CsvDataSource
+import org.ballistacompute.datasource.CsvDataSource
 
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance

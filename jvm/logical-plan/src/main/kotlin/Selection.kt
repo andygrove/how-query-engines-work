@@ -1,4 +1,4 @@
-package io.andygrove.kquery.logical
+package org.ballistacompute.logical
 
 import org.apache.arrow.vector.types.pojo.Schema
 
