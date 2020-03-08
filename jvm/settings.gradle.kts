@@ -14,6 +14,9 @@ include("datasource")
 include("logical-plan")
 include("optimizer")
 include("physical-plan")
+include("query-planner")
+include("sql")
+include("execution")
 
 // Ballista JVM Connectors
 include("client")
