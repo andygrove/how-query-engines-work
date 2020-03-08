@@ -9,6 +9,7 @@ import org.ballistacompute.datatypes.ArrowVectorBuilder
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.*
 import org.apache.arrow.vector.types.pojo.ArrowType
+import java.lang.UnsupportedOperationException
 import java.util.*
 
 /**
@@ -234,17 +235,13 @@ class MaxAccumulator : Accumulator {
             if (this.value == null) {
                 this.value = value
             } else {
-                when (value) {
-                    is Int -> {
-                        if (value > this.value as Int) {
-                            this.value = value
-                        }
-                    }
-                    is Double -> {
-                        if (value > this.value as Double) {
-                            this.value = value
-                        }
-                    }
+                val isMax = when (value) {
+                    is Int -> value > this.value as Int
+                    is Double -> value > this.value as Double
+                    else -> throw UnsupportedOperationException()
+                }
+                if (isMax) {
+                    this.value = value
                 }
             }
         }
