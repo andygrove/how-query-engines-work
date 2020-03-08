@@ -13,6 +13,7 @@ rootProject.name = "ballista"
 include("datasource")
 include("logical-plan")
 include("optimizer")
+include("physical-plan")
 
 // Ballista JVM Connectors
 include("client")

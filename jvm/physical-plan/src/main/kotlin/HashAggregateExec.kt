@@ -1,0 +1,78 @@
+package org.ballistacompute.physical
+
+import org.ballistacompute.datasource.ArrowFieldVector
+import org.ballistacompute.datasource.ArrowVectorBuilder
+import org.ballistacompute.datasource.RecordBatch
+import org.apache.arrow.memory.RootAllocator
+import org.apache.arrow.vector.VectorSchemaRoot
+import org.apache.arrow.vector.types.pojo.Schema
+
+class HashAggregateExec(val input: PhysicalPlan,
+                        val groupExpr: List<PhysicalExpr>,
+                        val aggregateExpr: List<AggregatePExpr>,
+                        val schema: Schema) : PhysicalPlan {
+
+    override fun execute(): Sequence<RecordBatch> {
+
+        val map = HashMap<List<Any?>, List<Accumulator>>()
+
+        input.execute().iterator().forEach { batch ->
+
+            //println("HashAggregateExec input\n${batch.toCSV()}")
+
+            // evaluate the grouping expressions
+            val groupKeys = groupExpr.map { it.evaluate(batch) }
+
+            // evaluate the expressions that are inputs to the aggregate functions
+            val aggrInputValues = aggregateExpr.map { it.inputExpression().evaluate(batch) }
+
+            (0 until batch.rowCount()).forEach { rowIndex ->
+
+                val rowKey = groupKeys.map {
+                    val value = it.getValue(rowIndex)
+                    when (value) {
+                        is ByteArray -> String(value)
+                        else -> value
+                    }
+                }
+
+                //println(rowKey)
+
+                // get or create accumulators for this grouping key
+                val accumulators = map.getOrPut(rowKey) {
+                    aggregateExpr.map { it.createAccumulator() }
+                }
+
+                // perform accumulation
+                accumulators.withIndex().forEach { accum ->
+                    accum.value.accumulate(aggrInputValues[accum.index].getValue(rowIndex))
+                }
+
+            }
+        }
+
+        val root = VectorSchemaRoot.create(schema, RootAllocator(Long.MAX_VALUE))
+        root.allocateNew()
+        root.rowCount = map.size
+
+        val builders = root.fieldVectors.map { ArrowVectorBuilder(it) }
+
+        map.entries.withIndex().forEach { entry ->
+            val rowIndex = entry.index
+            val groupingKey = entry.value.key
+            val accumulators = entry.value.value
+            groupExpr.indices.forEach {
+                builders[it].set(rowIndex, groupingKey[it])
+            }
+            aggregateExpr.indices.forEach {
+                builders[groupExpr.size+it].set(rowIndex, accumulators[it].finalValue())
+            }
+        }
+
+        val outputBatch = RecordBatch(schema, root.fieldVectors.map { ArrowFieldVector(it) })
+        //println("HashAggregateExec output:\n${outputBatch.toCSV()}")
+        return listOf(outputBatch).asSequence()
+    }
+
+}
+
