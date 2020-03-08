@@ -1,10 +1,5 @@
-package io.andygrove.ballista.spark.datasource;
+package org.ballistacompute.spark.datasource;
 
-import org.apache.arrow.flight.FlightClient;
-import org.apache.arrow.flight.FlightStream;
-import org.apache.arrow.flight.Ticket;
-import org.apache.arrow.vector.VectorSchemaRoot;
-import org.apache.arrow.vector.types.pojo.Schema;
 import org.apache.spark.sql.connector.read.Batch;
 import org.apache.spark.sql.connector.read.Scan;
 import org.apache.spark.sql.connector.read.streaming.ContinuousStream;

@@ -1,11 +1,9 @@
-package io.andygrove.ballista.spark.datasource;
+package org.ballistacompute.spark.datasource;
 
-import org.apache.arrow.flight.FlightClient;
 import org.apache.spark.sql.catalyst.InternalRow;
 import org.apache.spark.sql.connector.read.InputPartition;
 import org.apache.spark.sql.connector.read.PartitionReader;
 import org.apache.spark.sql.connector.read.PartitionReaderFactory;
-import org.apache.spark.sql.types.StructType;
 import org.apache.spark.sql.vectorized.ColumnarBatch;
 
 public class BallistaPartitionReaderFactory implements PartitionReaderFactory {

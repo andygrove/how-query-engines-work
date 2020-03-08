@@ -1,7 +1,6 @@
-package io.andygrove.ballista.spark.datasource;
+package org.ballistacompute.spark.datasource;
 
 import com.google.common.collect.ImmutableSet;
-import org.apache.arrow.flight.FlightClient;
 import org.apache.spark.sql.connector.catalog.SupportsRead;
 import org.apache.spark.sql.connector.catalog.Table;
 import org.apache.spark.sql.connector.catalog.TableCapability;

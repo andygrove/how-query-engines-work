@@ -1,13 +1,8 @@
-package io.andygrove.ballista.spark.datasource;
+package org.ballistacompute.spark.datasource;
 
-import org.apache.arrow.flight.CallOption;
-import org.apache.arrow.flight.CallOptions;
 import org.apache.arrow.flight.FlightClient;
-import org.apache.arrow.flight.FlightDescriptor;
-import org.apache.arrow.flight.FlightInfo;
 import org.apache.arrow.flight.FlightStream;
 import org.apache.arrow.flight.Location;
-import org.apache.arrow.flight.SchemaResult;
 import org.apache.arrow.flight.Ticket;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.types.pojo.Schema;

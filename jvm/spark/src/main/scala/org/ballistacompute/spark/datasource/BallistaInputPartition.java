@@ -1,4 +1,4 @@
-package io.andygrove.ballista.spark.datasource;
+package org.ballistacompute.spark.datasource;
 
 import org.apache.spark.sql.connector.read.InputPartition;
 

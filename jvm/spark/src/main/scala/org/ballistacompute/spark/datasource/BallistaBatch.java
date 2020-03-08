@@ -1,10 +1,8 @@
-package io.andygrove.ballista.spark.datasource;
+package org.ballistacompute.spark.datasource;
 
-import org.apache.arrow.flight.FlightClient;
 import org.apache.spark.sql.connector.read.Batch;
 import org.apache.spark.sql.connector.read.InputPartition;
 import org.apache.spark.sql.connector.read.PartitionReaderFactory;
-import org.apache.spark.sql.types.StructType;
 
 public class BallistaBatch implements Batch {
 

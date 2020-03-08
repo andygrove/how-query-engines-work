@@ -1,4 +1,4 @@
-package io.andygrove.ballista.spark.datasource;
+package org.ballistacompute.spark.datasource;
 
 import org.apache.arrow.flight.FlightClient;
 import org.apache.arrow.flight.FlightStream;
@@ -6,16 +6,11 @@ import org.apache.arrow.flight.Location;
 import org.apache.arrow.flight.Ticket;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.VectorSchemaRoot;
-import org.apache.arrow.vector.types.pojo.Schema;
 import org.apache.spark.sql.connector.read.PartitionReader;
-import org.apache.spark.sql.types.StructType;
 import org.apache.spark.sql.vectorized.ArrowColumnVector;
-import org.apache.spark.sql.vectorized.ColumnVector;
 import org.apache.spark.sql.vectorized.ColumnarBatch;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class BallistaColumnarReader implements PartitionReader<ColumnarBatch> {
 
