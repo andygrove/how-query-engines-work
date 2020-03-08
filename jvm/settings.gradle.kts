@@ -17,6 +17,8 @@ include("physical-plan")
 include("query-planner")
 include("sql")
 include("execution")
+include("examples")
+include("spark-examples")
 
 // Ballista JVM Connectors
 include("client")
