@@ -9,11 +9,12 @@
 
 rootProject.name = "ballista"
 
-// kotlin-query
+// Ballista JVM Query Engine
 include("datasource")
 include("logical-plan")
+include("optimizer")
 
-// ballista
+// Ballista JVM Connectors
 include("client")
 include("jdbc")
 include("protobuf")
