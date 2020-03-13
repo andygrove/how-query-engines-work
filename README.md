@@ -10,34 +10,36 @@ Ballista is an experimental distributed compute platform based on [Kubernetes](h
 
 Ballista aims to be language-agnostic with an architecture that is capable of supporting any language supported by Apache Arrow, which currently includes C, C++, C#, Go, Java, JavaScript, MATLAB, Python, R, Ruby, and Rust. 
 
-# Ballista Goals
+# Architecture
 
-- Define a logical query plan in protobuf format. See [ballista.proto](proto/ballista.proto)
-- Provide DataFrame style interfaces for JVM (Java, [Kotlin](jvm/client/src/main/kotlin/DataFrame.kt), Scala), [Rust](rust/src/dataframe.rs), and Python
-- Provide a JDBC Driver, allowing Ballista to be used from existing BI and SQL tools
-- Use Apache Flight for sending query plans between nodes, and streaming results between nodes
-- Allow clusters to be created, consisting of executors implemented in any language that supports Flight
-- Distributed compute jobs should be capable of invoking code in more than one language (with some performance trade-offs for IPC overhead)
-- Provide integrations with Apache Spark (e.g. Spark V2 Data Source allowing Spark to interact with Ballista)
-
-# Ballista Anti Goals
-
-- Ballista is not intended to replace Apache Spark but to augment it
+- Query plans are defined in Google Protocol Buffer format
+- Data is exchanged using Apache Arrow Flight protocol
+- Executors can be built in any language
+- Clients can be built in any language
+- Ballista will orchestrate execution
+- Seamless integration with Apache Spark and other platforms with provided connectors
 
 # Status
 
-I learned a lot from the initial PoC (see below for a demo and more info) but have decided to start the project again due to the changes in scope mentioned above so the project is currently in a state of flux and nothing works right now but I am in the process of building a second PoC.
+I have recently re-started this project. Here is the current plan.
 
-Here is a rough plan for delivering PoC #2:
+- [ ] Implement Logical Plan and DataFrame API for Rust
 
-- [ ] Implement a Rust server implementing Flight protocol that can receive a logical plan and validate it and execute it (in progress)
-- [ ] Implement a Kotlin DataFrame client that can build a plan and execute it against the Rust server (in progress)
-- [ ] Implement a Rust DataFrame client that can build a plan and execute it against the Rust server (in progress)
-- [ ] Implement a JDBC driver that can execute a SQL statement against the Rust server (in progress)
-- [ ] Implement a Scala server implementing the Flight protocol that can receive a logical plan and translate it to Spark and execute it
-- [ ] Build a benchmark client in Kotlin that can run against the Rust and Scala servers
+- [ ] Implement Logical Plan and DataFrame API for JVM (Java, Kotlin, Scala)
+
+- [ ] Implement Executor in Kotlin
+
+- [ ] Implement Executor in Rust (based on DataFusion)
+
+- [ ] Implement Executor in Scala (wrapping Apache Spark)
+
+- [ ] Implement a JDBC driver that can execute a SQL statement against an executor
+
+  
 
 # PoC #1
+
+The following content is from the original PoC that I built in July 2019. See my [blog post](https://andygrove.io/2019/07/announcing-ballista/) for more information.
 
 This demo shows a Ballista cluster being created in Minikube and then shows the [nyctaxi example](examples/nyctaxi) being executed, causing a distributed query to run in the cluster, with each executor pod performing an aggregate query on one partition of the data, and then the driver merges the results and runs a secondary aggregate query to get the final result. 
 
