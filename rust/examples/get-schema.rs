@@ -39,8 +39,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let schema_result = client.get_schema(request).await?.into_inner();
-    let schema = Schema::try_from(&schema_result)?;
-    println!("Schema: {:?}", schema);
+    // let schema = Schema::try_from(&schema_result)?;
+    // println!("Schema: {:?}", schema);
 
     Ok(())
 }
