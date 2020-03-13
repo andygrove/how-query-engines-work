@@ -44,4 +44,8 @@ class ArrowVectorBuilder(val fieldVector: FieldVector) {
         }
     }
 
+    fun build(): ColumnVector {
+        return ArrowFieldVector(fieldVector)
+    }
+
 }
