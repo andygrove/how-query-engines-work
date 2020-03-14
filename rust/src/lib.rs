@@ -6,7 +6,6 @@ pub mod protobuf {
     include!(concat!(env!("OUT_DIR"), "/ballista.protobuf.rs"));
 }
 
-pub mod dfcontext;
 pub mod error;
 pub mod logical_plan;
 pub mod serde;
