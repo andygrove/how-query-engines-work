@@ -102,28 +102,6 @@ message TableMeta {
   Schema schema = 4;
 }
 
-// for now this is just CSV data so I can get the end to end PoC working quickly but this needs to be
-// IPC format eventually
-message RecordBatch {
-  string data = 1;
-}
-
-service Executor {
-  rpc execute(ExecuteRequest) returns (ExecuteResponse) {}
-}
-
-message ExecuteRequest {
-  LogicalPlanNode plan = 1;
-  repeated TableMeta table_meta = 2;
-}
-
-message ExecuteResponse {
-  string message = 1;
-  repeated RecordBatch batch = 2;
-}
-
-
-
 // copied from GandivaType from Apache Arrow project
 enum ArrowType {
   NONE = 0;     // arrow::Type::NA

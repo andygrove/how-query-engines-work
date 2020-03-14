@@ -8,6 +8,10 @@ class Executor {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
+
+            // https://issues.apache.org/jira/browse/ARROW-5412
+            System.setProperty( "io.netty.tryReflectionSetAccessible","true")
+
             val server = FlightServer.builder(
                     RootAllocator(Long.MAX_VALUE),
                     Location.forGrpcInsecure("localhost", 50051),

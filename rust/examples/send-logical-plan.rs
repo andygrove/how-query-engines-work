@@ -38,11 +38,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut client = FlightServiceClient::connect("http://localhost:50051").await?;
 
     let plan = LogicalPlanBuilder::new()
-        .scan("employee.csv")
+        .scan("testdata/employee.csv")
         .unwrap()
         .filter(eq(col("state"), lit_str("CO")))
         .unwrap()
-        .project(vec![col("state")])
+        .project(vec![col("id")])
         .unwrap()
         .build()
         .unwrap();
