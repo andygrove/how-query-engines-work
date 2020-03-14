@@ -1,37 +1,78 @@
-use crate::protobuf;
-use crate::logical_plan::LogicalPlan;
+use crate::error::BallistaError;
 use crate::logical_plan::LogicalExpr;
-use crate::error::{Result, BallistaError};
+use crate::logical_plan::LogicalPlan;
+use crate::protobuf;
 
-fn from_plan(plan: &LogicalPlan) -> Result<protobuf::LogicalPlanNode> {
-    match plan {
-        LogicalPlan::Scan { filename } => {
-            let node = empty_plan_node();
-            Ok(node)
-        },
-        LogicalPlan::Projection { expr, input } => {
-            let input = from_plan(&input)?;
-            let node = empty_plan_node();
-            Ok(node)
-        },
-        LogicalPlan::Selection { expr, input } => {
-            let input = from_plan(&input)?;
-            let node = empty_plan_node();
-            Ok(node)
-        },
-        _ => Err(BallistaError::NotImplemented(format!("{:?}", plan)))
+use std::convert::TryInto;
+
+impl TryInto<protobuf::LogicalPlanNode> for LogicalPlan {
+    type Error = BallistaError;
+
+    fn try_into(self) -> Result<protobuf::LogicalPlanNode, Self::Error> {
+        match self {
+            LogicalPlan::Scan { filename } => {
+                let mut node = empty_plan_node();
+                node.file = Some(protobuf::FileNode {
+                    filename: filename.clone(),
+                    schema: None,
+                    projection: vec![],
+                });
+                Ok(node)
+            }
+            LogicalPlan::Projection { expr, input } => {
+                let input: protobuf::LogicalPlanNode = input.as_ref().to_owned().try_into()?;
+                let mut node = empty_plan_node();
+                node.input = Some(Box::new(input));
+                node.projection = Some(protobuf::ProjectionNode {
+                    expr: expr
+                        .iter()
+                        .map(|expr| expr.to_owned().try_into())
+                        .collect::<Result<Vec<_>, BallistaError>>()?,
+                });
+                Ok(node)
+            }
+            LogicalPlan::Selection { expr, input } => {
+                let input: protobuf::LogicalPlanNode = input.as_ref().to_owned().try_into()?;
+                let mut node = empty_plan_node();
+                node.input = Some(Box::new(input));
+                node.selection = Some(protobuf::SelectionNode {
+                    expr: Some(expr.as_ref().to_owned().try_into()?),
+                });
+                Ok(node)
+            }
+            _ => Err(BallistaError::NotImplemented(format!("{:?}", self))),
+        }
     }
 }
 
-fn from_expr(expr: &LogicalExpr) -> Result<protobuf::LogicalExprNode> {
-    match expr {
-        LogicalExpr::Column(name) => {
-            let mut expr = empty_expr_node();
-            expr.has_column_name = true;
-            expr.column_name = name.clone();
-            Ok(expr)
+impl TryInto<protobuf::LogicalExprNode> for LogicalExpr {
+    type Error = BallistaError;
+
+    fn try_into(self) -> Result<protobuf::LogicalExprNode, Self::Error> {
+        match self {
+            LogicalExpr::Column(name) => {
+                let mut expr = empty_expr_node();
+                expr.has_column_name = true;
+                expr.column_name = name.clone();
+                Ok(expr)
+            }
+            LogicalExpr::LiteralString(str) => {
+                let mut expr = empty_expr_node();
+                expr.has_literal_string = true;
+                expr.literal_string = str.clone();
+                Ok(expr)
+            }
+            LogicalExpr::Eq(l, r) => {
+                let mut expr = empty_expr_node();
+                expr.binary_expr = Some(Box::new(protobuf::BinaryExprNode {
+                    l: Some(Box::new(l.as_ref().to_owned().try_into()?)),
+                    r: Some(Box::new(r.as_ref().to_owned().try_into()?)),
+                    op: "eq".to_owned(),
+                }));
+                Ok(expr)
+            }
+            _ => Err(BallistaError::NotImplemented(format!("{:?}", self))),
         }
-        _ => Err(BallistaError::NotImplemented(format!("{:?}", expr)))
     }
 }
 
@@ -63,35 +104,21 @@ fn empty_plan_node() -> protobuf::LogicalPlanNode {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use super::LogicalPlan::*;
-    use super::LogicalExpr::*;
+    use crate::error::Result;
+    use crate::logical_plan::*;
+    use crate::protobuf;
+    use std::convert::TryInto;
 
     #[test]
     fn roundtrip() -> Result<()> {
+        let plan = LogicalPlanBuilder::new()
+            .scan("employee.csv")?
+            .filter(eq(col("state"), lit_str("CO")))?
+            .project(vec![col("state")])?
+            .build()?;
 
-        let scan = Scan {
-            filename: "employee.csv".to_owned()
-        };
-
-        let filter = Selection {
-            input: Box::new(scan),
-            expr: Box::new(Eq(
-                Box::new(Column("state".to_owned())),
-                Box::new(LiteralString("CO".to_owned())),
-            ))
-        };
-
-        let projection = Projection {
-            input: Box::new(filter),
-            expr: vec![
-                Column("state".to_owned())
-            ],
-        };
-
-        let proto = from_plan(&projection)?;
+        let proto: protobuf::LogicalPlanNode = plan.try_into()?;
 
         Ok(())
     }
-
 }
