@@ -1,30 +1,22 @@
-// Licensed to the Apache Software Foundation (ASF) under one
-// or more contributor license agreements.  See the NOTICE file
-// distributed with this work for additional information
-// regarding copyright ownership.  The ASF licenses this file
-// to you under the Apache License, Version 2.0 (the
-// "License"); you may not use this file except in compliance
-// with the License.  You may obtain a copy of the License at
-//
-//   http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing,
-// software distributed under the License is distributed on an
-// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-// KIND, either express or implied.  See the License for the
-// specific language governing permissions and limitations
-// under the License.
-
+use std::convert::TryInto;
+use std::io::Cursor;
 use std::pin::Pin;
 
-use futures::Stream;
-use tonic::transport::Server;
-use tonic::{Request, Response, Status, Streaming};
+use ballista::logical_plan::LogicalPlan;
+use ballista::protobuf;
 
 use datafusion::datasource::parquet::ParquetTable;
 use datafusion::datasource::TableProvider;
 use datafusion::execution::context::ExecutionContext;
+use datafusion::logicalplan::LogicalPlan as DataFusionPlan;
 
+use futures::Stream;
+
+use tonic::transport::Server;
+use tonic::{Request, Response, Status, Streaming};
+
+use ballista::error::BallistaError::DataFusionError;
+use ballista::serde::decode_protobuf;
 use flight::{
     flight_service_server::FlightService, flight_service_server::FlightServiceServer, Action,
     ActionType, Criteria, Empty, FlightData, FlightDescriptor, FlightInfo, HandshakeRequest,
@@ -95,6 +87,12 @@ impl FlightService for FlightServiceImpl {
         request: Request<Ticket>,
     ) -> Result<Response<Self::DoGetStream>, Status> {
         let ticket = request.into_inner();
+
+        //TODO we really want to receive the logical plan here instead of SQL
+        //let bytes = ticket.ticket.to_vec();
+        // let plan = decode_protobuf(bytes).unwrap();
+        // println!("{}", plan.pretty_print());
+
         match String::from_utf8(ticket.ticket.to_vec()) {
             Ok(sql) => {
                 println!("do_get: {}", sql);
@@ -102,15 +100,12 @@ impl FlightService for FlightServiceImpl {
                 // create local execution context
                 let mut ctx = ExecutionContext::new();
 
-                let testdata =
-                    std::env::var("PARQUET_TEST_DATA").expect("PARQUET_TEST_DATA not defined");
+                // let testdata =
+                //     std::env::var("PARQUET_TEST_DATA").expect("PARQUET_TEST_DATA not defined");
 
                 // register parquet file with the execution context
-                ctx.register_parquet(
-                    "alltypes_plain",
-                    &format!("{}/alltypes_plain.parquet", testdata),
-                )
-                .map_err(|e| to_tonic_err(&e))?;
+                ctx.register_parquet("alltypes_plain", &format!("alltypes_plain.snappy.parquet"))
+                    .map_err(|e| to_tonic_err(&e))?;
 
                 // create the query plan
                 let plan = ctx

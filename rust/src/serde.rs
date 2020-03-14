@@ -1,9 +1,83 @@
-use crate::error::BallistaError;
+use crate::error::{ballista_error, BallistaError};
 use crate::logical_plan::LogicalExpr;
 use crate::logical_plan::LogicalPlan;
 use crate::protobuf;
 
+use prost::bytes::Buf;
+use prost::Message;
+
 use std::convert::TryInto;
+use std::io::Cursor;
+
+impl TryInto<LogicalPlan> for protobuf::LogicalPlanNode {
+    type Error = BallistaError;
+
+    fn try_into(self) -> Result<LogicalPlan, Self::Error> {
+        if let Some(projection) = self.projection {
+            Ok(LogicalPlan::Projection {
+                expr: projection
+                    .expr
+                    .iter()
+                    .map(|expr| expr.to_owned().try_into())
+                    .collect::<Result<Vec<_>, BallistaError>>()?,
+                input: Box::new(self.input.unwrap().as_ref().to_owned().try_into()?),
+            })
+        } else if let Some(selection) = self.selection {
+            let expr: protobuf::LogicalExprNode = selection.expr.expect("expression required");
+            Ok(LogicalPlan::Selection {
+                expr: Box::new(expr.try_into()?),
+                input: Box::new(self.input.unwrap().as_ref().to_owned().try_into()?),
+            })
+        } else if let Some(scan) = self.file {
+            Ok(LogicalPlan::Scan {
+                filename: scan.filename.clone(),
+            })
+        } else {
+            Err(ballista_error(&format!(
+                "Unsupported logical plan '{:?}'",
+                self
+            )))
+        }
+    }
+}
+
+impl TryInto<LogicalExpr> for protobuf::LogicalExprNode {
+    type Error = BallistaError;
+
+    fn try_into(self) -> Result<LogicalExpr, Self::Error> {
+        if let Some(binary_expr) = self.binary_expr {
+            match binary_expr.op.as_ref() {
+                //TODO use macros to implement all binary expressions
+                "eq" => Ok(LogicalExpr::Eq(
+                    Box::new(parse_required_expr(binary_expr.l)?),
+                    Box::new(parse_required_expr(binary_expr.r)?),
+                )),
+                other => Err(ballista_error(&format!(
+                    "Unsupported binary operator '{}'",
+                    other
+                ))),
+            }
+        } else if self.has_column_name {
+            Ok(LogicalExpr::Column(self.column_name.clone()))
+        } else if self.has_literal_string {
+            Ok(LogicalExpr::LiteralString(self.literal_string.clone()))
+        } else {
+            Err(ballista_error(&format!(
+                "Unsupported logical expression '{:?}'",
+                self
+            )))
+        }
+    }
+}
+
+fn parse_required_expr(
+    p: Option<Box<protobuf::LogicalExprNode>>,
+) -> Result<LogicalExpr, BallistaError> {
+    match p {
+        Some(expr) => expr.as_ref().to_owned().try_into(),
+        None => Err(ballista_error("Missing required expression")),
+    }
+}
 
 impl TryInto<protobuf::LogicalPlanNode> for LogicalPlan {
     type Error = BallistaError;
@@ -102,6 +176,14 @@ fn empty_plan_node() -> protobuf::LogicalPlanNode {
     }
 }
 
+pub fn decode_protobuf(bytes: &Vec<u8>) -> Result<LogicalPlan, BallistaError> {
+    //TODO error handling
+    let mut buf = Cursor::new(bytes);
+    let plan_node: protobuf::LogicalPlanNode = protobuf::LogicalPlanNode::decode(&mut buf).unwrap();
+    let plan: LogicalPlan = plan_node.try_into().unwrap();
+    Ok(plan)
+}
+
 #[cfg(test)]
 mod tests {
     use crate::error::Result;
@@ -117,7 +199,11 @@ mod tests {
             .project(vec![col("state")])?
             .build()?;
 
-        let proto: protobuf::LogicalPlanNode = plan.try_into()?;
+        let proto: protobuf::LogicalPlanNode = plan.clone().try_into()?;
+
+        let plan2: LogicalPlan = proto.try_into()?;
+
+        assert_eq!(plan.pretty_print(), plan2.pretty_print());
 
         Ok(())
     }
