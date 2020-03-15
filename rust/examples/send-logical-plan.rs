@@ -23,8 +23,8 @@ use arrow::array::Int32Array;
 use arrow::datatypes::Schema;
 use arrow::flight::flight_data_to_batch;
 
-use ballista::logical_plan::*;
 use ballista::protobuf;
+use datafusion::logicalplan::*;
 
 use prost::bytes::BufMut;
 use prost::Message;
@@ -37,15 +37,12 @@ use flight::Ticket;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut client = FlightServiceClient::connect("http://localhost:50051").await?;
 
-    let plan = LogicalPlanBuilder::new()
-        .scan("testdata/employee.csv")
-        .unwrap()
-        .filter(eq(col("state"), lit_str("CO")))
-        .unwrap()
-        .project(vec![col("id")])
-        .unwrap()
-        .build()
-        .unwrap();
+    let plan = LogicalPlanBuilder::scan("default", "employee", &Schema::empty(), None)
+        .and_then(|plan| plan.filter((col(0).eq(&lit_str("CO")))))
+        .and_then(|plan| plan.project(&vec![col(0)]))
+        .and_then(|plan| plan.build())
+        //.map_err(|e| Err(format!("{:?}", e)))
+        .unwrap(); //TODO
 
     let serialized_plan: protobuf::LogicalPlanNode = plan.try_into().unwrap();
     let mut buf: Vec<u8> = Vec::with_capacity(serialized_plan.encoded_len());

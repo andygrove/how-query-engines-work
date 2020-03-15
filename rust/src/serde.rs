@@ -1,37 +1,42 @@
 use crate::error::{ballista_error, BallistaError};
-use crate::logical_plan::LogicalExpr;
-use crate::logical_plan::LogicalPlan;
 use crate::protobuf;
+use datafusion::logicalplan::{Expr, LogicalPlan, LogicalPlanBuilder, Operator, ScalarValue};
 
 use prost::bytes::Buf;
 use prost::Message;
 
+use arrow::datatypes::Schema;
 use std::convert::TryInto;
 use std::io::Cursor;
+use std::sync::Arc;
 
 impl TryInto<LogicalPlan> for protobuf::LogicalPlanNode {
     type Error = BallistaError;
 
     fn try_into(self) -> Result<LogicalPlan, Self::Error> {
         if let Some(projection) = self.projection {
-            Ok(LogicalPlan::Projection {
-                expr: projection
-                    .expr
-                    .iter()
-                    .map(|expr| expr.to_owned().try_into())
-                    .collect::<Result<Vec<_>, BallistaError>>()?,
-                input: Box::new(self.input.unwrap().as_ref().to_owned().try_into()?),
-            })
+            let input: LogicalPlan = self.input.unwrap().as_ref().to_owned().try_into()?;
+            LogicalPlanBuilder::from(&input)
+                .project(
+                    &projection
+                        .expr
+                        .iter()
+                        .map(|expr| expr.to_owned().try_into())
+                        .collect::<Result<Vec<_>, _>>()?,
+                )?
+                .build()
+                .map_err(|e| e.into())
         } else if let Some(selection) = self.selection {
+            let input: LogicalPlan = self.input.unwrap().as_ref().to_owned().try_into()?;
             let expr: protobuf::LogicalExprNode = selection.expr.expect("expression required");
-            Ok(LogicalPlan::Selection {
-                expr: Box::new(expr.try_into()?),
-                input: Box::new(self.input.unwrap().as_ref().to_owned().try_into()?),
-            })
+            LogicalPlanBuilder::from(&input)
+                .filter(expr.try_into()?)?
+                .build()
+                .map_err(|e| e.into())
         } else if let Some(scan) = self.file {
-            Ok(LogicalPlan::Scan {
-                filename: scan.filename.clone(),
-            })
+            LogicalPlanBuilder::scan("", &scan.filename, &Schema::empty(), None)?
+                .build()
+                .map_err(|e| e.into())
         } else {
             Err(ballista_error(&format!(
                 "Unsupported logical plan '{:?}'",
@@ -41,26 +46,24 @@ impl TryInto<LogicalPlan> for protobuf::LogicalPlanNode {
     }
 }
 
-impl TryInto<LogicalExpr> for protobuf::LogicalExprNode {
+impl TryInto<Expr> for protobuf::LogicalExprNode {
     type Error = BallistaError;
 
-    fn try_into(self) -> Result<LogicalExpr, Self::Error> {
+    fn try_into(self) -> Result<Expr, Self::Error> {
         if let Some(binary_expr) = self.binary_expr {
-            match binary_expr.op.as_ref() {
-                //TODO use macros to implement all binary expressions
-                "eq" => Ok(LogicalExpr::Eq(
-                    Box::new(parse_required_expr(binary_expr.l)?),
-                    Box::new(parse_required_expr(binary_expr.r)?),
-                )),
-                other => Err(ballista_error(&format!(
-                    "Unsupported binary operator '{}'",
-                    other
-                ))),
-            }
-        } else if self.has_column_name {
-            Ok(LogicalExpr::Column(self.column_name.clone()))
+            Ok(Expr::BinaryExpr {
+                left: Arc::new(parse_required_expr(binary_expr.l)?),
+                op: Operator::Eq, //TODO parse binary_expr.op.clone(),
+                right: Arc::new(parse_required_expr(binary_expr.r)?),
+            })
+        } else if self.has_column_index {
+            Ok(Expr::Column(self.column_index as usize))
+        // } else if self.has_column_name {
+        //     Ok(Expr::Column(self.column_name.clone()))
         } else if self.has_literal_string {
-            Ok(LogicalExpr::LiteralString(self.literal_string.clone()))
+            Ok(Expr::Literal(ScalarValue::Utf8(
+                self.literal_string.clone(),
+            )))
         } else {
             Err(ballista_error(&format!(
                 "Unsupported logical expression '{:?}'",
@@ -70,9 +73,7 @@ impl TryInto<LogicalExpr> for protobuf::LogicalExprNode {
     }
 }
 
-fn parse_required_expr(
-    p: Option<Box<protobuf::LogicalExprNode>>,
-) -> Result<LogicalExpr, BallistaError> {
+fn parse_required_expr(p: Option<Box<protobuf::LogicalExprNode>>) -> Result<Expr, BallistaError> {
     match p {
         Some(expr) => expr.as_ref().to_owned().try_into(),
         None => Err(ballista_error("Missing required expression")),
@@ -84,16 +85,26 @@ impl TryInto<protobuf::LogicalPlanNode> for LogicalPlan {
 
     fn try_into(self) -> Result<protobuf::LogicalPlanNode, Self::Error> {
         match self {
-            LogicalPlan::Scan { filename } => {
+            LogicalPlan::TableScan {
+                schema_name,
+                table_name,
+                table_schema,
+                projected_schema,
+                projection,
+            } => {
                 let mut node = empty_plan_node();
                 node.file = Some(protobuf::FileNode {
-                    filename: filename.clone(),
-                    schema: None,
+                    filename: table_name.clone(),
+                    schema: None, //TODO
                     projection: vec![],
                 });
                 Ok(node)
             }
-            LogicalPlan::Projection { expr, input } => {
+            LogicalPlan::Projection {
+                expr,
+                input,
+                schema,
+            } => {
                 let input: protobuf::LogicalPlanNode = input.as_ref().to_owned().try_into()?;
                 let mut node = empty_plan_node();
                 node.input = Some(Box::new(input));
@@ -110,7 +121,7 @@ impl TryInto<protobuf::LogicalPlanNode> for LogicalPlan {
                 let mut node = empty_plan_node();
                 node.input = Some(Box::new(input));
                 node.selection = Some(protobuf::SelectionNode {
-                    expr: Some(expr.as_ref().to_owned().try_into()?),
+                    expr: Some(expr.try_into()?),
                 });
                 Ok(node)
             }
@@ -119,29 +130,35 @@ impl TryInto<protobuf::LogicalPlanNode> for LogicalPlan {
     }
 }
 
-impl TryInto<protobuf::LogicalExprNode> for LogicalExpr {
+impl TryInto<protobuf::LogicalExprNode> for Expr {
     type Error = BallistaError;
 
     fn try_into(self) -> Result<protobuf::LogicalExprNode, Self::Error> {
         match self {
-            LogicalExpr::Column(name) => {
+            Expr::Column(index) => {
                 let mut expr = empty_expr_node();
-                expr.has_column_name = true;
-                expr.column_name = name.clone();
+                expr.has_column_index = true;
+                expr.column_index = index as u32;
                 Ok(expr)
             }
-            LogicalExpr::LiteralString(str) => {
+            // Expr::ColumnName(name) => {
+            //     let mut expr = empty_expr_node();
+            //     expr.has_column_name = true;
+            //     expr.column_name = name.clone();
+            //     Ok(expr)
+            // }
+            Expr::Literal(ScalarValue::Utf8(str)) => {
                 let mut expr = empty_expr_node();
                 expr.has_literal_string = true;
                 expr.literal_string = str.clone();
                 Ok(expr)
             }
-            LogicalExpr::Eq(l, r) => {
+            Expr::BinaryExpr { left, op, right } => {
                 let mut expr = empty_expr_node();
                 expr.binary_expr = Some(Box::new(protobuf::BinaryExprNode {
-                    l: Some(Box::new(l.as_ref().to_owned().try_into()?)),
-                    r: Some(Box::new(r.as_ref().to_owned().try_into()?)),
-                    op: "eq".to_owned(),
+                    l: Some(Box::new(left.as_ref().to_owned().try_into()?)),
+                    r: Some(Box::new(right.as_ref().to_owned().try_into()?)),
+                    op: format!("{:?}", op),
                 }));
                 Ok(expr)
             }
@@ -187,23 +204,33 @@ pub fn decode_protobuf(bytes: &Vec<u8>) -> Result<LogicalPlan, BallistaError> {
 #[cfg(test)]
 mod tests {
     use crate::error::Result;
-    use crate::logical_plan::*;
     use crate::protobuf;
+    use arrow::datatypes::{DataType, Field, Schema};
+    use datafusion::logicalplan::{col, lit_str, LogicalPlan, LogicalPlanBuilder};
     use std::convert::TryInto;
 
     #[test]
     fn roundtrip() -> Result<()> {
-        let plan = LogicalPlanBuilder::new()
-            .scan("employee.csv")?
-            .filter(eq(col("state"), lit_str("CO")))?
-            .project(vec![col("state")])?
-            .build()?;
+        let schema = Schema::new(vec![
+            Field::new("id", DataType::Int32, false),
+            Field::new("first_name", DataType::Utf8, false),
+            Field::new("last_name", DataType::Utf8, false),
+            Field::new("state", DataType::Utf8, false),
+            Field::new("salary", DataType::Int32, false),
+        ]);
+
+        let plan = LogicalPlanBuilder::scan("default", "employee", &schema, None)
+            .and_then(|plan| plan.filter(col(4).eq(&lit_str("CO"))))
+            .and_then(|plan| plan.project(&vec![col(0)]))
+            .and_then(|plan| plan.build())
+            //.map_err(|e| Err(format!("{:?}", e)))
+            .unwrap(); //TODO
 
         let proto: protobuf::LogicalPlanNode = plan.clone().try_into()?;
 
         let plan2: LogicalPlan = proto.try_into()?;
 
-        assert_eq!(plan.pretty_print(), plan2.pretty_print());
+        assert_eq!(format!("{:?}", plan), format!("{:?}", plan2));
 
         Ok(())
     }

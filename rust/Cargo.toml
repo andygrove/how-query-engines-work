@@ -23,9 +23,9 @@ prost-types = "0.6"
 #arrow-flight = { path="../../arrow/rust/arrow-flight" }
 #datafusion = { path="../../arrow/rust/datafusion" }
 
-arrow = { git = "https://github.com/andygrove/arrow", branch = "master" }
-arrow-flight = { git = "https://github.com/andygrove/arrow", branch = "master" }
-datafusion = { git = "https://github.com/andygrove/arrow", branch = "master" }
+arrow = { git = "https://github.com/andygrove/arrow", branch = "ARROW-8123" }
+arrow-flight = { git = "https://github.com/andygrove/arrow", branch = "ARROW-8123" }
+datafusion = { git = "https://github.com/andygrove/arrow", branch = "ARROW-8123" }
 
 [[bin]]
 name = "executor"

@@ -2,11 +2,10 @@ use std::convert::TryInto;
 use std::io::Cursor;
 use std::pin::Pin;
 
-use ballista::logical_plan::LogicalPlan;
 use ballista::protobuf;
+use datafusion::logicalplan::*;
 
 use datafusion::datasource::parquet::ParquetTable;
-use datafusion::datasource::TableProvider;
 use datafusion::execution::context::ExecutionContext;
 use datafusion::logicalplan::LogicalPlan as DataFusionPlan;
 
@@ -45,7 +44,7 @@ impl FlightService for FlightServiceImpl {
 
     async fn get_schema(
         &self,
-        request: Request<FlightDescriptor>,
+        _request: Request<FlightDescriptor>,
     ) -> Result<Response<SchemaResult>, Status> {
         println!("get_schema()");
 
@@ -60,7 +59,7 @@ impl FlightService for FlightServiceImpl {
 
     async fn get_flight_info(
         &self,
-        request: Request<FlightDescriptor>,
+        _request: Request<FlightDescriptor>,
     ) -> Result<Response<FlightInfo>, Status> {
         println!("get_flight_info");
 
