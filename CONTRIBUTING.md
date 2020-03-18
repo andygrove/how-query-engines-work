@@ -19,15 +19,13 @@ We have a [Gitter IM room](https://gitter.im/ballista-rs/community) for discussi
 
 # Issues
 
-See https://github.com/andygrove/ballista/issues for a list of open issues. I recommend starting here when contributing because there is a plan in place for delivering useful point solutions along the way as the project heads towards a v1.0 release. For example, working on a distributed query planner is fun but doesn't make sense until we have the ability to execute a hand-written plan, and Ballista has value even if users have to hand-write plans.
-
-Note that many of the issues are for research tasks right now given the early nature of this project.
+See the current milestones and issues [here](https://github.com/ballista-compute/ballista/milestones?direction=asc&sort=title&state=open). I recommend starting here when contributing because there is a plan in place for delivering useful point solutions along the way as the project heads towards a v1.0 release. For example, working on a distributed query planner is fun but doesn't make sense until we have the ability to execute a hand-written plan, and Ballista has value even if users have to hand-write plans.
 
 # Creating Pull Requests
 
 This project uses the standard [GitHub Forking Workflow](https://gist.github.com/Chaser324/ce0505fbed06b947d962).
 
-# Code Formatting
+# Rust Code Formatting
 
 To make sure your build passes the checks in Travis CI, run these commands before creating a pull request. Builds will fail if the code is not formatted correctly.
 

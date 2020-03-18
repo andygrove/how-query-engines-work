@@ -6,36 +6,34 @@
 
 # Overview
 
-Ballista is an experimental distributed compute platform based on [Kubernetes](https://kubernetes.io/) and [Apache Arrow](https://arrow.apache.org/) that I am developing in my spare time as a way to learn more about distributed data processing. It is largely inspired by Apache Spark.
+Ballista is an experimental distributed compute platform based on [Kubernetes](https://kubernetes.io/) and [Apache Arrow](https://arrow.apache.org/) that I am developing in my spare time as a way to learn more about distributed data processing. I am documenting the design in my book [How Query Engines Work](https://leanpub.com/how-query-engines-work) as I implement this.
 
-Ballista aims to be language-agnostic with an architecture that is capable of supporting any language supported by Apache Arrow, which currently includes C, C++, C#, Go, Java, JavaScript, MATLAB, Python, R, Ruby, and Rust. 
+Ballista aims to be language-agnostic with an architecture that is capable of supporting any language supported by Apache Arrow, with an initial focus on supporting Rust and JVM (Java, Kotlin, and Scala) but I would also eventually like to provide a Python client. 
 
 # Architecture
 
 - Query plans are defined in Google Protocol Buffer format
-- Data is exchanged using Apache Arrow Flight protocol
-- Executors can be built in any language
-- Clients can be built in any language
-- Ballista will orchestrate execution
-- Seamless integration with Apache Spark and other platforms with provided connectors
+- Data is exchanged using Apache Arrow Flight protocol (gRPC-based)
+- Executors can be built in any language and Ballista will provide Rust and JVM implementations
+- Clients can be built in any language and Ballista will provide Rust and JVM implementations
+- Ballista will provide distributed query planning and orchestration functionality 
+- Seamless integration with Apache Spark and other platforms with provided connectors and drivers
 
 # Status
 
-I have recently re-started this project. Here is the current plan.
+I have recently re-started this project. I am tracking milestones and issues [here](https://github.com/ballista-compute/ballista/milestones?direction=asc&sort=title&state=open) but here are the immediate priorities for a 0.2 (PoC #2) release.
 
-- [ ] Implement Logical Plan and DataFrame API for Rust
+- [x] Query plan defined in Google Protocol Buffer format
+- [ ] Rust client for submitting query plans to a cluster
+- [ ] JVM client for submitting query plans to a cluster
+- [ ] Rust Executor (based on DataFusion)
+- [ ] JVM Executor
+- [ ] Kubernetes deployment YAML
+- [ ] Implement demo of parallel aggregate query
 
-- [ ] Implement Logical Plan and DataFrame API for JVM (Java, Kotlin, Scala)
+# Contributing
 
-- [ ] Implement Executor in Kotlin
-
-- [ ] Implement Executor in Rust (based on DataFusion)
-
-- [ ] Implement Executor in Scala (wrapping Apache Spark)
-
-- [ ] Implement a JDBC driver that can execute a SQL statement against an executor
-
-  
+Contributors are welcome but this is a spare time project for me and I cannot make commitments on how quickly I can review contributions or respond to questions.
 
 # PoC #1
 
