@@ -1,28 +1,15 @@
-use std::convert::TryInto;
-use std::io::Cursor;
 use std::pin::Pin;
 
-use ballista::protobuf;
-use datafusion::logicalplan::*;
-
-use datafusion::datasource::parquet::ParquetTable;
-use datafusion::execution::context::ExecutionContext;
-use datafusion::logicalplan::LogicalPlan as DataFusionPlan;
-
-use futures::Stream;
-
-use tonic::transport::Server;
-use tonic::{Request, Response, Status, Streaming};
-
-use ballista::error::BallistaError::DataFusionError;
 use ballista::serde::decode_protobuf;
+use datafusion::execution::context::ExecutionContext;
 use flight::{
     flight_service_server::FlightService, flight_service_server::FlightServiceServer, Action,
     ActionType, Criteria, Empty, FlightData, FlightDescriptor, FlightInfo, HandshakeRequest,
     HandshakeResponse, PutResult, SchemaResult, Ticket,
 };
-
-//use arrow::ipc::writer::schema_to_bytes;
+use futures::Stream;
+use tonic::transport::Server;
+use tonic::{Request, Response, Status, Streaming};
 
 #[derive(Clone)]
 pub struct FlightServiceImpl {}
@@ -87,14 +74,9 @@ impl FlightService for FlightServiceImpl {
     ) -> Result<Response<Self::DoGetStream>, Status> {
         let ticket = request.into_inner();
 
-        //TODO we really want to receive the logical plan here instead of SQL
-        //let bytes = ticket.ticket.to_vec();
-        // let plan = decode_protobuf(bytes).unwrap();
-        // println!("{}", plan.pretty_print());
-
-        match String::from_utf8(ticket.ticket.to_vec()) {
-            Ok(sql) => {
-                println!("do_get: {}", sql);
+        match decode_protobuf(&ticket.ticket.to_vec()) {
+            Ok(logical_plan) => {
+                println!("do_get: {:?}", logical_plan);
 
                 // create local execution context
                 let mut ctx = ExecutionContext::new();
@@ -108,8 +90,7 @@ impl FlightService for FlightServiceImpl {
 
                 // create the query plan
                 let plan = ctx
-                    .create_logical_plan(&sql)
-                    .and_then(|plan| ctx.optimize(&plan))
+                    .optimize(&logical_plan)
                     .and_then(|plan| ctx.create_physical_plan(&plan, 1024 * 1024))
                     .map_err(|e| to_tonic_err(&e))?;
 
