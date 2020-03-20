@@ -2,8 +2,10 @@
 
 use k8s_openapi::{
     api,
-//    apimachinery::pkg::apis::meta::v1::{LabelSelector, ObjectMeta},
-    http, Response, ResponseBody,
+    //    apimachinery::pkg::apis::meta::v1::{LabelSelector, ObjectMeta},
+    http,
+    Response,
+    ResponseBody,
 };
 use kube::config;
 
@@ -12,9 +14,9 @@ use crate::error::BallistaError;
 const CLUSTER_LABEL_KEY: &str = "ballista-cluster";
 
 fn execute<T, F>(request: http::Request<Vec<u8>>, response_body: F) -> Result<T, BallistaError>
-    where
-        T: Response,
-        F: Fn(http::StatusCode) -> ResponseBody<T>,
+where
+    T: Response,
+    F: Fn(http::StatusCode) -> ResponseBody<T>,
 {
     let kubeconfig = config::load_kube_config()
         .or_else(|_| config::incluster_config())
@@ -32,7 +34,7 @@ fn execute<T, F>(request: http::Request<Vec<u8>>, response_body: F) -> Result<T,
             return Err(BallistaError::General(format!("Invalid method: {}", other)));
         }
     }
-        .body(body);
+    .body(body);
 
     let mut response = req.send()?;
     let status = response.status();
@@ -90,4 +92,3 @@ pub fn get_executors(cluster_name: &str, namespace: &str) -> Result<Vec<Executor
         ))
     }
 }
-

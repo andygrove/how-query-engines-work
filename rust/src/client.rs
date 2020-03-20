@@ -3,8 +3,8 @@ use std::sync::Arc;
 
 use crate::protobuf;
 
-use arrow::flight::flight_data_to_batch;
 use arrow::datatypes::Schema;
+use arrow::flight::flight_data_to_batch;
 use arrow::record_batch::RecordBatch;
 use datafusion::logicalplan::*;
 //use flight::flight_descriptor;
@@ -12,8 +12,11 @@ use flight::flight_service_client::FlightServiceClient;
 use flight::Ticket;
 use prost::Message;
 
-pub async fn execute_query(host: &str, port: usize, plan: LogicalPlan) -> Result<Vec<RecordBatch>, Box<dyn std::error::Error>> {
-
+pub async fn execute_query(
+    host: &str,
+    port: usize,
+    plan: LogicalPlan,
+) -> Result<Vec<RecordBatch>, Box<dyn std::error::Error>> {
     //TODO need to avoid connecting per request
     let mut client = FlightServiceClient::connect(format!("http://{}:{}", host, port)).await?;
 

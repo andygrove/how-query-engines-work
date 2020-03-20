@@ -122,11 +122,7 @@ impl TryInto<protobuf::LogicalPlanNode> for LogicalPlan {
                 });
                 Ok(node)
             }
-            LogicalPlan::Projection {
-                expr,
-                input,
-                ..
-            } => {
+            LogicalPlan::Projection { expr, input, .. } => {
                 let input: protobuf::LogicalPlanNode = input.as_ref().to_owned().try_into()?;
                 let mut node = empty_plan_node();
                 node.input = Some(Box::new(input));
