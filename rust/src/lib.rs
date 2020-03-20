@@ -6,5 +6,7 @@ pub mod protobuf {
     include!(concat!(env!("OUT_DIR"), "/ballista.protobuf.rs"));
 }
 
+pub mod client;
+pub mod cluster;
 pub mod error;
 pub mod serde;

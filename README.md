@@ -24,11 +24,8 @@ Ballista aims to be language-agnostic with an architecture that is capable of su
 I have recently re-started this project. I am tracking milestones and issues [here](https://github.com/ballista-compute/ballista/milestones?direction=asc&sort=title&state=open) but here are the immediate priorities for a 0.2 (PoC #2) release.
 
 - [x] Query plan defined in Google Protocol Buffer format
-- [ ] Rust client for submitting query plans to a cluster
-- [ ] JVM client for submitting query plans to a cluster
-- [ ] Rust Executor (based on DataFusion)
-- [ ] JVM Executor
-- [ ] Kubernetes deployment YAML
+- [x] Rust client for submitting query plans to a cluster
+- [x] Rust executor for executing query plans (based on DataFusion)
 - [ ] Implement demo of parallel aggregate query
 
 # Contributing

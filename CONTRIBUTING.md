@@ -34,3 +34,8 @@ cargo fmt --all
 cargo clippy --all
 cargo test
 ```
+
+# Development Environment
+
+Follow instructions for [setting up OpenSSL](https://docs.rs/openssl/0.10.28/openssl/)
+
