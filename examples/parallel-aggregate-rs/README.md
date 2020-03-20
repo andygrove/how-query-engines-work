@@ -40,6 +40,9 @@ kubectl apply -f cluster-deployment.yaml
 
 ## Step 4: Deploy Example
 
+```bash
+kubectl apply -f example-deployment.yaml
+```
 
 ## Teardown
 
