@@ -11,7 +11,7 @@ tonic = "0.1.1"
 
 ballista = { path = "../../rust" }
 
-arrow = { git = "https://github.com/andygrove/arrow", branch = "ARROW-8123" }
-arrow-flight = { git = "https://github.com/andygrove/arrow", branch = "ARROW-8123" }
-datafusion = { git = "https://github.com/andygrove/arrow", branch = "ARROW-8123" }
+arrow = { git = "https://github.com/andygrove/arrow", branch = "master" }
+arrow-flight = { git = "https://github.com/andygrove/arrow", branch = "master" }
+datafusion = { git = "https://github.com/andygrove/arrow", branch = "master" }
 

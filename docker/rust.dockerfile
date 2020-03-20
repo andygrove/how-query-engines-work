@@ -1,6 +1,5 @@
-ARG REPO=andygrove
-
-FROM $REPO/ballista-platform as build
+ARG REPO=ballistacompute
+FROM $REPO/rust-base as build
 
 # Copy the statically-linked binary into a scratch container.
 FROM alpine:3.10
@@ -9,7 +8,7 @@ FROM alpine:3.10
 RUN apk add --no-cache tini
 ENTRYPOINT ["/sbin/tini", "--"]
 
-COPY --from=build /tmp/ballista/target/x86_64-unknown-linux-musl/release/ballista-server /
+COPY --from=build /tmp/ballista/target/x86_64-unknown-linux-musl/release/executor /
 USER 1000
 
 EXPOSE 9090
@@ -17,4 +16,4 @@ EXPOSE 9090
 ENV RUST_LOG=info
 ENV RUST_BACKTRACE=1
 
-CMD ["/ballista-server"]
+CMD ["/executor"]

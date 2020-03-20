@@ -41,12 +41,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Field::new("total_amount", DataType::Float64, true),
     ]);
 
-    let mut client = FlightServiceClient::connect("http://localhost:50051").await?;
-
     let mut batches: Vec<RecordBatch> = vec![];
 
     let num_months: usize = 12;
     for month in 0..num_months {
+
+        let mut client = FlightServiceClient::connect("http://localhost:50051").await?;
+
         let filename = format!(
             "/mnt/data/nyc_taxis/csv/yellow_tripdata_2019-{:02}.csv",
             month + 1

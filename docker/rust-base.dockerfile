@@ -69,18 +69,20 @@ ENV OPENSSL_DIR=/usr/local/musl/ \
     LIBZ_SYS_STATIC=1 \
     TARGET=musl
 
-
-# Copy Ballista sources
+# Fetch Ballista dependencies
 WORKDIR /tmp
 RUN USER=root cargo new ballista --lib
 WORKDIR /tmp/ballista
-COPY Cargo.toml Cargo.lock /tmp/ballista/
+COPY rust/Cargo.toml rust/Cargo.lock /tmp/ballista/
 RUN cargo fetch
-RUN mkdir -p /tmp/ballista/src/bin/ && echo 'fn main() {}' >> /tmp/ballista/src/bin/server.rs && echo 'fn main() {}' >> /tmp/ballista/src/bin/cli.rs
-COPY proto /tmp/ballista/proto/
-COPY build.rs /tmp/ballista/
-RUN cargo build --release  --target x86_64-unknown-linux-musl
 
-COPY src/ /tmp/ballista/src/
+# Compile Ballista dependencies
+RUN mkdir -p /tmp/ballista/src/bin/ && echo 'fn main() {}' >> /tmp/ballista/src/bin/executor.rs
+COPY proto /tmp/proto/
+COPY rust/build.rs /tmp/ballista/
+RUN cargo build --release --target x86_64-unknown-linux-musl
+
+# Compile Ballista
+COPY rust/src/ /tmp/ballista/src/
 RUN cargo build --release --target x86_64-unknown-linux-musl
 

@@ -6,7 +6,13 @@ This example shows how to manually create a Ballista cluster of Rust executors a
 
 ## Prerequisites
 
-- Kubernetes cluster (minikube)
+
+You will need a Kubernetes cluster to deploy to. I am using Minikube.
+
+```bash
+sudo minikube start --vm-driver=podman
+```
+
 - Sample data installed (TBD)
 
 ## Step 1: Build Docker Image for Ballista Rust Project
@@ -14,8 +20,8 @@ This example shows how to manually create a Ballista cluster of Rust executors a
 From the root of the project.
 
 ```bash
-cd rust
-./build-docker-image.sh
+docker build -t ballistacompute/rust-base -f docker/rust-base.dockerfile .
+docker build -t ballistacompute/rust -f docker/rust.dockerfile .
 ```
 
 ## Step 2: Build Docker Image for Example
@@ -33,3 +39,12 @@ kubectl apply -f cluster-deployment.yaml
 ```
 
 ## Step 4: Deploy Example
+
+
+## Teardown
+
+Remove cluster:
+
+```bash
+kubectl delete -f cluster-deployment.yaml
+```

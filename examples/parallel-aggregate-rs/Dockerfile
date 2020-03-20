@@ -1,7 +1,9 @@
-FROM ballista/rust
+FROM rustlang/rust:nightly
 
-ADD . /opt/example
-WORKDIR /opt/example
+ADD temp/ /opt
+
+ADD . /opt/examples/parallel-aggregate-rs/
+WORKDIR /opt/examples/parallel-aggregate-rs
 
 RUN cargo build --release
 
