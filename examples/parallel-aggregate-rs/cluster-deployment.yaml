@@ -28,24 +28,21 @@ spec:
         app: ballista
     spec:
       containers:
-        - name: ballista
-          image: ballistacompute/rust
-          resources:
-            limits:
-              memory: "256Mi"
-            requests:
-              memory: "128Mi"
-          ports:
-            - containerPort: 50051
-              name: flight
-#          volumeMounts:
-#            - name: www
-#              mountPath: /usr/share/ballista/html
-#  volumeClaimTemplates:
-#    - metadata:
-#        name: www
-#      spec:
-#        accessModes: [ "ReadWriteOnce" ]
-#        resources:
-#          requests:
-#            storage: 1Gi
+      - name: ballista
+        image: ballistacompute/rust
+        resources:
+          limits:
+            memory: "256Mi"
+          requests:
+            memory: "128Mi"
+        ports:
+          - containerPort: 50051
+            name: flight
+        volumeMounts:
+        - name: nyctaxi
+          mountPath: /mnt/nyctaxi
+      volumes:
+      - name: nyctaxi
+        hostPath:
+          # change this to the path to the files on your host
+          path: /mnt/nyctaxi

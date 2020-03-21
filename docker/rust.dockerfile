@@ -1,5 +1,8 @@
-ARG REPO=ballistacompute
-FROM $REPO/rust-base as build
+FROM ballistacompute/rust-cached-deps as build
+
+# Compile Ballista
+COPY rust/src/ /tmp/ballista/src/
+RUN cargo build --release --target x86_64-unknown-linux-musl
 
 # Copy the statically-linked binary into a scratch container.
 FROM alpine:3.10

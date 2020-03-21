@@ -19,6 +19,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Parallel Aggregate Query Example");
 
+    let nyc_taxi_path = "/mnt/nyctaxi"; //TODO use env var
+
     // get a list of ballista executors from kubernetes
     let executors = cluster::get_executors("nyctaxi", "default").unwrap();
     let mut executor_index = 0;
@@ -44,7 +46,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Executing query against executor at {}:{}", host, port);
 
             let filename = format!(
-                "/mnt/data/nyc_taxis/csv/yellow_tripdata_2019-{:02}.csv",
+                "{}/csv/yellow/2019/yellow_tripdata_2019-{:02}.csv",
+                nyc_taxi_path,
                 month + 1
             );
             let schema = nyctaxi_schema();
@@ -102,6 +105,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                                                  //    .map_err(|e| to_tonic_err(&e))?;
 
     // print results
+
+    //TODO call utility method to print results
+
     results.iter().for_each(|batch| {
         println!(
             "RecordBatch has {} rows and {} columns",
