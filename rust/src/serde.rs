@@ -1,10 +1,13 @@
 use crate::error::{ballista_error, BallistaError};
+use crate::plan::{Action, TableMeta};
 use crate::protobuf;
+
 use datafusion::logicalplan::{Expr, LogicalPlan, LogicalPlanBuilder, Operator, ScalarValue};
 
 use prost::Message;
 
 use arrow::datatypes::{DataType, Field, Schema};
+
 use std::convert::TryInto;
 use std::io::Cursor;
 use std::sync::Arc;
@@ -88,6 +91,168 @@ fn parse_required_expr(p: Option<Box<protobuf::LogicalExprNode>>) -> Result<Expr
     }
 }
 
+impl TryInto<protobuf::Action> for Action {
+    type Error = BallistaError;
+
+    fn try_into(self) -> Result<protobuf::Action, Self::Error> {
+        match self {
+            Action::RemoteQuery { plan, tables } => {
+                let plan_proto: protobuf::LogicalPlanNode = plan.try_into()?;
+
+                let table_meta: Vec<protobuf::TableMeta> = tables
+                    .iter()
+                    .map(|t| match t {
+                        TableMeta::Csv {
+                            table_name,
+                            path,
+                            has_header,
+                            schema,
+                        } => {
+                            let schema: Result<protobuf::Schema, _> = schema.clone().try_into();
+
+                            schema.and_then(|schema| {
+                                let csv_meta = protobuf::CsvFileMeta {
+                                    has_header: *has_header,
+                                    schema: Some(schema),
+                                };
+
+                                Ok(protobuf::TableMeta {
+                                    table_name: table_name.to_owned(),
+                                    filename: path.to_owned(),
+                                    csv_meta: Some(csv_meta),
+                                })
+                            })
+                        }
+                        _ => unimplemented!(),
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Ok(protobuf::Action {
+                    query: Some(plan_proto),
+                    table_meta: table_meta,
+                })
+            }
+        }
+    }
+}
+
+impl TryInto<Action> for protobuf::Action {
+    type Error = BallistaError;
+
+    fn try_into(self) -> Result<Action, Self::Error> {
+        if self.query.is_some() {
+            let plan: LogicalPlan = self.query.unwrap().try_into()?;
+            let tables = self
+                .table_meta
+                .iter()
+                .map(|t| {
+                    if t.csv_meta.is_some() {
+                        //TODO fix the ugly code and make safe
+                        let csv_meta = t.csv_meta.as_ref().unwrap();
+                        let schema: Result<Schema, _> =
+                            csv_meta.schema.as_ref().unwrap().clone().try_into();
+                        schema.and_then(|schema| {
+                            Ok(TableMeta::Csv {
+                                table_name: t.table_name.to_owned(),
+                                path: t.filename.to_owned(),
+                                has_header: csv_meta.has_header,
+                                schema: schema,
+                            })
+                        })
+                    } else {
+                        unimplemented!()
+                    }
+                })
+                .collect::<Result<Vec<_>, _>>()?;
+
+            Ok(Action::RemoteQuery { plan, tables })
+        } else {
+            Err(BallistaError::NotImplemented(format!("{:?}", self)))
+        }
+    }
+}
+
+impl TryInto<protobuf::Schema> for Schema {
+    type Error = BallistaError;
+
+    fn try_into(self) -> Result<protobuf::Schema, Self::Error> {
+        Ok(protobuf::Schema {
+            columns: self
+                .fields()
+                .iter()
+                .map(|field| {
+                    let proto = to_proto_arrow_type(&field.data_type());
+                    proto.and_then(|arrow_type| {
+                        Ok(protobuf::Field {
+                            name: field.name().to_owned(),
+                            arrow_type: arrow_type.into(),
+                            nullable: field.is_nullable(),
+                            children: vec![],
+                        })
+                    })
+                })
+                .collect::<Result<Vec<_>, _>>()?,
+        })
+    }
+}
+
+fn to_proto_arrow_type(dt: &DataType) -> Result<protobuf::ArrowType, BallistaError> {
+    match dt {
+        DataType::Int8 => Ok(protobuf::ArrowType::Int8),
+        DataType::Int16 => Ok(protobuf::ArrowType::Int16),
+        DataType::Int32 => Ok(protobuf::ArrowType::Int32),
+        DataType::Int64 => Ok(protobuf::ArrowType::Int64),
+        DataType::UInt8 => Ok(protobuf::ArrowType::Uint8),
+        DataType::UInt16 => Ok(protobuf::ArrowType::Uint16),
+        DataType::UInt32 => Ok(protobuf::ArrowType::Uint32),
+        DataType::UInt64 => Ok(protobuf::ArrowType::Uint64),
+        DataType::Float32 => Ok(protobuf::ArrowType::Float),
+        DataType::Float64 => Ok(protobuf::ArrowType::Double),
+        DataType::Utf8 => Ok(protobuf::ArrowType::Utf8),
+        other => Err(BallistaError::General(format!(
+            "Unsupported data type {:?}",
+            other
+        ))),
+    }
+}
+
+fn from_proto_arrow_type(dt: i32 /*protobuf::ArrowType*/) -> Result<DataType, BallistaError> {
+    //TODO how to match on protobuf enums ?
+    match dt {
+        /*protobuf::ArrowType::Uint8*/ 2 => Ok(DataType::UInt8),
+        /*protobuf::ArrowType::Int8*/ 3 => Ok(DataType::Int8),
+        /*protobuf::ArrowType::UInt16*/ 4 => Ok(DataType::UInt16),
+        /*protobuf::ArrowType::Int16*/ 5 => Ok(DataType::Int16),
+        /*protobuf::ArrowType::UInt32*/ 6 => Ok(DataType::UInt32),
+        /*protobuf::ArrowType::Int32*/ 7 => Ok(DataType::Int32),
+        /*protobuf::ArrowType::UInt64*/ 8 => Ok(DataType::UInt64),
+        /*protobuf::ArrowType::Int64*/ 9 => Ok(DataType::Int64),
+        /*protobuf::ArrowType::Float*/ 11 => Ok(DataType::Float32),
+        /*protobuf::ArrowType::Double*/ 12 => Ok(DataType::Float64),
+        /*protobuf::ArrowType::Utf8*/ 13 => Ok(DataType::Utf8),
+        other => Err(BallistaError::General(format!(
+            "Unsupported data type {:?}",
+            other
+        ))),
+    }
+}
+
+impl TryInto<Schema> for protobuf::Schema {
+    type Error = BallistaError;
+
+    fn try_into(self) -> Result<Schema, Self::Error> {
+        let fields = self
+            .columns
+            .iter()
+            .map(|c| {
+                let dt: Result<DataType, _> = from_proto_arrow_type(c.arrow_type);
+                dt.and_then(|dt| Ok(Field::new(&c.name, dt, c.nullable)))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+        Ok(Schema::new(fields))
+    }
+}
+
 impl TryInto<protobuf::LogicalPlanNode> for LogicalPlan {
     type Error = BallistaError;
 
@@ -100,20 +265,7 @@ impl TryInto<protobuf::LogicalPlanNode> for LogicalPlan {
             } => {
                 let mut node = empty_plan_node();
 
-                let schema = protobuf::Schema {
-                    columns: table_schema
-                        .fields()
-                        .iter()
-                        .map(|field| {
-                            protobuf::Field {
-                                name: field.name().to_owned(),
-                                arrow_type: 12, //TODO
-                                nullable: true,
-                                children: vec![],
-                            }
-                        })
-                        .collect(),
-                };
+                let schema: protobuf::Schema = table_schema.as_ref().to_owned().try_into()?;
 
                 node.file = Some(protobuf::FileNode {
                     filename: table_name.clone(),
@@ -211,9 +363,9 @@ fn empty_plan_node() -> protobuf::LogicalPlanNode {
     }
 }
 
-pub fn decode_protobuf(bytes: &Vec<u8>) -> Result<LogicalPlan, BallistaError> {
+pub fn decode_protobuf(bytes: &Vec<u8>) -> Result<Action, BallistaError> {
     let mut buf = Cursor::new(bytes);
-    protobuf::LogicalPlanNode::decode(&mut buf)
+    protobuf::Action::decode(&mut buf)
         .map_err(|e| BallistaError::General(format!("{:?}", e)))
         .and_then(|node| node.try_into())
 }
@@ -221,9 +373,10 @@ pub fn decode_protobuf(bytes: &Vec<u8>) -> Result<LogicalPlan, BallistaError> {
 #[cfg(test)]
 mod tests {
     use crate::error::Result;
+    use crate::plan::*;
     use crate::protobuf;
     use arrow::datatypes::{DataType, Field, Schema};
-    use datafusion::logicalplan::{col, lit_str, LogicalPlan, LogicalPlanBuilder};
+    use datafusion::logicalplan::{col, lit_str, LogicalPlanBuilder};
     use std::convert::TryInto;
 
     #[test]
@@ -243,11 +396,21 @@ mod tests {
             //.map_err(|e| Err(format!("{:?}", e)))
             .unwrap(); //TODO
 
-        let proto: protobuf::LogicalPlanNode = plan.clone().try_into()?;
+        let action = Action::RemoteQuery {
+            plan: plan.clone(),
+            tables: vec![TableMeta::Csv {
+                table_name: "employee".to_owned(),
+                has_header: true,
+                path: "/foo/bar.csv".to_owned(),
+                schema: schema.clone(),
+            }],
+        };
 
-        let plan2: LogicalPlan = proto.try_into()?;
+        let proto: protobuf::Action = action.clone().try_into()?;
 
-        assert_eq!(format!("{:?}", plan), format!("{:?}", plan2));
+        let action2: Action = proto.try_into()?;
+
+        assert_eq!(format!("{:?}", action), format!("{:?}", action2));
 
         Ok(())
     }

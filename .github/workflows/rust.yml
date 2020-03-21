@@ -8,14 +8,15 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-    env:
-      working-directory: ./rust
-
     steps:
     - uses: actions/checkout@v2
+    - name: Check Formatting
+      run: cd rust && cargo fmt --all -- --check
     - name: Build
-      run: cargo build --verbose
+      run: cd rust && cargo build --verbose
     - name: Run tests
-      run: cargo test --verbose
+      run: cd rust && cargo test --verbose
+    - name: Build Example
+      run: cd examples/parallel-aggregate-rs && cargo test --verbose
+
