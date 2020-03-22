@@ -19,7 +19,6 @@ use datafusion::logicalplan::*;
 
 #[tokio::main]
 async fn main() -> Result<(), BallistaError> {
-
     println!("Parallel Aggregate Query Example");
 
     //TODO use env vars and/or command-line args
@@ -56,43 +55,43 @@ async fn main() -> Result<(), BallistaError> {
 
         // execute the query against the executor
         //tokio::spawn(async move {
-            println!("Executing query against executor at {}:{}", host, port);
+        println!("Executing query against executor at {}:{}", host, port);
 
-            let filename = format!(
-                "{}/csv/yellow/2019/yellow_tripdata_2019-{:02}.csv",
-                nyc_taxi_path,
-                month + 1
-            );
-            let schema = nyctaxi_schema();
+        let filename = format!(
+            "{}/csv/yellow/2019/yellow_tripdata_2019-{:02}.csv",
+            nyc_taxi_path,
+            month + 1
+        );
+        let schema = nyctaxi_schema();
 
-            // SELECT passenger_count, MAX(fare_amount) FROM <filename> GROUP BY passenger_count
-            let plan = LogicalPlanBuilder::scan("default", "tripdata", &schema, None)
-                .and_then(|plan| plan.aggregate(vec![col(0)], vec![max(col(1))]))
-                .and_then(|plan| plan.build())
-                //.map_err(|e| Err(format!("{:?}", e)))
-                .unwrap(); //TODO
+        // SELECT passenger_count, MAX(fare_amount) FROM <filename> GROUP BY passenger_count
+        let plan = LogicalPlanBuilder::scan("default", "tripdata", &schema, None)
+            .and_then(|plan| plan.aggregate(vec![col(0)], vec![max(col(1))]))
+            .and_then(|plan| plan.build())
+            //.map_err(|e| Err(format!("{:?}", e)))
+            .unwrap(); //TODO
 
-            let action = Action::RemoteQuery {
-                plan: plan.clone(),
-                tables: vec![TableMeta::Csv {
-                    table_name: "tripdata".to_owned(),
-                    has_header: true,
-                    path: filename,
-                    schema: schema.clone(),
-                }],
-            };
+        let action = Action::RemoteQuery {
+            plan: plan.clone(),
+            tables: vec![TableMeta::Csv {
+                table_name: "tripdata".to_owned(),
+                has_header: true,
+                path: filename,
+                schema: schema.clone(),
+            }],
+        };
 
-            println!("Sending plan to {}:{}", host, port);
+        println!("Sending plan to {}:{}", host, port);
 
-            let response = client::execute_action(&host, port, action)
-                .await
-                .map_err(|e| BallistaError::General(format!("{:?}", e)))?;
+        let response = client::execute_action(&host, port, action)
+            .await
+            .map_err(|e| BallistaError::General(format!("{:?}", e)))?;
 
         println!("Received {} batches from {}:{}", response.len(), host, port);
 
         for batch in response {
-                batches.push(batch);
-            }
+            batches.push(batch);
+        }
 
         //});
     }
@@ -139,22 +138,22 @@ async fn main() -> Result<(), BallistaError> {
 
         println!("{:?}", batch.schema());
 
-    //
-    //     let c1 = batch
-    //         .column(0)
-    //         .as_any()
-    //         .downcast_ref::<Int32Array>()
-    //         .expect("Int type");
-    //
-    //     let c2 = batch
-    //         .column(1)
-    //         .as_any()
-    //         .downcast_ref::<Int32Array>()
-    //         .expect("Int type");
-    //
-    //     for i in 0..batch.num_rows() {
-    //         println!("{}, {}", c1.value(i), c2.value(i),);
-    //     }
+        //
+        //     let c1 = batch
+        //         .column(0)
+        //         .as_any()
+        //         .downcast_ref::<Int32Array>()
+        //         .expect("Int type");
+        //
+        //     let c2 = batch
+        //         .column(1)
+        //         .as_any()
+        //         .downcast_ref::<Int32Array>()
+        //         .expect("Int type");
+        //
+        //     for i in 0..batch.num_rows() {
+        //         println!("{}, {}", c1.value(i), c2.value(i),);
+        //     }
     });
 
     Ok(())
