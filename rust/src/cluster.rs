@@ -49,10 +49,6 @@ pub struct Executor {
     pub port: usize,
 }
 
-pub fn statefulset_name(name: &str) -> String {
-    format!("ballista-{}", name)
-}
-
 /// Get a list of executor nodes in a cluster by listing pods in the stateful set.
 pub fn get_executors(cluster_name: &str, namespace: &str) -> Result<Vec<Executor>, BallistaError> {
     use api::core::v1::{ListNamespacedPodOptional, ListNamespacedPodResponse, Pod};
@@ -76,7 +72,7 @@ pub fn get_executors(cluster_name: &str, namespace: &str) -> Result<Vec<Executor
                     host: format!(
                         "{}.{}.{}",
                         pod_meta.name.as_ref().unwrap().clone(),
-                        statefulset_name(cluster_name),
+                        cluster_name,
                         namespace,
                     ),
                     port: pod.spec.as_ref().unwrap().containers[0]
