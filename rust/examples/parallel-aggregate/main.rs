@@ -38,6 +38,8 @@ async fn main() -> Result<(), BallistaError> {
 
     println!("Found {} executors", executors.len());
 
+    let mut batches: Vec<RecordBatch> = vec![];
+
     // execute aggregate query in parallel across all files
     let num_months: usize = 12;
     let threads: Vec<thread::JoinHandle<Result<Vec<RecordBatch>, BallistaError>>> = vec![];
@@ -53,7 +55,7 @@ async fn main() -> Result<(), BallistaError> {
         let port = executor.port;
 
         // execute the query against the executor
-        tokio::spawn(async move {
+        //tokio::spawn(async move {
             println!("Executing query against executor at {}:{}", host, port);
 
             let filename = format!(
@@ -82,20 +84,26 @@ async fn main() -> Result<(), BallistaError> {
 
             println!("Sending plan to {}:{}", host, port);
 
-            client::execute_action(&host, port, action)
+            let response = client::execute_action(&host, port, action)
                 .await
-                .map_err(|e| BallistaError::General(format!("{:?}", e)))
-        });
+                .map_err(|e| BallistaError::General(format!("{:?}", e)))?;
+
+        println!("Received {} batches from {}:{}", response.len(), host, port);
+
+        for batch in response {
+                batches.push(batch);
+            }
+
+        //});
     }
 
     // collect the results
-    let mut batches: Vec<RecordBatch> = vec![];
-    for handle in threads {
-        let response: Vec<RecordBatch> = handle.join().expect("thread panicked").unwrap();
-        for batch in response {
-            batches.push(batch);
-        }
-    }
+    // for handle in threads {
+    //     let response: Vec<RecordBatch> = handle.join().expect("thread panicked").unwrap();
+    //     for batch in response {
+    //         batches.push(batch);
+    //     }
+    // }
     println!("Received {} batches", batches.len());
 
     // perform secondary aggregate query on the results collected from the executors
