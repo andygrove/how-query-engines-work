@@ -26,10 +26,11 @@ spec:
     metadata:
       labels:
         app: ballista
+        ballista-cluster: ballista
     spec:
       containers:
       - name: ballista
-        image: ballistacompute/rust
+        image: ballistacompute/rust:0.2.0
         resources:
           limits:
             memory: "256Mi"

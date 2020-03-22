@@ -19,6 +19,6 @@ USER 1000
 EXPOSE 9090
 
 ENV RUST_LOG=info
-ENV RUST_BACKTRACE=1
+ENV RUST_BACKTRACE=full
 
 CMD ["/parallel-aggregate"]

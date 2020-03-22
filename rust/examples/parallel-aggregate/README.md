@@ -10,6 +10,12 @@ You will need a Kubernetes cluster to deploy to. I recommend using [Minikube](ht
 
 You will need to run [download-nyctaxi-files.sh](download-nyctaxi-files.sh) to download a subset of the [NYC Taxi data set](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page) and then edit [cluster-deployment.yaml](cluster-deployment.yaml) to provide the correct path to these files.
 
+Ballista will need some permissions.
+
+```bash
+kubectl apply -f rbac.yaml
+```
+
 ## Build Example Docker Image
 
 If you are using Minikube, make sure your docker environment is pointing to the Docker daemon running in Minikube.

@@ -1,3 +1,4 @@
+use std::process;
 use std::sync::Arc;
 use std::thread;
 
@@ -17,14 +18,22 @@ use datafusion::execution::context::ExecutionContext;
 use datafusion::logicalplan::*;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), BallistaError> {
 
     println!("Parallel Aggregate Query Example");
 
-    let nyc_taxi_path = "/mnt/nyctaxi"; //TODO use env var
+    //TODO use env vars and/or command-line args
+    let nyc_taxi_path = "/mnt/nyctaxi";
+    let cluster_name = "ballista";
+    let namespace = "default";
 
     // get a list of ballista executors from kubernetes
-    let executors = cluster::get_executors("nyctaxi", "default").unwrap();
+    let executors = cluster::get_executors(cluster_name, namespace)?;
+    if executors.is_empty() {
+        println!("No executors found");
+        process::exit(1);
+    }
+
     let mut executor_index = 0;
 
     println!("Found {} executors", executors.len());
@@ -71,6 +80,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }],
             };
 
+            println!("Sending plan to {}:{}", host, port);
+
             client::execute_action(&host, port, action)
                 .await
                 .map_err(|e| BallistaError::General(format!("{:?}", e)))
@@ -107,6 +118,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                                                  //    .map_err(|e| to_tonic_err(&e))?;
 
     // print results
+    println!("{} batches", results.len());
 
     //TODO call utility method to print results
 
@@ -117,21 +129,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             batch.num_columns()
         );
 
-        let c1 = batch
-            .column(0)
-            .as_any()
-            .downcast_ref::<Int32Array>()
-            .expect("Int type");
+        println!("{:?}", batch.schema());
 
-        let c2 = batch
-            .column(1)
-            .as_any()
-            .downcast_ref::<Int32Array>()
-            .expect("Int type");
-
-        for i in 0..batch.num_rows() {
-            println!("{}, {}", c1.value(i), c2.value(i),);
-        }
+    //
+    //     let c1 = batch
+    //         .column(0)
+    //         .as_any()
+    //         .downcast_ref::<Int32Array>()
+    //         .expect("Int type");
+    //
+    //     let c2 = batch
+    //         .column(1)
+    //         .as_any()
+    //         .downcast_ref::<Int32Array>()
+    //         .expect("Int type");
+    //
+    //     for i in 0..batch.num_rows() {
+    //         println!("{}, {}", c1.value(i), c2.value(i),);
+    //     }
     });
 
     Ok(())

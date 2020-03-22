@@ -65,30 +65,32 @@ pub fn get_executors(cluster_name: &str, namespace: &str) -> Result<Vec<Executor
         },
     )?;
     let response = execute(request, response_body)?;
-    if let ListNamespacedPodResponse::Ok(pod_list) = response {
-        Ok(pod_list
-            .items
-            .iter()
-            .map(|pod| {
-                let pod_meta = pod.metadata.as_ref().unwrap();
-                Executor {
-                    host: format!(
-                        "{}.{}.{}",
-                        pod_meta.name.as_ref().unwrap().clone(),
-                        statefulset_name(cluster_name),
-                        namespace,
-                    ),
-                    port: pod.spec.as_ref().unwrap().containers[0]
-                        .ports
-                        .as_ref()
-                        .unwrap()[0]
-                        .container_port as usize,
-                }
-            })
-            .collect())
-    } else {
-        Err(BallistaError::General(
-            "Unexpected response from Kubernetes API".to_string(),
+
+    match response {
+        ListNamespacedPodResponse::Ok(pod_list) => {
+            Ok(pod_list
+                .items
+                .iter()
+                .map(|pod| {
+                    let pod_meta = pod.metadata.as_ref().unwrap();
+                    Executor {
+                        host: format!(
+                            "{}.{}.{}",
+                            pod_meta.name.as_ref().unwrap().clone(),
+                            statefulset_name(cluster_name),
+                            namespace,
+                        ),
+                        port: pod.spec.as_ref().unwrap().containers[0]
+                            .ports
+                            .as_ref()
+                            .unwrap()[0]
+                            .container_port as usize,
+                    }
+                })
+                .collect())
+        },
+        other => Err(BallistaError::General(
+            format!("Unexpected response from Kubernetes API: {:?}", other),
         ))
     }
 }
