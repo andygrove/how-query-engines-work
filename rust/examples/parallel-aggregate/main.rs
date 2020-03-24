@@ -1,5 +1,6 @@
 use std::process;
 use std::sync::Arc;
+use std::time::Instant;
 
 use arrow::datatypes::{DataType, Field, Schema};
 use arrow::record_batch::RecordBatch;
@@ -39,6 +40,8 @@ async fn main() -> Result<(), BallistaError> {
     }
     println!("Found {} executors", executors.len());
 
+    let start = Instant::now();
+
     // execute aggregate query in parallel across all files
     let num_months: usize = 12;
     let mut batches: Vec<RecordBatch> = vec![];
@@ -57,6 +60,7 @@ async fn main() -> Result<(), BallistaError> {
         // execute the query against the executor
         tasks.push(tokio::spawn(async move {
             println!("Executing query against executor at {}:{}", host, port);
+            let start = Instant::now();
 
             let filename = format!(
                 "{}/csv/yellow/2019/yellow_tripdata_2019-{:02}.csv",
@@ -80,21 +84,37 @@ async fn main() -> Result<(), BallistaError> {
                 }],
             };
 
-            execute_remote_query(host, port, action).await
+            let response = client::execute_action(&host, port, action).await?;
+
+            println!(
+                "Executed query against executor at {}:{} in {} seconds",
+                host,
+                port,
+                start.elapsed().as_secs()
+            );
+
+            Ok(response)
         }));
     }
 
     // collect the results
     for handle in tasks {
-        let response: Vec<RecordBatch> = handle.await.expect("thread panicked")?;
-        for batch in response {
-            batches.push(batch);
+        match handle.await {
+            Ok(results) => {
+                for batch in results? {
+                    batches.push(batch);
+                }
+            }
+            Err(e) => {
+                println!("Thread panicked: {:?}", e);
+                process::exit(2);
+            }
         }
     }
 
     if batches.is_empty() {
         println!("No data returned from executors!");
-        process::exit(1);
+        process::exit(3);
     }
     println!("Received {} batches from executors", batches.len());
 
@@ -113,23 +133,9 @@ async fn main() -> Result<(), BallistaError> {
         .iter()
         .for_each(|str| println!("{}", str));
 
+    println!("Parallel query took {} seconds", start.elapsed().as_secs());
+
     Ok(())
-}
-
-async fn execute_remote_query(
-    host: String,
-    port: usize,
-    action: Action,
-) -> Result<Vec<RecordBatch>, BallistaError> {
-    println!("Sending plan to {}:{}", host, port);
-
-    let response = client::execute_action(&host, port, action)
-        .await
-        .map_err(|e| BallistaError::General(format!("{:?}", e)))?;
-
-    println!("Received {} batches from {}:{}", response.len(), host, port);
-
-    Ok(response)
 }
 
 fn nyctaxi_schema() -> Schema {
