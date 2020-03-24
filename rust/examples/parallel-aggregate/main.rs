@@ -1,7 +1,6 @@
 use std::process;
 use std::sync::Arc;
 
-use arrow::array::{Float64Array, Int32Array, UInt32Array};
 use arrow::datatypes::{DataType, Field, Schema};
 use arrow::record_batch::RecordBatch;
 
@@ -10,6 +9,7 @@ extern crate ballista;
 use ballista::cluster;
 use ballista::error::BallistaError;
 use ballista::plan::{Action, TableMeta};
+use ballista::utils;
 use ballista::{client, BALLISTA_VERSION};
 
 use datafusion::datasource::MemTable;
@@ -25,28 +25,24 @@ async fn main() -> Result<(), BallistaError> {
         BALLISTA_VERSION
     );
 
-    //TODO use env vars and/or command-line args
+    //TODO use command-line args
     let nyc_taxi_path = "/mnt/nyctaxi";
     let cluster_name = "ballista";
     let namespace = "default";
 
     // get a list of ballista executors from kubernetes
+    let mut executor_index = 0;
     let executors = cluster::get_executors(cluster_name, namespace)?;
     if executors.is_empty() {
         println!("No executors found");
         process::exit(1);
     }
-
-    let mut executor_index = 0;
-
     println!("Found {} executors", executors.len());
-
-    let mut batches: Vec<RecordBatch> = vec![];
 
     // execute aggregate query in parallel across all files
     let num_months: usize = 12;
+    let mut batches: Vec<RecordBatch> = vec![];
     let mut tasks: Vec<task::JoinHandle<Result<Vec<RecordBatch>, BallistaError>>> = vec![];
-
     for month in 0..num_months {
         // round robin across the executors
         let executor = &executors[executor_index];
@@ -70,11 +66,9 @@ async fn main() -> Result<(), BallistaError> {
             let schema = nyctaxi_schema();
 
             // SELECT passenger_count, MAX(fare_amount) FROM <filename> GROUP BY passenger_count
-            let plan = LogicalPlanBuilder::scan("default", "tripdata", &schema, None)
-                .and_then(|plan| plan.aggregate(vec![col(3)], vec![max(col(10))]))
-                .and_then(|plan| plan.build())
-                //.map_err(|e| Err(format!("{:?}", e)))
-                .unwrap(); //TODO
+            let plan = LogicalPlanBuilder::scan("default", "tripdata", &schema, None)?
+                .aggregate(vec![col(3)], vec![max(col(10))])?
+                .build()?;
 
             let action = Action::RemoteQuery {
                 plan: plan.clone(),
@@ -97,66 +91,27 @@ async fn main() -> Result<(), BallistaError> {
             batches.push(batch);
         }
     }
-    println!("Received {} batches", batches.len());
 
-    batches.iter().for_each(|batch| {
-        println!(
-            "RecordBatch has {} rows and {} columns and schema {:?}",
-            batch.num_rows(),
-            batch.num_columns(),
-            batch.schema()
-        );
-    });
+    if batches.is_empty() {
+        println!("No data returned from executors!");
+        process::exit(1);
+    }
+    println!("Received {} batches from executors", batches.len());
 
     // perform secondary aggregate query on the results collected from the executors
     let mut ctx = ExecutionContext::new();
-
-    let schema = Schema::new(vec![
-        Field::new("c0", DataType::UInt32, true),
-        Field::new("MAX", DataType::Float64, true),
-    ]);
-    let provider = MemTable::new(Arc::new(schema.clone()), batches).unwrap();
+    let schema = (&batches[0]).schema();
+    let provider = MemTable::new(Arc::new(schema.as_ref().clone()), batches.clone())?;
     ctx.register_table("tripdata", Box::new(provider));
+    let plan = LogicalPlanBuilder::scan("default", "tripdata", &schema, None)?
+        .aggregate(vec![col(0)], vec![max(col(1))])?
+        .build()?;
+    let results = ctx.collect_plan(&plan, 1024 * 1024)?;
 
-    let plan = LogicalPlanBuilder::scan("default", "tripdata", &schema, None)
-        .and_then(|plan| plan.aggregate(vec![col(0)], vec![max(col(1))]))
-        .and_then(|plan| plan.build())
-        //.map_err(|e| Err(format!("{:?}", e)))
-        .unwrap(); //TODO
-
-    let results = ctx.collect_plan(&plan, 1024 * 1024).unwrap(); // TODO
-                                                                 //    .map_err(|e| to_tonic_err(&e))?;
-
-    // print results
-    println!("{} batches", results.len());
-
-    //TODO call utility method to print results
-
-    results.iter().for_each(|batch| {
-        println!(
-            "RecordBatch has {} rows and {} columns",
-            batch.num_rows(),
-            batch.num_columns()
-        );
-
-        println!("{:?}", batch.schema());
-
-        let passenger_count = batch
-            .column(0)
-            .as_any()
-            .downcast_ref::<UInt32Array>()
-            .expect("UInt32 type");
-
-        let fare_amount = batch
-            .column(1)
-            .as_any()
-            .downcast_ref::<Float64Array>()
-            .expect("Float64 type");
-
-        for i in 0..batch.num_rows() {
-            println!("{}, {}", passenger_count.value(i), fare_amount.value(i),);
-        }
-    });
+    // print the results
+    utils::result_str(&results)
+        .iter()
+        .for_each(|str| println!("{}", str));
 
     Ok(())
 }

@@ -8,7 +8,6 @@ use prost::Message;
 
 use arrow::datatypes::{DataType, Field, Schema};
 
-use datafusion::logicalplan::Expr::AggregateFunction;
 use std::convert::TryInto;
 use std::io::Cursor;
 use std::sync::Arc;
@@ -376,17 +375,20 @@ impl TryInto<protobuf::LogicalExprNode> for Expr {
                 }));
                 Ok(expr)
             }
-            Expr::AggregateFunction {
-                name,
-                args,
-                return_type,
-            } => {
-                //TODO clean up this mess
+            Expr::AggregateFunction { name, args, .. } => {
                 let mut expr = empty_expr_node();
-                let x = args[0].clone();
+
+                let aggr_function = match name.as_str() {
+                    "MAX" => Ok(1), // TODO use protobuf enum
+                    other => Err(BallistaError::NotImplemented(format!(
+                        "Aggregate function {:?}",
+                        other
+                    ))),
+                }?;
+
                 expr.aggregate_expr = Some(Box::new(protobuf::AggregateExprNode {
-                    aggr_function: 1, //TODO protobuf::AggregateFunction::Max, //TODO parse aggr function
-                    expr: Some(Box::new(x.try_into()?)),
+                    aggr_function,
+                    expr: Some(Box::new(args[0].clone().try_into()?)),
                 }));
                 Ok(expr)
             }
