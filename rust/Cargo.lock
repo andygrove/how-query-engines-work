@@ -66,7 +66,7 @@ checksum = "cff77d8686867eceff3105329d4698d96c2391c176d5d03adc90c7389162b5b8"
 [[package]]
 name = "arrow"
 version = "1.0.0-SNAPSHOT"
-source = "git+https://github.com/andygrove/arrow?rev=eb0dd86893307277ff6a48d96098bad16b636f94#eb0dd86893307277ff6a48d96098bad16b636f94"
+source = "git+https://github.com/andygrove/arrow?rev=0b678164ffe04debc5244beebdfc259b75c50bd7#0b678164ffe04debc5244beebdfc259b75c50bd7"
 dependencies = [
  "arrow-flight",
  "chrono",
@@ -88,7 +88,7 @@ dependencies = [
 [[package]]
 name = "arrow-flight"
 version = "1.0.0-SNAPSHOT"
-source = "git+https://github.com/andygrove/arrow?rev=eb0dd86893307277ff6a48d96098bad16b636f94#eb0dd86893307277ff6a48d96098bad16b636f94"
+source = "git+https://github.com/andygrove/arrow?rev=0b678164ffe04debc5244beebdfc259b75c50bd7#0b678164ffe04debc5244beebdfc259b75c50bd7"
 dependencies = [
  "bytes 0.5.4",
  "futures 0.3.1",
@@ -527,7 +527,7 @@ dependencies = [
 [[package]]
 name = "datafusion"
 version = "1.0.0-SNAPSHOT"
-source = "git+https://github.com/andygrove/arrow?rev=eb0dd86893307277ff6a48d96098bad16b636f94#eb0dd86893307277ff6a48d96098bad16b636f94"
+source = "git+https://github.com/andygrove/arrow?rev=0b678164ffe04debc5244beebdfc259b75c50bd7#0b678164ffe04debc5244beebdfc259b75c50bd7"
 dependencies = [
  "arrow",
  "clap",
@@ -1537,7 +1537,7 @@ dependencies = [
 [[package]]
 name = "parquet"
 version = "1.0.0-SNAPSHOT"
-source = "git+https://github.com/andygrove/arrow?rev=eb0dd86893307277ff6a48d96098bad16b636f94#eb0dd86893307277ff6a48d96098bad16b636f94"
+source = "git+https://github.com/andygrove/arrow?rev=0b678164ffe04debc5244beebdfc259b75c50bd7#0b678164ffe04debc5244beebdfc259b75c50bd7"
 dependencies = [
  "arrow",
  "brotli",
@@ -2290,9 +2290,9 @@ dependencies = [
 
 [[package]]
 name = "sqlparser"
-version = "0.2.4"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "00e2846fa0d30a9050d25dd133d65ae41c77b75d403204d8dab66b83369638fb"
+checksum = "a26144f20152cffde46456fad8ab1c0eb3b0aff77722d98556356f17bf9aff11"
 dependencies = [
  "chrono",
  "log 0.4.8",

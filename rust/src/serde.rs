@@ -20,7 +20,7 @@ impl TryInto<LogicalPlan> for protobuf::LogicalPlanNode {
             let input: LogicalPlan = self.input.unwrap().as_ref().to_owned().try_into()?;
             LogicalPlanBuilder::from(&input)
                 .project(
-                    &projection
+                    projection
                         .expr
                         .iter()
                         .map(|expr| expr.to_owned().try_into())
@@ -451,7 +451,7 @@ mod tests {
 
         let plan = LogicalPlanBuilder::scan("default", "employee", &schema, None)
             .and_then(|plan| plan.filter(col(4).eq(&lit_str("CO"))))
-            .and_then(|plan| plan.project(&vec![col(0)]))
+            .and_then(|plan| plan.project(vec![col(0)]))
             .and_then(|plan| plan.build())
             //.map_err(|e| Err(format!("{:?}", e)))
             .unwrap(); //TODO
