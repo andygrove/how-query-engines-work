@@ -232,7 +232,7 @@ infix fun LogicalExpr.mod(rhs: LogicalExpr): LogicalExpr {
 /** Aliased expression e.g. `expr AS alias`. */
 class Alias(val expr: LogicalExpr, val alias: String) : LogicalExpr {
     override fun toField(input: LogicalPlan): Field {
-        return Field.nullablePrimitive(alias, expr.toField(input).type as ArrowType.PrimitiveType)
+        return Field.nullable(alias, expr.toField(input).type)
     }
 
     override fun toString(): String {
@@ -243,6 +243,17 @@ class Alias(val expr: LogicalExpr, val alias: String) : LogicalExpr {
 /** Convenience method to wrap the current expression in an alias using an infix operator */
 infix fun LogicalExpr.alias(alias: String) : Alias {
     return Alias(this, alias)
+}
+
+/** Scalar function */
+class ScalarFunction(val name: String, val args: List<LogicalExpr>, val returnType: ArrowType ) : LogicalExpr {
+    override fun toField(input: LogicalPlan): Field {
+        return Field.nullable(name, returnType)
+    }
+
+    override fun toString(): String {
+        return "$name($args)"
+    }
 }
 
 /** Base class for aggregate functions that are of the same type as the underlying expression */

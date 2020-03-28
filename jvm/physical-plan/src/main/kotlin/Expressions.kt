@@ -9,8 +9,11 @@ import org.ballistacompute.datatypes.ArrowVectorBuilder
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.*
 import org.apache.arrow.vector.types.pojo.ArrowType
+import java.lang.IllegalStateException
 import java.lang.UnsupportedOperationException
 import java.util.*
+import kotlin.math.ln
+import kotlin.math.sqrt
 
 /**
  * Physical representation of an expression.
@@ -196,6 +199,43 @@ class LiteralDoublePExpr(val value: Double) : PhysicalExpr {
 class LiteralStringPExpr(val value: String) : PhysicalExpr {
     override fun evaluate(input: RecordBatch): ColumnVector {
         return LiteralValueVector(value.toByteArray(), input.rowCount())
+    }
+}
+
+/** Base class for unary math expressions */
+abstract class UnaryMathExpr(private val expr: PhysicalExpr) : PhysicalExpr {
+
+    override fun evaluate(input: RecordBatch): ColumnVector {
+        val n = expr.evaluate(input);
+        val v = Float8Vector("v", RootAllocator(Long.MAX_VALUE))
+        v.allocateNew()
+        (0 until n.size()).forEach {
+            val nv = n.getValue(it)
+            if (nv == null) {
+                v.setNull(it)
+            } else if (nv is Double) {
+                v.set(it, sqrt(nv))
+            } else {
+                throw IllegalStateException()
+            }
+        }
+        return ArrowFieldVector(v)
+    }
+
+    abstract fun apply(value: Double): Double
+}
+
+/** Square root */
+class Sqrt(expr: PhysicalExpr) : UnaryMathExpr(expr) {
+    override fun apply(value: Double): Double {
+        return sqrt(value)
+    }
+}
+
+/** Natural logarithm */
+class Log(expr: PhysicalExpr) : UnaryMathExpr(expr) {
+    override fun apply(value: Double): Double {
+        return ln(value)
     }
 }
 
