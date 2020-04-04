@@ -1,16 +1,10 @@
 package org.ballistacompute.execution
 
 import org.ballistacompute.datasource.CsvDataSource
+import org.ballistacompute.datasource.DataSource
 import org.ballistacompute.datatypes.RecordBatch
-import org.ballistacompute.datatypes.ColumnVector
-import org.ballistacompute.datatypes.ArrowFieldVector
-import org.ballistacompute.datatypes.LiteralValueVector
-import org.ballistacompute.datatypes.ArrowVectorBuilder
-
-import org.ballistacompute.logical.DataFrame
-import org.ballistacompute.logical.DataFrameImpl
-import org.ballistacompute.logical.LogicalPlan
-import org.ballistacompute.logical.Scan
+import org.ballistacompute.logical.*
+import org.ballistacompute.optimizer.Optimizer
 import org.ballistacompute.planner.QueryPlanner
 import org.ballistacompute.sql.SqlParser
 import org.ballistacompute.sql.SqlPlanner
@@ -18,7 +12,7 @@ import org.ballistacompute.sql.SqlSelect
 import org.ballistacompute.sql.SqlTokenizer
 
 /** Execution context */
-class ExecutionContext {
+class ExecutionContext(val batchSize: Int = 1024) {
 
     /** Tables registered with this context */
     private val tables = mutableMapOf<String, DataFrame>()
@@ -32,7 +26,7 @@ class ExecutionContext {
     }
 
     /** Get a DataFrame representing the specified CSV file */
-    fun csv(filename: String, batchSize: Int = 1000): DataFrame {
+    fun csv(filename: String): DataFrame {
         return DataFrameImpl(Scan(filename, CsvDataSource(filename, batchSize), listOf()))
     }
 
@@ -42,9 +36,15 @@ class ExecutionContext {
     }
 
     /** Register a CSV data source with the context */
+    fun registerDataSource(tablename: String, datasource: DataSource) {
+        register(tablename, DataFrameImpl(Scan(tablename, datasource, listOf())))
+    }
+
+    /** Register a CSV data source with the context */
     fun registerCsv(tablename: String, filename: String) {
         register(tablename, csv(filename))
     }
+
     /** Execute the logical plan represented by a DataFrame */
     fun execute(df: DataFrame) : Sequence<RecordBatch> {
         return execute(df.logicalPlan())
@@ -52,7 +52,17 @@ class ExecutionContext {
 
     /** Execute the provided logical plan */
     fun execute(plan: LogicalPlan) : Sequence<RecordBatch> {
-        val physicalPlan = QueryPlanner().createPhysicalPlan(plan)
+        println("ExecutionContext.execute() plan:" +
+                "\n${plan.pretty()}")
+
+        val optimizedPlan = Optimizer().optimize(plan)
+        println("ExecutionContext.execute() optimizedPlan:" +
+                "\n${optimizedPlan.pretty()}")
+
+        val physicalPlan = QueryPlanner().createPhysicalPlan(optimizedPlan)
+        println("ExecutionContext.execute() physicalPlan:" +
+                "\n${physicalPlan.pretty()}")
+
         return physicalPlan.execute()
     }
 

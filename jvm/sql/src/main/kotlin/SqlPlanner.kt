@@ -6,6 +6,7 @@ import org.ballistacompute.logical.*
 
 import java.sql.SQLException
 import java.util.logging.Logger
+import kotlin.system.exitProcess
 
 /**
  * SqlPlanner creates a logical plan from a parsed SQL statement.
@@ -29,8 +30,8 @@ class SqlPlanner {
         val columnNamesInProjection = getReferencedColumns(projectionExpr)
         println("Projection references columns: $columnNamesInProjection")
 
-        val aggregateExpr = projectionExpr.filter { it is AggregateExpr }.map { it as AggregateExpr }
-        if (aggregateExpr.isEmpty() && select.groupBy.isNotEmpty()) {
+        val aggregateExprCount = projectionExpr.count { isAggregateExpr(it) }
+        if (aggregateExprCount == 0 && select.groupBy.isNotEmpty()) {
             throw SQLException("GROUP BY without aggregate expressions is not supported")
         }
 
@@ -39,10 +40,42 @@ class SqlPlanner {
 
         var plan = table
 
-        if (aggregateExpr.isEmpty()) {
+        if (aggregateExprCount == 0) {
             return planNonAggregateQuery(select, plan, projectionExpr, columnNamesInSelection, columnNamesInProjection)
         } else {
-            return planAggregateQuery(projectionExpr, select, columnNamesInSelection, plan, aggregateExpr)
+
+            val projection = mutableListOf<LogicalExpr>()
+            val aggrExpr = mutableListOf<AggregateExpr>()
+            val numGroupCols = select.groupBy.size
+            var groupCount = 0
+
+            projectionExpr.forEach { expr ->
+                when (expr) {
+                    is AggregateExpr -> {
+                        projection.add(ColumnIndex(numGroupCols + aggrExpr.size))
+                        aggrExpr.add(expr)
+                    }
+                    is Alias -> {
+                        projection.add(Alias(ColumnIndex(numGroupCols + aggrExpr.size), expr.alias))
+                        aggrExpr.add(expr.expr as AggregateExpr)
+                    }
+                    else -> {
+                        projection.add(ColumnIndex(groupCount))
+                        groupCount += 1
+                    }
+                }
+            }
+            plan = planAggregateQuery(projectionExpr, select, columnNamesInSelection, plan, aggrExpr)
+            return plan.project(projection)
+        }
+    }
+
+    private fun isAggregateExpr(expr: LogicalExpr): Boolean {
+        //TODO implement this correctly .. this just handles aggregates and aliased aggregates
+        return when (expr) {
+            is AggregateExpr -> true
+            is Alias -> expr.expr is AggregateExpr
+            else -> false
         }
     }
 
