@@ -85,8 +85,8 @@ impl TryInto<Expr> for protobuf::LogicalExprNode {
             })
         } else if self.has_column_index {
             Ok(Expr::Column(self.column_index as usize))
-        // } else if self.has_column_name {
-        //     Ok(Expr::Column(self.column_name.clone()))
+        } else if self.has_column_name {
+            Ok(Expr::UnresolvedColumn(self.column_name))
         } else if self.has_literal_string {
             Ok(Expr::Literal(ScalarValue::Utf8(
                 self.literal_string.clone(),
@@ -354,12 +354,12 @@ impl TryInto<protobuf::LogicalExprNode> for Expr {
                 expr.column_index = index as u32;
                 Ok(expr)
             }
-            // Expr::ColumnName(name) => {
-            //     let mut expr = empty_expr_node();
-            //     expr.has_column_name = true;
-            //     expr.column_name = name.clone();
-            //     Ok(expr)
-            // }
+            Expr::UnresolvedColumn(name) => {
+                let mut expr = empty_expr_node();
+                expr.has_column_name = true;
+                expr.column_name = name.clone();
+                Ok(expr)
+            }
             Expr::Literal(ScalarValue::Utf8(str)) => {
                 let mut expr = empty_expr_node();
                 expr.has_literal_string = true;

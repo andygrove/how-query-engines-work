@@ -30,7 +30,7 @@ impl FlightService for FlightServiceImpl {
     type ListActionsStream =
         Pin<Box<dyn Stream<Item = Result<ActionType, Status>> + Send + Sync + 'static>>;
     type DoExchangeStream =
-    Pin<Box<dyn Stream<Item = Result<FlightData, Status>> + Send + Sync + 'static>>;
+        Pin<Box<dyn Stream<Item = Result<FlightData, Status>> + Send + Sync + 'static>>;
 
     async fn do_get(
         &self,
@@ -185,7 +185,6 @@ impl FlightService for FlightServiceImpl {
     ) -> Result<Response<Self::DoExchangeStream>, Status> {
         Err(Status::unimplemented("Not yet implemented"))
     }
-
 }
 
 fn to_tonic_err(e: &datafusion::error::ExecutionError) -> Status {
