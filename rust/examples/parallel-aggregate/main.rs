@@ -71,7 +71,7 @@ async fn main() -> Result<(), BallistaError> {
 
             // SELECT passenger_count, MAX(fare_amount) FROM <filename> GROUP BY passenger_count
             let plan = LogicalPlanBuilder::scan("default", "tripdata", &schema, None)?
-                .aggregate(vec![col(3)], vec![max(col(10))])?
+                .aggregate(vec![col("passenger_count")], vec![max(col("fare_amt"))])?
                 .build()?;
 
             let action = Action::RemoteQuery {
@@ -124,7 +124,7 @@ async fn main() -> Result<(), BallistaError> {
     let provider = MemTable::new(Arc::new(schema.as_ref().clone()), batches.clone())?;
     ctx.register_table("tripdata", Box::new(provider));
     let plan = LogicalPlanBuilder::scan("default", "tripdata", &schema, None)?
-        .aggregate(vec![col(0)], vec![max(col(1))])?
+        .aggregate(vec![col_index(0)], vec![max(col_index(1))])?
         .build()?;
     let results = ctx.collect_plan(&plan, 1024 * 1024)?;
 

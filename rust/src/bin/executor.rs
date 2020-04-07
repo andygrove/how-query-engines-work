@@ -29,6 +29,8 @@ impl FlightService for FlightServiceImpl {
         Pin<Box<dyn Stream<Item = Result<flight::Result, Status>> + Send + Sync + 'static>>;
     type ListActionsStream =
         Pin<Box<dyn Stream<Item = Result<ActionType, Status>> + Send + Sync + 'static>>;
+    type DoExchangeStream =
+    Pin<Box<dyn Stream<Item = Result<FlightData, Status>> + Send + Sync + 'static>>;
 
     async fn do_get(
         &self,
@@ -63,7 +65,7 @@ impl FlightService for FlightServiceImpl {
                         let optimized_plan =
                             ctx.optimize(&logical_plan).map_err(|e| to_tonic_err(&e))?;
 
-                        println!("Executing: {:?}", optimized_plan.as_ref());
+                        println!("Executing: {:?}", optimized_plan);
 
                         let physical_plan = ctx
                             .create_physical_plan(&optimized_plan, 1024 * 1024)
@@ -176,6 +178,14 @@ impl FlightService for FlightServiceImpl {
     ) -> Result<Response<Self::ListActionsStream>, Status> {
         Err(Status::unimplemented("Not yet implemented"))
     }
+
+    async fn do_exchange(
+        &self,
+        _request: Request<Streaming<FlightData>>,
+    ) -> Result<Response<Self::DoExchangeStream>, Status> {
+        Err(Status::unimplemented("Not yet implemented"))
+    }
+
 }
 
 fn to_tonic_err(e: &datafusion::error::ExecutionError) -> Status {

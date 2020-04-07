@@ -450,8 +450,8 @@ mod tests {
         ]);
 
         let plan = LogicalPlanBuilder::scan("default", "employee", &schema, None)
-            .and_then(|plan| plan.filter(col(4).eq(&lit_str("CO"))))
-            .and_then(|plan| plan.project(vec![col(0)]))
+            .and_then(|plan| plan.filter(col("state").eq(&lit_str("CO"))))
+            .and_then(|plan| plan.project(vec![col("id")]))
             .and_then(|plan| plan.build())
             //.map_err(|e| Err(format!("{:?}", e)))
             .unwrap(); //TODO
@@ -486,7 +486,7 @@ mod tests {
         ]);
 
         let plan = LogicalPlanBuilder::scan("default", "employee", &schema, None)
-            .and_then(|plan| plan.aggregate(vec![col(3)], vec![max(col(4))]))
+            .and_then(|plan| plan.aggregate(vec![col("state")], vec![max(col("salary"))]))
             .and_then(|plan| plan.build())
             //.map_err(|e| Err(format!("{:?}", e)))
             .unwrap(); //TODO

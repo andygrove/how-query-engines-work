@@ -23,9 +23,9 @@ prost = "0.6"
 prost-types = "0.6"
 reqwest = "0.9.18"
 
-arrow = { git = "https://github.com/andygrove/arrow", rev = "0b678164ffe04debc5244beebdfc259b75c50bd7" }
-arrow-flight = { git = "https://github.com/andygrove/arrow", rev = "0b678164ffe04debc5244beebdfc259b75c50bd7" }
-datafusion = { git = "https://github.com/andygrove/arrow", rev = "0b678164ffe04debc5244beebdfc259b75c50bd7" }
+arrow = { git = "https://github.com/apache/arrow" }
+arrow-flight = { git = "https://github.com/apache/arrow" }
+datafusion = { git = "https://github.com/apache/arrow" }
 
 [[bin]]
 name = "executor"
