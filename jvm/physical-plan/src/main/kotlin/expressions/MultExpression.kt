@@ -1,10 +1,12 @@
-package org.ballistacompute.physical
+package org.ballistacompute.physical.expressions
 
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.Float8Vector
 import org.ballistacompute.datatypes.ColumnVector
+import org.ballistacompute.physical.expressions.BinaryExpression
+import org.ballistacompute.physical.expressions.Expression
 
-class MultExpr(l: PhysicalExpr, r: PhysicalExpr): BinaryPExpr(l,r) {
+class MultExpression(l: Expression, r: Expression): BinaryExpression(l,r) {
 
     override fun evaluate(l: ColumnVector, r: ColumnVector): ColumnVector {
 

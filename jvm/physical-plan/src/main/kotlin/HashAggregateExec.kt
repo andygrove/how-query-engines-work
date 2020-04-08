@@ -7,10 +7,13 @@ import org.ballistacompute.datatypes.ArrowVectorBuilder
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.VectorSchemaRoot
 import org.apache.arrow.vector.types.pojo.Schema
+import org.ballistacompute.physical.expressions.Accumulator
+import org.ballistacompute.physical.expressions.AggregateExpression
+import org.ballistacompute.physical.expressions.Expression
 
 class HashAggregateExec(val input: PhysicalPlan,
-                        val groupExpr: List<PhysicalExpr>,
-                        val aggregateExpr: List<AggregatePExpr>,
+                        val groupExpr: List<Expression>,
+                        val aggregateExpr: List<AggregateExpression>,
                         val schema: Schema) : PhysicalPlan {
 
     override fun schema(): Schema {

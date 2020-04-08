@@ -3,6 +3,7 @@ package org.ballistacompute.planner
 import org.apache.arrow.vector.types.pojo.Schema
 import org.ballistacompute.logical.*
 import org.ballistacompute.physical.*
+import org.ballistacompute.physical.expressions.*
 import java.sql.SQLException
 
 /**
@@ -34,8 +35,9 @@ class QueryPlanner {
                 val groupExpr = plan.groupExpr.map { createPhysicalExpr(it, plan.input) }
                 val aggregateExpr = plan.aggregateExpr.map {
                     when (it) {
-                        is Max -> MaxPExpr(createPhysicalExpr(it.expr, plan.input))
-                        else -> TODO()
+                        is Max -> MaxExpression(createPhysicalExpr(it.expr, plan.input))
+                        is Min -> MinExpression(createPhysicalExpr(it.expr, plan.input))
+                        else -> throw java.lang.IllegalStateException("Unsupported aggregate function: $it")
                     }
                 }
                 HashAggregateExec(input, groupExpr, aggregateExpr, plan.schema())
@@ -47,11 +49,11 @@ class QueryPlanner {
     /**
      * Create a physical expression from a logical expression.
      */
-    fun createPhysicalExpr(expr: LogicalExpr, input: LogicalPlan): PhysicalExpr = when (expr) {
-        is LiteralLong -> LiteralLongPExpr(expr.n)
-        is LiteralDouble -> LiteralDoublePExpr(expr.n)
-        is LiteralString -> LiteralStringPExpr(expr.str)
-        is ColumnIndex -> ColumnPExpr(expr.i)
+    fun createPhysicalExpr(expr: LogicalExpr, input: LogicalPlan): Expression = when (expr) {
+        is LiteralLong -> LiteralLongExpression(expr.n)
+        is LiteralDouble -> LiteralDoubleExpression(expr.n)
+        is LiteralString -> LiteralStringExpression(expr.str)
+        is ColumnIndex -> ColumnExpression(expr.i)
         is Alias -> {
             // note that there is no physical expression for an alias since the alias
             // only affects the name using in the planning phase and not how the aliased
@@ -63,19 +65,19 @@ class QueryPlanner {
             if (i == -1) {
                 throw SQLException("No column named '${expr.name}'")
             }
-            ColumnPExpr(i)
+            ColumnExpression(i)
         }
-        is CastExpr -> CastPExpr(createPhysicalExpr(expr.expr, input), expr.dataType)
+        is CastExpr -> CastExpression(createPhysicalExpr(expr.expr, input), expr.dataType)
 
         // comparision
-        is Eq -> EqExpr(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
+        is Eq -> EqExpression(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
         //TODO other comparison ops
 
         // math
 //        is Add -> MultExpr(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
 //        is Subtract -> MultExpr(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
 //        is Multiply -> MultExpr(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
-        is Divide -> MultExpr(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
+        is Divide -> MultExpression(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
 //        is Modulus -> MultExpr(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
 
         // boolean

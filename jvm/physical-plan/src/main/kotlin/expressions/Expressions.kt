@@ -1,4 +1,4 @@
-package org.ballistacompute.physical
+package org.ballistacompute.physical.expressions
 
 import org.ballistacompute.datatypes.RecordBatch
 import org.ballistacompute.datatypes.ColumnVector
@@ -7,7 +7,7 @@ import org.ballistacompute.datatypes.LiteralValueVector
 /**
  * Physical representation of an expression.
  */
-interface PhysicalExpr {
+interface Expression {
 
     /**
      * Evaluate the expression against an input record batch and produce a column of data as output
@@ -15,19 +15,19 @@ interface PhysicalExpr {
     fun evaluate(input: RecordBatch): ColumnVector
 }
 
-class LiteralLongPExpr(val value: Long) : PhysicalExpr {
+class LiteralLongExpression(val value: Long) : Expression {
     override fun evaluate(input: RecordBatch): ColumnVector {
         return LiteralValueVector(value, input.rowCount())
     }
 }
 
-class LiteralDoublePExpr(val value: Double) : PhysicalExpr {
+class LiteralDoubleExpression(val value: Double) : Expression {
     override fun evaluate(input: RecordBatch): ColumnVector {
         return LiteralValueVector(value, input.rowCount())
     }
 }
 
-class LiteralStringPExpr(val value: String) : PhysicalExpr {
+class LiteralStringExpression(val value: String) : Expression {
     override fun evaluate(input: RecordBatch): ColumnVector {
         return LiteralValueVector(value.toByteArray(), input.rowCount())
     }

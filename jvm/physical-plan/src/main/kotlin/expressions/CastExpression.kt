@@ -1,4 +1,4 @@
-package org.ballistacompute.physical
+package org.ballistacompute.physical.expressions
 
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.Float8Vector
@@ -9,7 +9,7 @@ import org.ballistacompute.datatypes.ArrowVectorBuilder
 import org.ballistacompute.datatypes.ColumnVector
 import org.ballistacompute.datatypes.RecordBatch
 
-class CastPExpr(val expr: PhysicalExpr, val dataType: ArrowType) : PhysicalExpr {
+class CastExpression(val expr: Expression, val dataType: ArrowType) : Expression {
 
     override fun toString(): String {
         return "CAST($expr AS $dataType)"

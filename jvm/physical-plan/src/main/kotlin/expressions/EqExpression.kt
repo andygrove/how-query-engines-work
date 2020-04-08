@@ -1,4 +1,4 @@
-package org.ballistacompute.physical
+package org.ballistacompute.physical.expressions
 
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.BitVector
@@ -6,7 +6,7 @@ import org.ballistacompute.datatypes.ArrowFieldVector
 import org.ballistacompute.datatypes.ColumnVector
 import java.util.*
 
-class EqExpr(l: PhysicalExpr, r: PhysicalExpr): ComparisonPExpr(l,r) {
+class EqExpression(l: Expression, r: Expression): ComparisonExpression(l,r) {
 
     override fun compare(l: ColumnVector, r: ColumnVector): ColumnVector {
         assert(l.size() == r.size())

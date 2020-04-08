@@ -3,20 +3,19 @@ package org.ballistacompute.physical
 import org.ballistacompute.datatypes.RecordBatch
 import org.ballistacompute.datatypes.ColumnVector
 import org.ballistacompute.datatypes.ArrowFieldVector
-import org.ballistacompute.datatypes.LiteralValueVector
 import org.ballistacompute.datatypes.ArrowVectorBuilder
 
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.BitVector
 import org.apache.arrow.vector.FieldVector
 import org.apache.arrow.vector.VarCharVector
-import org.apache.arrow.vector.VectorSchemaRoot
 import org.apache.arrow.vector.types.pojo.Schema
+import org.ballistacompute.physical.expressions.Expression
 
 /**
  * Execute a selection.
  */
-class SelectionExec(val input: PhysicalPlan, val expr: PhysicalExpr) : PhysicalPlan {
+class SelectionExec(val input: PhysicalPlan, val expr: Expression) : PhysicalPlan {
 
     override fun schema(): Schema {
         return input.schema()

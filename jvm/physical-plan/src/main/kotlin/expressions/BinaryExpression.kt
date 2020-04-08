@@ -1,4 +1,4 @@
-package org.ballistacompute.physical
+package org.ballistacompute.physical.expressions
 
 import org.ballistacompute.datatypes.ColumnVector
 import org.ballistacompute.datatypes.RecordBatch
@@ -8,7 +8,7 @@ import org.ballistacompute.datatypes.RecordBatch
  * specific binary operator against those input values, so we can use this base class to simplify the
  * implementation for each operator.
  */
-abstract class BinaryPExpr(val l: PhysicalExpr, val r: PhysicalExpr) : PhysicalExpr {
+abstract class BinaryExpression(val l: Expression, val r: Expression) : Expression {
     override fun evaluate(input: RecordBatch): ColumnVector {
         val ll = l.evaluate(input)
         val rr = r.evaluate(input)

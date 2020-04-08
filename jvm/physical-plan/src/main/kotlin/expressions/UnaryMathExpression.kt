@@ -1,16 +1,15 @@
-package org.ballistacompute.physical
+package org.ballistacompute.physical.expressions
 
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.Float8Vector
 import org.ballistacompute.datatypes.ArrowFieldVector
 import org.ballistacompute.datatypes.ColumnVector
 import org.ballistacompute.datatypes.RecordBatch
-import java.lang.IllegalStateException
 import kotlin.math.ln
 import kotlin.math.sqrt
 
 /** Base class for unary math expressions */
-abstract class UnaryMathExpr(private val expr: PhysicalExpr) : PhysicalExpr {
+abstract class UnaryMathExpression(private val expr: Expression) : Expression {
 
     override fun evaluate(input: RecordBatch): ColumnVector {
         val n = expr.evaluate(input);
@@ -23,7 +22,7 @@ abstract class UnaryMathExpr(private val expr: PhysicalExpr) : PhysicalExpr {
             } else if (nv is Double) {
                 v.set(it, sqrt(nv))
             } else {
-                throw IllegalStateException()
+                TODO()
             }
         }
         return ArrowFieldVector(v)
@@ -34,14 +33,14 @@ abstract class UnaryMathExpr(private val expr: PhysicalExpr) : PhysicalExpr {
 
 
 /** Square root */
-class Sqrt(expr: PhysicalExpr) : UnaryMathExpr(expr) {
+class Sqrt(expr: Expression) : UnaryMathExpression(expr) {
     override fun apply(value: Double): Double {
         return sqrt(value)
     }
 }
 
 /** Natural logarithm */
-class Log(expr: PhysicalExpr) : UnaryMathExpr(expr) {
+class Log(expr: Expression) : UnaryMathExpression(expr) {
     override fun apply(value: Double): Double {
         return ln(value)
     }

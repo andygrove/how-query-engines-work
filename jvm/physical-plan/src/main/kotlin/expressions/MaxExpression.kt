@@ -1,10 +1,10 @@
-package org.ballistacompute.physical
+package org.ballistacompute.physical.expressions
 
 import java.lang.UnsupportedOperationException
 
-class MaxPExpr(private val expr: PhysicalExpr) : AggregatePExpr {
+class MaxExpression(private val expr: Expression) : AggregateExpression {
 
-    override fun inputExpression(): PhysicalExpr {
+    override fun inputExpression(): Expression {
         return expr
     }
 
@@ -17,7 +17,7 @@ class MaxPExpr(private val expr: PhysicalExpr) : AggregatePExpr {
     }
 }
 
-private class MaxAccumulator : Accumulator {
+class MaxAccumulator : Accumulator {
 
     var value: Any? = null
 
@@ -27,10 +27,14 @@ private class MaxAccumulator : Accumulator {
                 this.value = value
             } else {
                 val isMax = when (value) {
+                    is Byte -> value > this.value as Byte
+                    is Short -> value > this.value as Short
                     is Int -> value > this.value as Int
+                    is Long -> value > this.value as Long
+                    is Float -> value > this.value as Float
                     is Double -> value > this.value as Double
                     is ByteArray -> throw UnsupportedOperationException("MAX is not implemented for String yet: ${String(value)}")
-                    else -> throw UnsupportedOperationException(value.javaClass.name)
+                    else -> throw UnsupportedOperationException("MAX is not implemented for String yet: ${value.javaClass.name}")
                 }
                 if (isMax) {
                     this.value = value
