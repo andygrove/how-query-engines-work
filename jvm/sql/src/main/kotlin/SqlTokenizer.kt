@@ -62,12 +62,21 @@ class SqlTokenizer(val sql: String) {
                 return IdentifierToken(s)
             }
 
-        } else if (listOf('=', '*', '/', '%', '-', '+', '<', '>').contains(sql[i])) {
-
-            //TODO add support for `>=`, `<=`, `<>`, and `!=`
-
+        } else if (listOf('=', '*', '/', '%', '-', '+', '<', '>', '!').contains(sql[i])) {
+            val start = i
             i++
-            return OperatorToken(sql[i-1].toString())
+
+            val compoundOperator = sql.substring(start, i + 1)
+            if (listOf("<=", ">=", "<>", "!=").contains(compoundOperator)) {
+              i++
+              return OperatorToken (compoundOperator)
+            }
+
+            if (sql[start] == '!') {
+                throw IllegalStateException("Invalid character '${sql[start]}' at position $start in '$sql' expected: !=")
+            }
+
+            return OperatorToken(sql.substring(start, i))
 
         } else if (sql[i] == '\'') {
             //TODO handle escaped quotes in string
