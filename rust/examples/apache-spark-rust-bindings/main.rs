@@ -1,17 +1,16 @@
 use std::collections::HashMap;
 
-use arrow::datatypes::{Schema, Field, DataType};
+use arrow::datatypes::{DataType, Field, Schema};
 
 extern crate ballista;
 
-use ballista::dataframe::{Context, max};
+use ballista::dataframe::{max, Context};
 use ballista::error::Result;
 use ballista::logicalplan::col;
 use datafusion::utils;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-
     let spark_master = "local[*]";
 
     let mut spark_settings = HashMap::new();

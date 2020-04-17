@@ -1,10 +1,17 @@
 package org.ballistacompute.spark.executor
 
+import java.util
+import java.util.{ArrayList, List}
+
 import scala.collection.JavaConverters._
 
+import io.netty.buffer.ArrowBuf
+
+import scala.collection.JavaConverters._
 import org.apache.arrow.flight.{Action, ActionType, Criteria, FlightDescriptor, FlightInfo, FlightProducer, FlightStream, PutResult, Result, Ticket}
 import org.apache.arrow.memory.RootAllocator
-import org.apache.arrow.vector.VectorSchemaRoot
+import org.apache.arrow.vector.ipc.message.{ArrowFieldNode, ArrowRecordBatch}
+import org.apache.arrow.vector.{FieldVector, Float8Vector, IntVector, TypeLayout, VarBinaryVector, VarCharVector, VectorLoader, VectorSchemaRoot}
 import org.apache.spark.sql.SparkSession
 import org.ballistacompute.protobuf
 
@@ -27,17 +34,44 @@ class SparkFlightProducer(spark: SparkSession) extends FlightProducer {
 
       // collect entire result set into memory - not scalable
       val rows = df.collect()
+      val sparkSchema = df.schema
 
       val allocator = new RootAllocator(Long.MaxValue)
       val root = VectorSchemaRoot.create(logicalPlan.schema(), allocator)
-      root.setRowCount(rows.length)
       root.allocateNew()
 
       listener.start(root, null)
 
-      rows.foreach { row =>
-        //TODO
+      rows.zipWithIndex.foreach {
+
+        //TODO null handling
+
+        case (row, row_index) =>
+          for (i <- 0 until sparkSchema.length) {
+            root.getVector(i) match {
+              case v: IntVector =>
+                v.set(row_index, row.getInt(i))
+              case v: Float8Vector =>
+                v.set(row_index, row.getDouble(i))
+              case v: VarCharVector =>
+                v.set(row_index, row.getString(i).getBytes)
+              case other =>
+                println(s"No support for $other")
+            }
+          }
+
+
+
+          if (row_index % 100 == 0) {
+            root.setRowCount(row_index+1)
+            //val batch = getRecordBatch(root)
+            listener.putNext()
+          }
+
       }
+
+      root.setRowCount(rows.length)
+      listener.putNext()
 
       listener.completed()
 
@@ -58,4 +92,25 @@ class SparkFlightProducer(spark: SparkSession) extends FlightProducer {
   override def doAction(context: FlightProducer.CallContext, action: Action, listener: FlightProducer.StreamListener[Result]): Unit = ???
 
   override def listActions(context: FlightProducer.CallContext, listener: FlightProducer.StreamListener[ActionType]): Unit = ???
+
+  def getRecordBatch(root: VectorSchemaRoot): ArrowRecordBatch = {
+    val nodes: util.List[ArrowFieldNode] = new util.ArrayList[ArrowFieldNode]
+    val buffers: util.List[ArrowBuf] = new util.ArrayList[ArrowBuf]
+    for (vector <- root.getFieldVectors.asScala) {
+      appendNodes(vector, nodes, buffers)
+    }
+    new ArrowRecordBatch(root.getRowCount, nodes, buffers, true)
+  }
+
+  private def appendNodes(vector: FieldVector, nodes: util.List[ArrowFieldNode], buffers: util.List[ArrowBuf]): Unit = {
+    val includeNullCount = true
+    nodes.add(new ArrowFieldNode(vector.getValueCount, if (includeNullCount) vector.getNullCount else -1))
+    val fieldBuffers: util.List[ArrowBuf] = vector.getFieldBuffers
+    val expectedBufferCount: Int = TypeLayout.getTypeBufferCount(vector.getField.getType)
+    if (fieldBuffers.size != expectedBufferCount) throw new IllegalArgumentException(String.format("wrong number of buffers for field %s in vector %s. found: %s", vector.getField, vector.getClass.getSimpleName, fieldBuffers))
+    buffers.addAll(fieldBuffers)
+    for (child <- vector.getChildrenFromFields.asScala) {
+      appendNodes(child, nodes, buffers)
+    }
+  }
 }

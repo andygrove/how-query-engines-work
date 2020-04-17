@@ -1,4 +1,4 @@
-use arrow::datatypes::{Schema, DataType};
+use arrow::datatypes::{DataType, Schema};
 use arrow::record_batch::RecordBatch;
 
 use crate::client;
@@ -15,10 +15,9 @@ pub struct ContextState {
 }
 
 impl ContextState {
-
     pub fn new(settings: HashMap<&str, &str>) -> Self {
         let mut s: HashMap<String, String> = HashMap::new();
-        for (k,v) in settings {
+        for (k, v) in settings {
             s.insert(k.to_owned(), v.to_owned());
         }
         Self { settings: s }
@@ -30,10 +29,9 @@ pub struct Context {
 }
 
 impl Context {
-
     pub fn new() -> Self {
         Self {
-            state: Arc::new(ContextState::new(HashMap::new()) )
+            state: Arc::new(ContextState::new(HashMap::new())),
         }
     }
 
@@ -72,7 +70,6 @@ impl Context {
         port: usize,
         action: Action,
     ) -> Result<Vec<RecordBatch>> {
-
         client::execute_action(host, port, action).await
     }
 }
@@ -210,7 +207,8 @@ impl DataFrame {
         let host = &self.ctx_state.settings["spark.ballista.host"];
         let port = &self.ctx_state.settings["spark.ballista.port"];
 
-        ctx.execute_action(host, port.parse::<usize>().unwrap(), action).await
+        ctx.execute_action(host, port.parse::<usize>().unwrap(), action)
+            .await
     }
 
     pub fn write_csv(&self, _path: &str) -> Result<()> {
@@ -224,7 +222,6 @@ impl DataFrame {
     pub fn schema(&self) -> Box<Schema> {
         unimplemented!()
     }
-
 }
 
 pub fn min(expr: Expr) -> Expr {
