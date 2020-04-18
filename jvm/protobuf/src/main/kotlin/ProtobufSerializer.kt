@@ -2,6 +2,7 @@ package org.ballistacompute.protobuf
 
 import org.ballistacompute.datasource.CsvDataSource
 import org.ballistacompute.logical.*
+import java.lang.IllegalStateException
 import java.lang.UnsupportedOperationException
 
 /**
@@ -49,7 +50,28 @@ class ProtobufSerializer {
                         .build()
 
             }
-            else -> TODO(plan.javaClass.name)
+            is Limit -> {
+                LogicalPlanNode
+                        .newBuilder()
+                        .setInput(toProto(plan.input))
+                        .setLimit(LimitNode
+                                .newBuilder()
+                                .setLimit(plan.limit)
+                                .build())
+                        .build()
+            }
+            is Aggregate -> {
+                LogicalPlanNode
+                        .newBuilder()
+                        .setInput(toProto(plan.input))
+                        .setAggregate(AggregateNode
+                                .newBuilder()
+                                .addAllGroupExpr(plan.groupExpr.map { toProto(it) })
+                                .addAllAggrExpr(plan.aggregateExpr.map { toProto(it) })
+                                .build())
+                        .build()
+            }
+            else -> throw IllegalStateException("Cannot serialize logical operator to protobuf: ${plan.javaClass.name}")
         }
     }
 
@@ -66,17 +88,38 @@ class ProtobufSerializer {
                         .setHasLiteralString(true)
                         .setLiteralString(expr.str).build()
             }
-            is Eq -> {
+            is LiteralDouble -> {
+                LogicalExprNode.newBuilder()
+                        .setHasLiteralDouble(true)
+                        .setLiteralDouble(expr.n).build()
+            }            
+            is LiteralLong -> {
+                LogicalExprNode.newBuilder()
+                        .setHasLiteralLong(true)
+                        .setLiteralLong(expr.n).build()
+            }
+            is BooleanBinaryExpr -> {
+                val op = when (expr) {
+                    is Eq -> "eq"
+                    is Neq -> "neq"
+                    is Lt -> "lt"
+                    is LtEq -> "lteq"
+                    is Gt -> "gt"
+                    is GtEq -> "gteq"
+                    is And -> "and"
+                    is Or -> "or"
+                    else -> throw IllegalStateException("Cannot serialize logical binary expression to protobuf: ${expr.javaClass.name}")
+                }
                 LogicalExprNode
                         .newBuilder().setBinaryExpr(
                         BinaryExprNode.newBuilder()
                                 .setL(toProto(expr.l))
-                                .setOp("eq")
+                                .setOp(op)
                                 .setR(toProto(expr.r))
                                 .build())
                         .build()
             }
-            else -> TODO(expr.javaClass.name)
+            else -> throw IllegalStateException("Cannot serialize logical expression to protobuf: ${expr.javaClass.name}")
         }
     }
 

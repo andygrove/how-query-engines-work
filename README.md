@@ -6,18 +6,22 @@
 
 ## Overview
 
-Ballista is an experimental distributed compute platform based on [Kubernetes](https://kubernetes.io/) and [Apache Arrow](https://arrow.apache.org/) that I am developing in my spare time as a way to learn more about distributed data processing. I am documenting the design in my book [How Query Engines Work](https://leanpub.com/how-query-engines-work) as I learn.
+Ballista is an experimental distributed compute platform, powered by Apache Arrow, with support for Rust and JVM (Java, Kotlin, and Scala).
 
-Ballista aims to be language-agnostic with an architecture that is capable of supporting any language supported by Apache Arrow, with an initial focus on supporting Rust and JVM (Java, Kotlin, and Scala). 
+The foundational technologies in Ballista are:
 
-## Architecture
+- **Apache Arrow Flight** protocol for efficient data transfer between processes.
+- **Google Protocol Buffers** for serializing query plans.
+- **Docker** for packaging up executors along with user-defined code.
+- **Kubernetes** for deployment and management of the executor docker containers.
 
-- Query plans are defined in Google Protocol Buffer format
-- Data is exchanged using [Apache Arrow Flight](https://arrow.apache.org/blog/2019/10/13/introducing-arrow-flight/) protocol
-- Query Executors can be built in any language supported by Arrow
-- Clients can be built in any language supported by Arrow
-- Ballista will provide distributed query planning and orchestration functionality 
-- Seamless integration with Apache Spark and other platforms with provided connectors and drivers
+Ballista supports a number of query engines that can be deployed as executors. The executors are responsible for executing query plans.
+
+- **Ballista JVM Executor**: This is a Kotlin-native query engine built on Apache Arrow, and is based on the design in the book [How Query Engines Work](https://leanpub.com/how-query-engines-work).
+- **Ballista Rust Executor**: This is a Rust-native query engine built on Apache Arrow and [DataFusion](https://github.com/apache/arrow/tree/master/rust/datafusion).
+- **Apache Spark Executor for Ballista**: This is a wrapper around Apache Spark and allows Ballista queries to be executed by Apache Spark.
+
+Ballista provides DataFrame APIs for Rust and Kotlin. The Kotlin DataFrame API can be used from Java, Kotlin, and Scala because Kotlin is 100% compatible with Java.
 
 ## Examples
 
@@ -26,9 +30,24 @@ The following examples should help illustrate the current capabilities of Ballis
 - [Rust bindings for Apache Spark](https://github.com/ballista-compute/ballista/tree/master/rust/examples/apache-spark-rust-bindings)
 - [Distributed query execution in Rust](https://github.com/ballista-compute/ballista/tree/master/rust/examples/parallel-aggregate)
 
+## Status
+
+- [x] Implement a JVM Executor
+- [x] Implement a Rust Executor
+- [x] Implement an Apache Spark Executor
+- [x] Implement example or Rust invoking a Spark query
+- [ ] Implement example of distributed execution in Rust
+- [ ] Implement distributed query planner and scheduler
+- [ ] Expand capabilities of JVM Executor
+- [ ] Expand capabilities of Rust Executor
+- [ ] Expand capabilities of Apache Spark Executor
+- [ ] Benchmarks
+- [ ] Automated integration tests
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for information on contributing to this project.
+
 
 
 

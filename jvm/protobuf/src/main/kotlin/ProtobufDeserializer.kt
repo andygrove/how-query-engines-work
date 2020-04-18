@@ -18,6 +18,9 @@ class ProtobufDeserializer {
         } else if (node.hasProjection()) {
             Projection(fromProto(node.input),
                     node.projection.exprList.map { fromProto(it) })
+        } else if (node.hasLimit()) {
+            Limit(fromProto(node.input),
+                    node.limit.limit)
         } else if (node.hasAggregate()) {
             val input = fromProto(node.input)
             val groupExpr = node.aggregate.groupExprList.map { fromProto(it) }
@@ -54,12 +57,18 @@ class ProtobufDeserializer {
             col(node.columnName)
         } else if (node.hasLiteralString) {
             lit(node.literalString)
+        } else if (node.hasLiteralLong) {
+            lit(node.literalLong)
+        } else if (node.hasLiteralDouble) {
+            lit(node.literalDouble)
         } else if (node.hasAggregateExpr()) {
             val aggr = node.aggregateExpr
             val expr = fromProto(aggr.expr)
             return when (aggr.aggrFunction) {
                 AggregateFunction.MIN -> Min(expr)
                 AggregateFunction.MAX -> Max(expr)
+                AggregateFunction.SUM -> Max(expr)
+                AggregateFunction.AVG -> Max(expr)
                 else -> throw RuntimeException("Failed to parse logical aggregate expression: ${aggr.aggrFunction}")
             }
 

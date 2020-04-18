@@ -8,6 +8,14 @@ This example shows how to manually create a Ballista cluster of Rust executors a
 
 You will need a Kubernetes cluster to deploy to. I recommend using [Minikube](https://kubernetes.io/docs/tutorials/hello-minikube).
 
+## Create minkube cluster
+
+These instructions are based on my usage on Ubuntu.
+
+```bash
+minikube start --driver=podman
+```
+
 Ballista will need some permissions.
 
 ```bash

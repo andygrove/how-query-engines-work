@@ -43,6 +43,8 @@ class BallistaSparkContext(spark: SparkSession) {
         val filterExpr = createExpression(s.getExpr, df)
         df.filter(filterExpr)
 
+      case l: ballista.Limit =>
+
       case a: ballista.Aggregate =>
         val df = createDataFrame(a.getInput, input)
         val groupExpr = a.getGroupExpr.asScala.map(e => createExpression(e, df))
@@ -55,8 +57,8 @@ class BallistaSparkContext(spark: SparkSession) {
           aggrFunction match {
             case "min" => min(col(fieldName))
             case "max" => max(col(fieldName))
-            case "sum" => max(col(fieldName))
-            case "avg" => max(col(fieldName))
+            case "sum" => sum(col(fieldName))
+            case "avg" => avg(col(fieldName))
           }
         }
 
