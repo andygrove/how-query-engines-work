@@ -1,17 +1,10 @@
 # Rust bindings for Apache Spark
 
-This example demonstrates using the Ballista Rust DataFrame to execute transformations and actions using Apache Spark.
-
-See the top-level [Ballista README](../../../README.md) for an overview of the Ballista architecture, but the brief overview of this example is:
-
-- Rust client uses Ballista DataFrame API to build a logical query plan
-- Query plan is encoded in Ballista protobuf format and sent to a Scala executor process
-- The executor translates the query plan into a Spark query and executes it
-- Results are returned to the client via Apache Arrow Flight protocol
+This example demonstrates using the Ballista Rust DataFrame API to execute queries with Apache Spark.
 
 ## Rust Client
 
-The Rust client uses the Ballista DataFrame API to define a logical query plan. In this example the query is a simple aggregate query against a CSV file.
+The example code builds a logical query plan using Ballista's [Rust DataFrame](https://github.com/ballista-compute/ballista/blob/master/rust/src/dataframe.rs). In this example the query is a simple aggregate query against a CSV file.
 
 ```rust
 let spark_master = "local[*]";
@@ -20,8 +13,6 @@ let mut spark_settings = HashMap::new();
 spark_settings.insert("spark.app.name", "rust-client-demo");
 spark_settings.insert("spark.ballista.host", "localhost");
 spark_settings.insert("spark.ballista.port", "50051");
-spark_settings.insert("spark.executor.memory", "4g");
-spark_settings.insert("spark.executor.cores", "4");
 
 let ctx = Context::spark(spark_master, spark_settings);
 
@@ -30,8 +21,9 @@ let path = "/mnt/nyctaxi/csv/yellow/2019/yellow_tripdata_2019-01.csv";
 let df = ctx
   .read_csv(path, Some(nyctaxi_schema()), None, true)?
   .aggregate(
-     vec![col("passenger_count")], 
-     vec![min(col("fare_amount")), max(col("fare_amount"))])?;
+     vec![col("passenger_count")], // group by 
+     vec![min(col("fare_amount")), max(col("fare_amount"))] // aggregates
+  )?;
 
 // print the query plan
 df.explain();
@@ -43,7 +35,9 @@ let results = df.collect().await?;
 utils::print_batches(&results)?;
 ```
 
-The Rust client produces the following output:
+When this code is executed, the call to `collect()` causes the logical plan to be encoded in protobuf format and sent to the Ballista Spark Executor using the host and port specified in the `spark_settings` map.
+
+The example produces the following output:
 
 ```
 Aggregate: groupBy=[[#passenger_count]], aggr=[[MIN(#fare_amount), MAX(#fare_amount)]]
@@ -66,7 +60,7 @@ Aggregate: groupBy=[[#passenger_count]], aggr=[[MIN(#fare_amount), MAX(#fare_amo
 
 ## Spark Executor
 
-The Ballista Spark Executor receives the protobuf-encoded logical query plan and translates it into the following Spark execution plan.
+The Ballista [Spark Executor](https://github.com/ballista-compute/ballista/blob/master/spark/src/main/scala/org/ballistacompute/spark/executor/SparkExecutor.scala) receives the protobuf-encoded logical query plan and [translates it](https://github.com/ballista-compute/ballista/blob/master/spark/src/main/scala/org/ballistacompute/spark/executor/BallistaSparkContext.scala) into the following Spark execution plan.
 
 ```
 == Physical Plan ==
@@ -76,3 +70,6 @@ The Ballista Spark Executor receives the protobuf-encoded logical query plan and
       +- *(1) Project [passenger_count#3, fare_amount#10]
          +- BatchScan[passenger_count#3, fare_amount#10] CSVScan Location: InMemoryFileIndex[file:/mnt/nyctaxi/csv/yellow/2019/yellow_tripdata_2019-01.csv], ReadSchema: struct<passenger_count:int,fare_amount:double>
 ```
+
+The query is then executed and the results are collected and written to the client using the [Apache Arrow Flight](https://arrow.apache.org/blog/2019/10/13/introducing-arrow-flight/) protocol. See [SparkFlightProducer](https://github.com/ballista-compute/ballista/blob/master/spark/src/main/scala/org/ballistacompute/spark/executor/SparkFlightProducer.scala) for the implementation code.
+
