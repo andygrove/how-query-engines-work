@@ -1,6 +1,7 @@
 package org.ballistacompute.protobuf
 
 import org.ballistacompute.datasource.CsvDataSource
+import org.ballistacompute.datatypes.ArrowTypes
 import org.ballistacompute.logical.*
 import java.lang.RuntimeException
 
@@ -8,7 +9,8 @@ class ProtobufDeserializer {
 
     fun fromProto(node: LogicalPlanNode): LogicalPlan {
         return if (node.hasScan()) {
-            val ds = CsvDataSource(node.scan.path, 1024)
+            val schema = fromProto(node.scan.schema)
+            val ds = CsvDataSource(node.scan.path, schema,1024)
             Scan(node.scan.path, ds, node.scan.projectionList.asByteStringList().map { it.toString() })
         } else if (node.hasSelection()) {
             Selection(fromProto(node.input),
@@ -64,5 +66,36 @@ class ProtobufDeserializer {
         } else {
             throw RuntimeException("Failed to parse logical expression: $node")
         }
+    }
+
+    fun fromProto(schema: Schema): org.ballistacompute.datatypes.Schema {
+
+        val arrowFields = schema.columnsList.map {
+
+            //TODO add all types
+            val dt = when (it.arrowTypeValue) {
+                ArrowType.UTF8_VALUE -> ArrowTypes.StringType
+
+                ArrowType.INT8_VALUE -> ArrowTypes.Int8Type
+                ArrowType.INT16_VALUE -> ArrowTypes.Int16Type
+                ArrowType.INT32_VALUE -> ArrowTypes.Int32Type
+                ArrowType.INT64_VALUE -> ArrowTypes.Int64Type
+
+                ArrowType.UINT8_VALUE -> ArrowTypes.UInt8Type
+                ArrowType.UINT16_VALUE -> ArrowTypes.UInt16Type
+                ArrowType.UINT32_VALUE -> ArrowTypes.UInt32Type
+                ArrowType.UINT64_VALUE -> ArrowTypes.UInt64Type
+
+                ArrowType.FLOAT_VALUE -> ArrowTypes.FloatType
+                ArrowType.DOUBLE_VALUE -> ArrowTypes.DoubleType
+
+                else -> throw IllegalStateException("Failed to parse Arrow data type enum from protobuf: ${it.arrowTypeValue}")
+            }
+
+            val fieldType = org.apache.arrow.vector.types.pojo.FieldType(true, dt, null)
+            org.apache.arrow.vector.types.pojo.Field(it.name, fieldType, listOf())
+        }
+
+        return org.ballistacompute.datatypes.SchemaConverter.fromArrow(org.apache.arrow.vector.types.pojo.Schema(arrowFields))
     }
 }

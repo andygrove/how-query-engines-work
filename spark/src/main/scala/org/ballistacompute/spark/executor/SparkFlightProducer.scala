@@ -4,14 +4,13 @@ import java.util
 import java.util.{ArrayList, List}
 
 import scala.collection.JavaConverters._
-
 import io.netty.buffer.ArrowBuf
 
 import scala.collection.JavaConverters._
 import org.apache.arrow.flight.{Action, ActionType, Criteria, FlightDescriptor, FlightInfo, FlightProducer, FlightStream, PutResult, Result, Ticket}
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.ipc.message.{ArrowFieldNode, ArrowRecordBatch}
-import org.apache.arrow.vector.{FieldVector, Float8Vector, IntVector, TypeLayout, VarBinaryVector, VarCharVector, VectorLoader, VectorSchemaRoot}
+import org.apache.arrow.vector.{FieldVector, Float4Vector, Float8Vector, IntVector, TypeLayout, VarBinaryVector, VarCharVector, VectorLoader, VectorSchemaRoot}
 import org.apache.spark.sql.SparkSession
 import org.ballistacompute.protobuf
 
@@ -37,7 +36,7 @@ class SparkFlightProducer(spark: SparkSession) extends FlightProducer {
       val sparkSchema = df.schema
 
       val allocator = new RootAllocator(Long.MaxValue)
-      val root = VectorSchemaRoot.create(logicalPlan.schema(), allocator)
+      val root = VectorSchemaRoot.create(logicalPlan.schema().toArrow(), allocator)
       root.allocateNew()
 
       listener.start(root, null)
@@ -50,24 +49,33 @@ class SparkFlightProducer(spark: SparkSession) extends FlightProducer {
           for (i <- 0 until sparkSchema.length) {
             root.getVector(i) match {
               case v: IntVector =>
-                v.set(row_index, row.getInt(i))
+                if (row.isNullAt(i)) {
+                  v.setNull(row_index)
+                } else {
+                  v.set(row_index, row.getInt(i))
+                }
+              case v: Float4Vector =>
+                if (row.isNullAt(i)) {
+                  v.setNull(row_index)
+                } else {
+                  v.set(row_index, row.getFloat(i))
+                }
               case v: Float8Vector =>
-                v.set(row_index, row.getDouble(i))
+                if (row.isNullAt(i)) {
+                  v.setNull(row_index)
+                } else {
+                  v.set(row_index, row.getDouble(i))
+                }
               case v: VarCharVector =>
-                v.set(row_index, row.getString(i).getBytes)
+                if (row.isNullAt(i)) {
+                  v.setNull(row_index)
+                } else {
+                  v.set(row_index, row.getString(i).getBytes)
+                }
               case other =>
-                println(s"No support for $other")
+                println(s"No support for $other yet")
             }
           }
-
-
-
-          if (row_index % 100 == 0) {
-            root.setRowCount(row_index+1)
-            //val batch = getRecordBatch(root)
-            listener.putNext()
-          }
-
       }
 
       root.setRowCount(rows.length)
