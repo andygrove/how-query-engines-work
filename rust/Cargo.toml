@@ -8,7 +8,7 @@ repository = "https://github.com/ballista-compute/ballista"
 authors = ["Andy Grove <andygrove73@gmail.com>"]
 edition = "2018"
 build = "build.rs"
-include = ["src/**/*", "Cargo.toml", "proto/ballista.proto", "format/Flight.proto"]
+include = ["build.rs", "src/**/*", "Cargo.toml", "proto/ballista.proto"]
 
 [dependencies]
 env_logger = { version = "0.6", default-features = false }
