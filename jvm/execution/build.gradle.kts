@@ -8,7 +8,7 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = "org.ballistacompute"
             artifactId = "execution"
-            version = "0.2.0-SNAPSHOT"
+            version = "0.2.0"
 
             from(components["kotlin"])
         }
@@ -24,5 +24,5 @@ dependencies {
     implementation(project(":optimizer"))
     implementation(project(":sql"))
 
-    implementation("org.apache.arrow:arrow-vector:0.16.0")
+    implementation("org.apache.arrow:arrow-vector:0.17.0")
 }

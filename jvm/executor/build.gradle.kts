@@ -9,7 +9,7 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = "org.ballistacompute"
             artifactId = "executor"
-            version = "0.2.0-SNAPSHOT"
+            version = "0.2.0"
 
             from(components["kotlin"])
         }
@@ -30,8 +30,8 @@ dependencies {
     implementation(project(":protobuf"))
     implementation(project(":execution"))
 
-    implementation("org.apache.arrow:arrow-vector:0.16.0")
+    implementation("org.apache.arrow:arrow-vector:0.17.0")
 
-    implementation("org.apache.arrow:flight-core:0.16.0")
-    implementation("org.apache.arrow:flight-grpc:0.16.0")
+    implementation("org.apache.arrow:flight-core:0.17.0")
+    implementation("org.apache.arrow:flight-grpc:0.17.0")
 }

@@ -7,7 +7,7 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = "org.ballistacompute"
             artifactId = "datatypes"
-            version = "0.2.0-SNAPSHOT"
+            version = "0.2.0"
 
             from(components["kotlin"])
         }
@@ -16,6 +16,6 @@ publishing {
 
 dependencies {
 
-    implementation("org.apache.arrow:arrow-memory:0.16.0")
-    implementation("org.apache.arrow:arrow-vector:0.16.0")
+    implementation("org.apache.arrow:arrow-memory:0.17.0")
+    implementation("org.apache.arrow:arrow-vector:0.17.0")
 }

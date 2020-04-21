@@ -44,6 +44,8 @@ class BallistaSparkContext(spark: SparkSession) {
         df.filter(filterExpr)
 
       case l: ballista.Limit =>
+        val df = createDataFrame(l.getInput, input)
+        df.limit(l.getLimit)
 
       case a: ballista.Aggregate =>
         val df = createDataFrame(a.getInput, input)

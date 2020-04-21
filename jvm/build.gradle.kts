@@ -15,7 +15,7 @@ subprojects {
         plugin("org.jetbrains.kotlin.jvm")
     }
 
-    version = "0.2.0-SNAPSHOT"
+    version = "0.2.0"
 
     val implementation by configurations
     val testImplementation by configurations
