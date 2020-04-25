@@ -1,4 +1,4 @@
-package io.andygrove.ballista.jdbc;
+package org.ballistacompute.jdbc;
 
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;

@@ -1,4 +1,4 @@
-package io.andygrove.ballista.jdbc;
+package org.ballistacompute.jdbc;
 
 import static org.junit.Assert.*;
 
@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableList;
  */
 public class DriverTest {
 
-  final Driver driver = new io.andygrove.ballista.jdbc.Driver();
+  final Driver driver = new Driver();
 
   @Test
   public void acceptsValidUrl() throws SQLException {

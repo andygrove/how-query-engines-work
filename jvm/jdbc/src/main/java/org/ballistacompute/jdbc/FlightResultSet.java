@@ -1,4 +1,4 @@
-package io.andygrove.ballista.jdbc;
+package org.ballistacompute.jdbc;
 
 import java.io.InputStream;
 import java.io.Reader;

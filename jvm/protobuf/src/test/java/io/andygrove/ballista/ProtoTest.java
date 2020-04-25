@@ -1,4 +1,4 @@
-package io.andygrove.ballista;
+package org.ballistacompute.ballista;
 
 import org.junit.Test;
 

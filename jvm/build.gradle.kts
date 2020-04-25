@@ -1,5 +1,7 @@
 plugins {
     kotlin("jvm") version "1.3.50" apply false
+    `maven-publish`
+    id("org.datlowe.maven-publish-auth") version "2.0.2"
 }
 
 allprojects {
@@ -8,14 +10,16 @@ allprojects {
         mavenCentral()
         jcenter()
     }
+    group = "org.ballistacompute"
+    version = "0.2.0"
 }
 
 subprojects {
     apply {
         plugin("org.jetbrains.kotlin.jvm")
+        plugin("maven-publish")
+        plugin("maven-publish-auth")
     }
-
-    version = "0.2.0"
 
     val implementation by configurations
     val testImplementation by configurations
@@ -42,6 +46,37 @@ subprojects {
 
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.14.0") // JVM dependency
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines:0.19.2")
+    }
+
+    publishing {
+        repositories {
+            maven {
+                val releasesRepoName = "sonatype"
+                val releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2")
+                val snapshotsRepoName = "sonatype-snapshots"
+                val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots")
+                name = if (project.hasProperty("release")) releasesRepoName else snapshotsRepoName
+                url = uri(if (project.hasProperty("release")) releasesRepoUrl else snapshotsRepoUrl)
+            }
+        }
+        publications {
+            create<MavenPublication>("maven") {
+                groupId = "org.ballistacompute"
+                //artifactId = "optimizer"
+                version = rootProject.version as String?
+
+                pom {
+                    licenses {
+                        license {
+                            name.set("The Apache License, Version 2.0")
+                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        }
+                    }
+                }
+
+                from(components["kotlin"])
+            }
+        }
     }
 
 }
