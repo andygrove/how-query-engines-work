@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm") version "1.3.50" apply false
     `maven-publish`
     id("org.datlowe.maven-publish-auth") version "2.0.2"
+    signing
 }
 
 allprojects {
@@ -51,26 +52,33 @@ subprojects {
     publishing {
         repositories {
             maven {
-                val releasesRepoName = "sonatype"
-                val releasesRepoUrl = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2")
-                val snapshotsRepoName = "sonatype-snapshots"
-                val snapshotsRepoUrl = uri("https://oss.sonatype.org/content/repositories/snapshots")
-                name = if (project.hasProperty("release")) releasesRepoName else snapshotsRepoName
-                url = uri(if (project.hasProperty("release")) releasesRepoUrl else snapshotsRepoUrl)
+                name = "sonatype"
+                url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2")
+                credentials {
+                    username = System.getenv("SONATYPE_USERNAME")
+                    password = System.getenv("SONATYPE_PASSWORD")
+                }
             }
         }
         publications {
             create<MavenPublication>("maven") {
                 groupId = "org.ballistacompute"
-                //artifactId = "optimizer"
                 version = rootProject.version as String?
 
                 pom {
+                    name.set("Ballista Compute")
+                    description.set("JVM query engine based on Apache Arrow")
+                    url.set("https://github.com/ballista-compute/ballista")
                     licenses {
                         license {
                             name.set("The Apache License, Version 2.0")
                             url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
                         }
+                    }
+                    scm {
+                        connection.set("scm:git:git://github.com/ballista-compute/ballista.git")
+                        developerConnection.set("scm:git:ssh://github.com/ballista-compute/ballista.git")
+                        url.set("https://github.com/ballista-compute/ballista/")
                     }
                 }
 
