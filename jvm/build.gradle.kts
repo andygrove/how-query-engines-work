@@ -2,6 +2,7 @@ plugins {
     kotlin("jvm") version "1.3.50" apply false
     `maven-publish`
     id("org.datlowe.maven-publish-auth") version "2.0.2"
+    id("org.jetbrains.dokka") version "0.10.1"
     signing
 }
 
@@ -12,7 +13,7 @@ allprojects {
         jcenter()
     }
     group = "org.ballistacompute"
-    version = "0.2.0"
+    version = "0.2.1"
 }
 
 subprojects {
@@ -20,6 +21,8 @@ subprojects {
         plugin("org.jetbrains.kotlin.jvm")
         plugin("maven-publish")
         plugin("maven-publish-auth")
+        plugin("signing")
+        plugin("org.jetbrains.dokka")
     }
 
     val implementation by configurations
@@ -49,6 +52,11 @@ subprojects {
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines:0.19.2")
     }
 
+    tasks.dokka {
+        outputFormat = "html"
+        outputDirectory = "$buildDir/javadoc"
+    }
+
     publishing {
         repositories {
             maven {
@@ -60,8 +68,9 @@ subprojects {
                 }
             }
         }
+
         publications {
-            create<MavenPublication>("maven") {
+            create<MavenPublication>("mavenKotlin") {
                 groupId = "org.ballistacompute"
                 version = rootProject.version as String?
 
@@ -75,6 +84,13 @@ subprojects {
                             url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
                         }
                     }
+                    developers {
+                        developer {
+                            id.set("andygrove")
+                            name.set("Andy Grove")
+                            email.set("andygrove73@gmail.com")
+                        }
+                    }
                     scm {
                         connection.set("scm:git:git://github.com/ballista-compute/ballista.git")
                         developerConnection.set("scm:git:ssh://github.com/ballista-compute/ballista.git")
@@ -85,6 +101,10 @@ subprojects {
                 from(components["kotlin"])
             }
         }
+    }
+
+    signing {
+        sign(publishing.publications["mavenKotlin"])
     }
 
 }

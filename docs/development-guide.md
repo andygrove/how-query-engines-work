@@ -31,3 +31,10 @@ Run these commands from the root directory of the project.
 ```bash
 ./dev/build-docker-images.sh
 ```
+
+## Publishing JVM Artifacts
+
+https://help.github.com/en/github/authenticating-to-github/generating-a-new-gpg-key
+gpg --full-generate-key
+gpg --export-secret-keys > ~/.gnupg/secring.gpg
+
