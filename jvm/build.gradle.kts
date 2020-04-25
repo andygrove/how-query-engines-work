@@ -1,4 +1,6 @@
 plugins {
+    java
+    `java-library`
     kotlin("jvm") version "1.3.50" apply false
     `maven-publish`
     id("org.datlowe.maven-publish-auth") version "2.0.2"
@@ -57,6 +59,20 @@ subprojects {
         outputDirectory = "$buildDir/javadoc"
     }
 
+    val sourcesJar = tasks.create<Jar>("sourcesJar") {
+        archiveClassifier.set("sources")
+        from(sourceSets.getByName("main").allSource)
+    }
+
+    val javadocJar = tasks.create<Jar>("javadocJar") {
+        archiveClassifier.set("javadoc")
+        from("$buildDir/javadoc")
+    }
+
+    java {
+        withJavadocJar()
+    }
+
     publishing {
         repositories {
             maven {
@@ -99,6 +115,8 @@ subprojects {
                 }
 
                 from(components["kotlin"])
+                artifact(sourcesJar)
+                artifact(javadocJar)
             }
         }
     }

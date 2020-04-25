@@ -37,4 +37,4 @@ Run these commands from the root directory of the project.
 https://help.github.com/en/github/authenticating-to-github/generating-a-new-gpg-key
 gpg --full-generate-key
 gpg --export-secret-keys > ~/.gnupg/secring.gpg
-
+gpg --key-server keys.openpgp.org --send-keys KEYID
