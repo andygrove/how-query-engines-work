@@ -1,4 +1,4 @@
-package org.ballistacompute.logical
+package org.ballistacompute.optimizer
 
 import org.ballistacompute.datasource.CsvDataSource
 import org.ballistacompute.optimizer.ProjectionPushDownRule

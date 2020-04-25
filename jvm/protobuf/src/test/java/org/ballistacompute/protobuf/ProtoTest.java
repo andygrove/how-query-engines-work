@@ -1,4 +1,4 @@
-package org.ballistacompute.ballista;
+package org.ballistacompute.protobuf;
 
 import org.junit.Test;
 
