@@ -15,7 +15,7 @@ allprojects {
         jcenter()
     }
     group = "org.ballistacompute"
-    version = "0.2.2-SNAPSHOT"
+    version = "0.2.2"
 }
 
 subprojects {

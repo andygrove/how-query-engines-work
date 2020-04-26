@@ -92,9 +92,7 @@ impl TryInto<Expr> for protobuf::LogicalExprNode {
                 self.literal_double.clone(),
             )))
         } else if self.has_literal_long {
-            Ok(Expr::Literal(ScalarValue::Int64(
-                self.literal_long.clone(),
-            )))
+            Ok(Expr::Literal(ScalarValue::Int64(self.literal_long.clone())))
         } else if let Some(aggregate_expr) = self.aggregate_expr {
             Ok(Expr::AggregateFunction {
                 name: "MAX".to_string(), //TODO
