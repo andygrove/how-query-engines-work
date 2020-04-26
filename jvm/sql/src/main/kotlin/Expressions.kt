@@ -36,13 +36,10 @@ data class SqlFunction(val id: String, val args: List<SqlExpr>) : SqlExpr {
 /** SQL aliased expression */
 data class SqlAlias(val expr: SqlExpr, val alias: SqlIdentifier) : SqlExpr
 
-//TODO: support other expression types
-
 data class SqlCast(val expr: SqlExpr, val dataType: SqlIdentifier) : SqlExpr
 
 interface SqlRelation : SqlExpr
 
-//TODO: ORDER BY, LIMIT, OFFSET
 data class SqlSelect(val projection: List<SqlExpr>,
                      val selection: SqlExpr?,
                      val groupBy: List<SqlExpr>,

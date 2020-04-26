@@ -22,13 +22,13 @@ class CastExpression(val expr: Expression, val dataType: ArrowType) : Expression
                     if (vv == null) {
                         builder.set(it, null)
                     } else {
-                        val value = when (vv) {
+                        val castValue = when (vv) {
                             is ByteArray -> String(vv).toByte()
                             is String -> vv.toByte()
                             is Number -> vv.toByte()
                             else -> throw IllegalStateException("Cannot cast value to Byte: $vv")
                         }
-                        builder.set(it, value)
+                        builder.set(it, castValue)
                     }
                 }
             }
@@ -38,13 +38,13 @@ class CastExpression(val expr: Expression, val dataType: ArrowType) : Expression
                     if (vv == null) {
                         builder.set(it, null)
                     } else {
-                        val value = when (vv) {
+                        val castValue = when (vv) {
                             is ByteArray -> String(vv).toShort()
                             is String -> vv.toShort()
                             is Number -> vv.toShort()
                             else -> throw IllegalStateException("Cannot cast value to Short: $vv")
                         }
-                        builder.set(it, value)
+                        builder.set(it, castValue)
                     }
                 }
             }
@@ -54,13 +54,13 @@ class CastExpression(val expr: Expression, val dataType: ArrowType) : Expression
                     if (vv == null) {
                         builder.set(it, null)
                     } else {
-                        val value = when (vv) {
+                        val castValue = when (vv) {
                             is ByteArray -> String(vv).toInt()
                             is String -> vv.toInt()
                             is Number -> vv.toInt()
                             else -> throw IllegalStateException("Cannot cast value to Int: $vv")
                         }
-                        builder.set(it, value)
+                        builder.set(it, castValue)
                     }
                 }
             }
@@ -70,13 +70,13 @@ class CastExpression(val expr: Expression, val dataType: ArrowType) : Expression
                     if (vv == null) {
                         builder.set(it, null)
                     } else {
-                        val value = when (vv) {
+                        val castValue = when (vv) {
                             is ByteArray -> String(vv).toLong()
                             is String -> vv.toLong()
                             is Number -> vv.toLong()
                             else -> throw IllegalStateException("Cannot cast value to Long: $vv")
                         }
-                        builder.set(it, value)
+                        builder.set(it, castValue)
                     }
                 }
             }
@@ -86,13 +86,13 @@ class CastExpression(val expr: Expression, val dataType: ArrowType) : Expression
                     if (vv == null) {
                         builder.set(it, null)
                     } else {
-                        val value = when (vv) {
+                        val castValue = when (vv) {
                             is ByteArray -> String(vv).toFloat()
                             is String -> vv.toFloat()
                             is Number -> vv.toFloat()
                             else -> throw IllegalStateException("Cannot cast value to Float: $vv")
                         }
-                        builder.set(it, value)
+                        builder.set(it, castValue)
                     }
                 }
             }
@@ -102,13 +102,13 @@ class CastExpression(val expr: Expression, val dataType: ArrowType) : Expression
                     if (vv == null) {
                         builder.set(it, null)
                     } else {
-                        val value = when (vv) {
+                        val castValue = when (vv) {
                             is ByteArray -> String(vv).toDouble()
                             is String -> vv.toDouble()
                             is Number -> vv.toDouble()
                             else -> throw IllegalStateException("Cannot cast value to Double: $vv")
                         }
-                        builder.set(it, value)
+                        builder.set(it, castValue)
                     }
                 }
             }

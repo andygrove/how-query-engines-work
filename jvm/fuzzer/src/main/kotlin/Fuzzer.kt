@@ -29,7 +29,7 @@ class Fuzzer {
             ArrowTypes.FloatType -> (0 until n).map { enhancedRandom.nextFloat() }
             ArrowTypes.DoubleType -> (0 until n).map { enhancedRandom.nextDouble() }
             ArrowTypes.StringType -> (0 until n).map { enhancedRandom.nextString(rand.nextInt(64)) }
-            else -> TODO()
+            else -> throw IllegalStateException()
         }
     }
 
@@ -64,7 +64,7 @@ class Fuzzer {
                     is Float4Vector -> v.set(row, value as Float)
                     is Float8Vector -> v.set(row, value as Double)
                     is VarCharVector -> v.set(row, (value as String).toByteArray())
-                    else -> TODO()
+                    else -> throw IllegalStateException()
                 }
             }
         }

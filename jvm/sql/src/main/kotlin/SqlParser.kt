@@ -82,7 +82,7 @@ class SqlParser(val tokens: TokenStream) : PrattParser {
                     assert(tokens.next() == RParenToken())
                     SqlFunction(left.id, args)
                 } else {
-                    TODO()
+                    throw IllegalStateException("Unexpected LPAREN")
                 }
             }
             else -> throw IllegalStateException("Unexpected infix token $token")

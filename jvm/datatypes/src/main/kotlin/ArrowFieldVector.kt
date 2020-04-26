@@ -38,7 +38,7 @@ class ArrowFieldVector(val field: FieldVector) : ColumnVector {
             is Float4Vector -> ArrowTypes.FloatType
             is Float8Vector -> ArrowTypes.DoubleType
             is VarCharVector -> ArrowTypes.StringType
-            else -> TODO(field.javaClass.name)
+            else -> throw IllegalStateException()
         }
     }
 
@@ -64,7 +64,7 @@ class ArrowFieldVector(val field: FieldVector) : ColumnVector {
                     String(bytes)
                 }
             }
-            else -> TODO(field.javaClass.name)
+            else -> throw IllegalStateException()
         }
     }
 

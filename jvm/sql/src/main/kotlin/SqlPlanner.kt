@@ -213,10 +213,12 @@ class SqlPlanner {
             is SqlAlias -> Alias(createLogicalExpr(expr.expr, input), expr.alias.id)
             is SqlCast -> CastExpr(createLogicalExpr(expr.expr, input), parseDataType(expr.dataType.id))
             is SqlFunction -> when(expr.id) {
+                "MIN" -> Min(createLogicalExpr(expr.args.first(), input))
                 "MAX" -> Max(createLogicalExpr(expr.args.first(), input))
-                else -> TODO()
+                "SUM" -> Sum(createLogicalExpr(expr.args.first(), input))
+                else -> throw SQLException("Invalid aggregate function: $expr")
             }
-            else -> TODO(expr.javaClass.toString())
+            else -> throw SQLException("Cannot create logical expression from sql expression: $expr")
         }
     }
 

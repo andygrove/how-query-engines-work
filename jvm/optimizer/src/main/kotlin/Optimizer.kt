@@ -1,6 +1,7 @@
 package org.ballistacompute.optimizer
 
 import org.ballistacompute.logical.*
+import java.lang.IllegalStateException
 
 class Optimizer() {
 
@@ -33,7 +34,7 @@ fun extractColumns(expr: LogicalExpr, input: LogicalPlan, accum: MutableSet<Stri
         is LiteralString -> {}
         is LiteralLong -> {}
         is LiteralDouble -> {}
-        else -> TODO(expr.javaClass.name)
+        else -> throw IllegalStateException("extractColumns does not support expression: $expr")
     }
 }
 

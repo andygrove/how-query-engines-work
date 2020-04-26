@@ -92,13 +92,11 @@ class QueryPlanner {
                 is Multiply -> MultiplyExpression(l, r)
                 is Divide -> DivideExpression(l, r)
 
-                else -> TODO(expr.javaClass.toString())
+                else -> throw IllegalStateException("Unsupported binary expression: $expr")
             }
         }
 
-        //is Not -> AndExpr(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
-
-        else -> TODO(expr.javaClass.toString())
+        else -> throw IllegalStateException("Unsupported logical expression: $expr")
     }
 
 }
