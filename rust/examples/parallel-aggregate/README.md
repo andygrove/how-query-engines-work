@@ -22,6 +22,13 @@ Ballista will need some permissions.
 kubectl apply -f rbac.yaml
 ```
 
+You should see the following output:
+
+```bash
+clusterrole.rbac.authorization.k8s.io/list-pods created
+clusterrolebinding.rbac.authorization.k8s.io/ballista-list-pods created
+```
+
 You will need to run [download-nyctaxi-files.sh](download-nyctaxi-files.sh) to download a subset of the [NYC Taxi data set](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page) and then edit [pv.yaml](pv.yaml) to provide the correct path to these files.
 
 Mount the host path into the Minikube VM.
@@ -34,6 +41,13 @@ Create a persistent volume.
 
 ```bash
 kubectl apply -f pv.yaml
+```
+
+You should see the following output:
+
+```bash
+persistentvolume/nyctaxi-pv created
+persistentvolumeclaim/nyctaxi-pv-claim created
 ```
 
 ## Build Example Docker Image

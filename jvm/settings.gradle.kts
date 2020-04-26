@@ -20,6 +20,7 @@ include("sql")
 include("execution")
 include("protobuf")
 include("executor")
+include("fuzzer")
 
 include("examples")
 

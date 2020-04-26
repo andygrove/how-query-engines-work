@@ -1,7 +1,8 @@
+description = "Ballista JDBC Driver"
+
 plugins {
     java
 }
-
 
 dependencies {
 
@@ -10,7 +11,6 @@ dependencies {
 
     testImplementation("junit:junit:4.13")
 }
-
 
 tasks.test {
     //useJUnitPlatform()

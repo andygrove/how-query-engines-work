@@ -1,3 +1,4 @@
+description = "Ballista SQL query planner"
 
 dependencies {
     implementation(project(":datatypes"))

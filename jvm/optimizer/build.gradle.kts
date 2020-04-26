@@ -1,3 +1,4 @@
+description = "Ballista query optimizer"
 
 dependencies {
     implementation(project(":datatypes"))

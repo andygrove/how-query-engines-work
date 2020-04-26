@@ -1,3 +1,5 @@
+description = "Ballista client"
+
 dependencies {
 
     implementation(project(":datatypes"))

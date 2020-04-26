@@ -1,5 +1,6 @@
 package org.ballistacompute.physical.expressions
 
+import org.ballistacompute.datatypes.ArrowTypes
 import org.ballistacompute.datatypes.RecordBatch
 import org.ballistacompute.datatypes.ColumnVector
 import org.ballistacompute.datatypes.LiteralValueVector
@@ -17,19 +18,19 @@ interface Expression {
 
 class LiteralLongExpression(val value: Long) : Expression {
     override fun evaluate(input: RecordBatch): ColumnVector {
-        return LiteralValueVector(value, input.rowCount())
+        return LiteralValueVector(ArrowTypes.Int64Type, value, input.rowCount())
     }
 }
 
 class LiteralDoubleExpression(val value: Double) : Expression {
     override fun evaluate(input: RecordBatch): ColumnVector {
-        return LiteralValueVector(value, input.rowCount())
+        return LiteralValueVector(ArrowTypes.DoubleType, value, input.rowCount())
     }
 }
 
 class LiteralStringExpression(val value: String) : Expression {
     override fun evaluate(input: RecordBatch): ColumnVector {
-        return LiteralValueVector(value.toByteArray(), input.rowCount())
+        return LiteralValueVector(ArrowTypes.StringType, value.toByteArray(), input.rowCount())
     }
 }
 

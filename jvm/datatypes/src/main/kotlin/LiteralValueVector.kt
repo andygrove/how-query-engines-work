@@ -1,10 +1,15 @@
 package org.ballistacompute.datatypes
 
+import org.apache.arrow.vector.types.pojo.ArrowType
 import java.lang.IllegalStateException
 import java.lang.IndexOutOfBoundsException
 
 /** Represents a literal value */
-class LiteralValueVector(val value: Any?, val size: Int) : ColumnVector {
+class LiteralValueVector(val arrowType: ArrowType, val value: Any?, val size: Int) : ColumnVector {
+
+    override fun getType(): ArrowType {
+        return arrowType
+    }
 
     override fun getValue(i: Int): Any? {
         if (i<0 || i>=size) {
@@ -19,14 +24,14 @@ class LiteralValueVector(val value: Any?, val size: Int) : ColumnVector {
 
     override fun eq(rhs: ColumnVector): ColumnVector {
         return when (rhs) {
-            is LiteralValueVector -> LiteralValueVector(value == rhs.value, size)
+            is LiteralValueVector -> LiteralValueVector(ArrowTypes.BooleanType, value == rhs.value, size)
             else -> throw IllegalArgumentException()
         }
     }
 
     override fun neq(rhs: ColumnVector): ColumnVector {
         return when (rhs) {
-            is LiteralValueVector -> LiteralValueVector(value != rhs.value, size)
+            is LiteralValueVector -> LiteralValueVector(ArrowTypes.BooleanType, value != rhs.value, size)
             else -> throw IllegalArgumentException()
         }
     }

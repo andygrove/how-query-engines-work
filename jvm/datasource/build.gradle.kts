@@ -1,3 +1,5 @@
+description = "Ballista data sources"
+
 dependencies {
 
     implementation(project(":datatypes"))

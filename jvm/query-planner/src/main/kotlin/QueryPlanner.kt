@@ -69,20 +69,33 @@ class QueryPlanner {
         }
         is CastExpr -> CastExpression(createPhysicalExpr(expr.expr, input), expr.dataType)
 
-        // comparision
-        is Eq -> EqExpression(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
-        //TODO other comparison ops
+        is BinaryExpr -> {
+            val l = createPhysicalExpr(expr.l, input)
+            val r = createPhysicalExpr(expr.r, input)
+            when (expr) {
+                // comparision
+                is Eq -> EqExpression(l, r)
+                is Neq -> NeqExpression(l, r)
+                is Gt -> GtExpression(l, r)
+                is GtEq -> GtEqExpression(l, r)
+                is Lt -> LtExpression(l, r)
+                is LtEq -> LtEqExpression(l, r)
 
-        // math
+                // math
 //        is Add -> MultExpr(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
 //        is Subtract -> MultExpr(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
 //        is Multiply -> MultExpr(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
-        is Divide -> MultExpression(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
+                is Divide -> MultExpression(l, r)
 //        is Modulus -> MultExpr(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
 
-        // boolean
+                // boolean
 //        is And -> AndExpr(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
-        //is Or -> AndExpr(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
+                //is Or -> AndExpr(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
+
+                else -> TODO(expr.javaClass.toString())
+            }
+        }
+
         //is Not -> AndExpr(createPhysicalExpr(expr.l, input), createPhysicalExpr(expr.r, input))
 
         else -> TODO(expr.javaClass.toString())

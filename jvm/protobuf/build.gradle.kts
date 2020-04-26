@@ -1,3 +1,5 @@
+description = "Ballista protocol buffer format"
+
 plugins {
     java
     id("com.google.protobuf") version "0.8.11"
