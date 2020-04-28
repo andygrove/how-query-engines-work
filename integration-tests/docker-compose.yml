@@ -1,6 +1,20 @@
 version: '2.0'
 services:
-  ballista-jvm:
-    image: ballista-jvm
+  ballista-rust:
+    image: ballistacompute/ballista-rust
     ports:
       - "50051:50051"
+    volumes:
+      - /mnt/nyctaxi:/mnt/nyctaxi
+  ballista-jvm:
+    image: ballistacompute/ballista-jvm
+    ports:
+      - "50052:50051"
+    volumes:
+      - /mnt/nyctaxi:/mnt/nyctaxi
+  ballista-spark:
+    image: ballistacompute/ballista-spark
+    ports:
+      - "50053:50051"
+    volumes:
+      - /mnt/nyctaxi:/mnt/nyctaxi

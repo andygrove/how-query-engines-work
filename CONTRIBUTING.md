@@ -29,13 +29,3 @@ This project uses the standard [GitHub Forking Workflow](https://gist.github.com
 
 See the [Ballista Development Guide](docs/user-guide/src/development-environment.md) for instructions on setting up a local build environment.
 
-## Rust Code Formatting
-
-To make sure your build passes the checks in Travis CI, run these commands before creating a pull request. Builds will fail if the code is not formatted correctly.
-
-```
-cargo fmt --all
-cargo clippy --all
-cargo test
-```
-

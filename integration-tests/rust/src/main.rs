@@ -17,31 +17,33 @@ async fn main() -> Result<()> {
     println!("Ballista v{} Rust Integration Tests", BALLISTA_VERSION);
 
     let host = "localhost";
-    let port = 50051;
+    let ports = vec![50051, 50052, 50053]; // rust, jvm, spark executors
 
-    println!("Executing query against executor at {}:{}", host, port);
-    let start = Instant::now();
+    for port in &ports {
+        println!("Executing query against executor at {}:{}", host, port);
+        let start = Instant::now();
 
-    let ctx = Context::remote(host, port);
+        let ctx = Context::remote(host, *port);
 
-    let filename = "/mnt/nyctaxi/yellow_tripdata_2019-01.csv";
+        let filename = "/mnt/nyctaxi/yellow_tripdata_2019-01.csv";
 
-    let response = ctx
-        .read_csv(filename, Some(nyctaxi_schema()), None, true)?
-        .aggregate(vec![col("passenger_count")], vec![max(col("fare_amount"))])?
-        .collect()
-        .await?;
+        let response = ctx
+            .read_csv(filename, Some(nyctaxi_schema()), None, true)?
+            .aggregate(vec![col("passenger_count")], vec![max(col("fare_amount"))])?
+            .collect()
+            .await?;
 
-    println!(
-        "Executed query against executor at {}:{} in {} seconds",
-        host,
-        port,
-        start.elapsed().as_secs()
-    );
+        println!(
+            "Executed query against executor at {}:{} in {} seconds",
+            host,
+            port,
+            start.elapsed().as_secs()
+        );
 
-    print_batches(&response)?;
+        print_batches(&response)?;
 
-    //TODO assertions
+        //TODO assertions
+    }
 
     Ok(())
 }
