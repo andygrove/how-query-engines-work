@@ -48,16 +48,18 @@ impl TryInto<LogicalPlan> for protobuf::LogicalPlanNode {
                 .build()
                 .map_err(|e| e.into())
         } else if let Some(scan) = self.scan {
-            let schema = Schema::new(
-                scan.schema
-                    .unwrap()
-                    .columns
-                    .iter()
-                    .map(|field| Field::new(&field.name, DataType::Utf8, true))
-                    .collect(),
-            );
+            let schema: Schema = scan.schema.unwrap().try_into()?;
+            println!("schema: {:?}", schema);
 
-            LogicalPlanBuilder::scan_csv(&scan.path, &schema, None)?
+            let projection: Vec<usize> = scan
+                .projection
+                .iter()
+                .map(|name| schema.index_of(name))
+                .collect::<Result<Vec<_>, _>>()?;
+
+            println!("projection: {:?}", projection);
+
+            LogicalPlanBuilder::scan_csv(&scan.path, &schema, None)? //TODO
                 .build()
                 .map_err(|e| e.into())
         } else {
@@ -94,8 +96,18 @@ impl TryInto<Expr> for protobuf::LogicalExprNode {
         } else if self.has_literal_long {
             Ok(Expr::Literal(ScalarValue::Int64(self.literal_long.clone())))
         } else if let Some(aggregate_expr) = self.aggregate_expr {
+            let name = match aggregate_expr.aggr_function {
+                0 => Ok("MIN"),
+                1 => Ok("MAX"),
+                2 => Ok("SUM"),
+                other => Err(ballista_error(&format!(
+                    "Unsupported aggregate function '{:?}'",
+                    other
+                ))),
+            }?;
+
             Ok(Expr::AggregateFunction {
-                name: "MAX".to_string(), //TODO
+                name: name.to_owned(),
                 args: vec![parse_required_expr(aggregate_expr.expr)?],
                 return_type: DataType::Boolean, //TODO
             })

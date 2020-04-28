@@ -129,9 +129,13 @@ impl LogicalPlan {
             LogicalPlan::MemoryScan { .. } => write!(f, "MemoryScan"),
             LogicalPlan::FileScan {
                 path: ref table_name,
-                ref projection,
+                ref projected_schema,
                 ..
-            } => write!(f, "TableScan: {} projection={:?}", table_name, projection),
+            } => write!(
+                f,
+                "TableScan: '{}'; schema={:?}",
+                table_name, projected_schema
+            ),
             LogicalPlan::Projection {
                 ref expr,
                 ref input,
@@ -1004,6 +1008,21 @@ fn translate_expr(expr: &Expr) -> Result<DFExpr> {
                 left: Arc::new(left),
                 op,
                 right: Arc::new(right),
+            })
+        }
+        Expr::AggregateFunction {
+            name,
+            args,
+            return_type,
+        } => {
+            let args = args
+                .iter()
+                .map(|e| translate_expr(e))
+                .collect::<Result<Vec<_>>>()?;
+            Ok(DFExpr::AggregateFunction {
+                name: name.to_owned(),
+                args,
+                return_type: return_type.clone(),
             })
         }
         other => Err(ExecutionError::General(format!(
