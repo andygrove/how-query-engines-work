@@ -47,7 +47,7 @@ The following examples should help illustrate the current capabilities of Ballis
 ## Status
 
 - It is possible to manually execute distributed hash aggregate queries and simple filters and projections in Rust and JVM.
-- The distributed scheduler work is being designed with the hope of this being available in the Summer of 2002.
+- The distributed scheduler work is being designed with the hope of this being available in the Summer of 2020.
 
 ## Documentation
 
