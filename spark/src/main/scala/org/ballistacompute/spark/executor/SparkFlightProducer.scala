@@ -33,8 +33,11 @@ class SparkFlightProducer(spark: SparkSession) extends FlightProducer {
 
       // collect entire result set into memory - not scalable
       val rows = df.collect()
+      rows.foreach(println)
+
       val sparkSchema = df.schema
 
+      //TODO should be able to delegate to common code in ballista=jvm for most of this, rather than duplicate here
       val allocator = new RootAllocator(Long.MaxValue)
       val root = VectorSchemaRoot.create(logicalPlan.schema().toArrow(), allocator)
       root.allocateNew()

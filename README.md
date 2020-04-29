@@ -15,13 +15,27 @@ The foundational technologies in Ballista are:
 - **Docker** for packaging up executors along with user-defined code.
 - **Kubernetes** for deployment and management of the executor docker containers.
 
-Ballista supports a number of query engines that can be deployed as executors. The executors are responsible for executing query plans.
+## Why Ballista?
 
-- **Ballista JVM Executor**: This is a Kotlin-native query engine built on Apache Arrow, and is based on the design in the book [How Query Engines Work](https://leanpub.com/how-query-engines-work).
-- **Ballista Rust Executor**: This is a Rust-native query engine built on Apache Arrow and [DataFusion](https://github.com/apache/arrow/tree/master/rust/datafusion).
-- **Apache Spark Executor for Ballista**: This is a wrapper around Apache Spark and allows Ballista queries to be executed by Apache Spark.
+Ballista is at a very early stage of development and therefore has little value currently, but the hope is to demonstrate a number of benefits due to the choice of Apache Arrow as the memory model.
 
-Ballista provides DataFrame APIs for Rust and Kotlin. The Kotlin DataFrame API can be used from Java, Kotlin, and Scala because Kotlin is 100% compatible with Java.
+Having a common memory model removes the overhead associated with supporting multiple programming languages. It makes it possible for high-level languages such as Python and Java to delegate operations to lower-level languages such as C++ and Rust without the need to serialize or copy data within the same process (pointers to memory can be passed instead).
+
+The common memory model also makes it possible to transfer data extremely efficiently between processes (regardless of implementation programming language) because the memory format is also the serialization format. These network transfers could be between processes on the same node (or in the same Kubernetes pod), or between different pods within a cluster.
+
+There are different value propositions for different audiences.
+
+## Ballista for Rustaceans
+
+Ballista will provide a distributed compute environment where it will be possible for all processing, including user-defined code, to happen in Rust.
+
+However, Ballista will also provide interoperability with other ecosystems, including Apache Spark, allowing Rust to be introduced gradually into existing pipelines.
+
+## Ballista for JVM Developers
+
+Ballista provides a JVM query engine (implemented in Kotlin) as well as interoperability with Apache Spark (implemented in Scala) . Ballista will also provide support for JNI integration with C++ and/or Rust compute kernels (such as delegating to Gandiva or DataFusion).
+
+This will allow JVM developers to leverage their investment in existing code and ecosystem whilst taking advantage of the memory efficiency and increased performance from offloading certain operations to lower-level languages.
 
 ## Examples
 
@@ -32,18 +46,12 @@ The following examples should help illustrate the current capabilities of Ballis
 
 ## Status
 
-- [x] Implement a JVM Executor
-- [x] Implement a Rust Executor
-- [x] Implement an Apache Spark Executor
-- [x] Implement example or Rust invoking a Spark query
-- [ ] Implement example of distributed execution in Rust
-- [ ] Implement distributed query planner and scheduler
-- [ ] Expand capabilities of JVM Executor
-- [ ] Expand capabilities of Rust Executor
-- [ ] Expand capabilities of Apache Spark Executor
-- [ ] Benchmarks
-- [ ] Automated integration tests
+- It is possible to manually execute distributed hash aggregate queries and simple filters and projections in Rust and JVM.
+- The distributed scheduler work is being designed with the hope of this being available in the Summer of 2002.
 
+## Documentation
+
+The [Ballista User Guide](https://ballistacompute.org/docs/) is hosted on the [Ballista website](https://ballistacompute.org/), along with the [Ballista Blog](https://ballistacompute.org/) where news and release notes are posted.
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for information on contributing to this project.

@@ -21,6 +21,7 @@ class BallistaSparkContext(spark: SparkSession) {
 
         val df = spark.read
           .format("csv")
+          .option("header", "true") //TODO do not hard-code
           .schema(sparkSchema)
           .load(s.getPath)
 

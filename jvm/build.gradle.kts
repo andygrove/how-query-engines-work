@@ -8,16 +8,17 @@ plugins {
     signing
 }
 
+group = "org.ballistacompute"
+version = "0.2.3-SNAPSHOT"
+
 allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
         jcenter()
     }
-    group = "org.ballistacompute"
-    version = "0.2.3-SNAPSHOT"
-}
 
+}
 subprojects {
     apply {
         plugin("org.jetbrains.kotlin.jvm")
@@ -26,6 +27,8 @@ subprojects {
         plugin("signing")
         plugin("org.jetbrains.dokka")
     }
+
+    extra["isReleaseVersion"]  = !version.toString().endsWith("SNAPSHOT")
 
     val implementation by configurations
     val testImplementation by configurations
@@ -122,6 +125,9 @@ subprojects {
     }
 
     signing {
+        setRequired({
+            (project.extra["isReleaseVersion"] as Boolean) && gradle.taskGraph.hasTask("publish")
+        })
         sign(publishing.publications["mavenKotlin"])
     }
 
