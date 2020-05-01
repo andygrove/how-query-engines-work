@@ -40,6 +40,7 @@ class SparkFlightProducer(spark: SparkSession) extends FlightProducer {
       //TODO should be able to delegate to common code in ballista=jvm for most of this, rather than duplicate here
       val allocator = new RootAllocator(Long.MaxValue)
       val root = VectorSchemaRoot.create(logicalPlan.schema().toArrow(), allocator)
+      root.getFieldVectors.asScala.foreach(_.setInitialCapacity(rows.size))
       root.allocateNew()
 
       listener.start(root, null)

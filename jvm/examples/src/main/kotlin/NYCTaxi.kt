@@ -16,7 +16,8 @@ import kotlin.system.measureTimeMillis
 
 fun main() {
 
-    val ctx = ExecutionContext()
+    val batchSize = 64 * 1024
+    val ctx = ExecutionContext(batchSize)
 
     // wget https://s3.amazonaws.com/nyc-tlc/trip+data/yellow_tripdata_2019-01.csv
 
@@ -42,7 +43,7 @@ fun main() {
     */
 
     val time = measureTimeMillis {
-        val df = ctx.csv("/home/andy/data/yellow_tripdata_2019-01.csv")
+        val df = ctx.csv("/mnt/nyctaxi/yellow_tripdata_2019-01.csv")
                 .aggregate(
                         listOf(col("passenger_count")),
                         listOf(Max(cast(col("fare_amount"), ArrowTypes.DoubleType))))

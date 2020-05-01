@@ -7,7 +7,7 @@ import java.lang.IllegalStateException
 
 object FieldVectorFactory {
 
-    fun create(arrowType: ArrowType): FieldVector {
+    fun create(arrowType: ArrowType, initialCapacity: Int): FieldVector {
         val rootAllocator = RootAllocator(Long.MAX_VALUE)
         val fieldVector: FieldVector = when (arrowType) {
             ArrowTypes.BooleanType -> BitVector("v", rootAllocator)
@@ -19,6 +19,9 @@ object FieldVectorFactory {
             ArrowTypes.DoubleType -> Float8Vector("v", rootAllocator)
             ArrowTypes.StringType -> VarCharVector("v", rootAllocator)
             else -> throw IllegalStateException()
+        }
+        if (initialCapacity != 0) {
+            fieldVector.setInitialCapacity(initialCapacity)
         }
         fieldVector.allocateNew()
         return fieldVector

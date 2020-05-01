@@ -12,9 +12,6 @@ import java.util.logging.Logger
 
 /**
  * Simple CSV data source. If no schema is provided then it assumes that the first line contains field names and that all values are strings.
- *
- * Note that this implementation loads the entire CSV file into memory so is not scalable. I plan on implementing
- * a streaming version later on.
  */
 class CsvDataSource(val filename: String, val schema: Schema?, private val batchSize: Int) : DataSource {
 
@@ -33,7 +30,7 @@ class CsvDataSource(val filename: String, val schema: Schema?, private val batch
         if (!file.exists()) {
             throw FileNotFoundException(file.absolutePath)
         }
-        val b = BufferedReader(FileReader(file))
+        val b = BufferedReader(FileReader(file), 16*1024*1024) //TODO configurable buffer size
         b.readLine() // skip header
 
         val projectionIndices = projection.map { name -> finalSchema.fields.indexOfFirst { it.name == name } }
@@ -73,7 +70,7 @@ class ReaderIterator(private val schema: Schema,
     private var rows: List<List<String>> = listOf()
 
     override fun hasNext(): Boolean {
-        var list = mutableListOf<List<String>>()
+        var list = ArrayList<List<String>>(batchSize)
         var line = r.readLine()
         while (line != null) {
             list.add(parseLine(line, projectionIndices))
@@ -90,21 +87,39 @@ class ReaderIterator(private val schema: Schema,
         return createBatch(rows)
     }
 
+    private val fieldSeparators = mutableListOf<Int>()
+
     private fun parseLine(line: String, projection: List<Int>) : List<String> {
         if (projection.isEmpty()) {
             return line.split(",")
         } else {
-            //TODO this could be implemented more efficiently
-            val splitLine = line.split(",")
-            return projection.map { splitLine[it] }.toList()
+            // find field delimiters
+            var i=0
+            fieldSeparators.clear()
+            fieldSeparators.add(0) // first field starts at zero offset
+            while (i<line.length) {
+                //TODO handle strings, escaped quotes, etc
+                if (line[i] == ',') {
+                    fieldSeparators.add(i)
+                }
+                i++
+            }
+            return projection.map {
+                val startIndex = fieldSeparators[it] + 1
+                if (it == fieldSeparators.size) {
+                    line.substring(startIndex)
+                } else {
+                    line.substring(startIndex, fieldSeparators[it+1])
+                }
+            }.toList()
         }
     }
 
     private fun createBatch(rows: List<List<String>>) : RecordBatch {
-        logger.fine("createBatch() rows=$rows")
-
         val root = VectorSchemaRoot.create(schema.toArrow(), RootAllocator(Long.MAX_VALUE))
-        root.rowCount = rows.size
+        root.fieldVectors.forEach {
+            it.setInitialCapacity(rows.size)
+        }
         root.allocateNew()
 
         root.fieldVectors.withIndex().forEach { field ->
@@ -167,10 +182,6 @@ class ReaderIterator(private val schema: Schema,
             field.value.valueCount = rows.size
         }
 
-        val batch = RecordBatch(schema, root.fieldVectors.map { ArrowFieldVector(it) })
-
-        logger.fine("Created batch:\n${batch.toCSV()}")
-
-        return batch
+        return RecordBatch(schema, root.fieldVectors.map { ArrowFieldVector(it) })
     }
 }

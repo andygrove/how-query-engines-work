@@ -11,8 +11,8 @@ class CastExpression(val expr: Expression, val dataType: ArrowType) : Expression
     }
 
     override fun evaluate(input: RecordBatch): ColumnVector {
-        val value = expr.evaluate(input)
-        val fieldVector = FieldVectorFactory.create(dataType)
+        val value: ColumnVector = expr.evaluate(input)
+        val fieldVector = FieldVectorFactory.create(dataType, input.rowCount())
         val builder = ArrowVectorBuilder(fieldVector)
 
         when (dataType) {

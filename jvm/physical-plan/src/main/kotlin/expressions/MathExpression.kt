@@ -1,7 +1,5 @@
 package org.ballistacompute.physical.expressions
 
-import org.apache.arrow.memory.RootAllocator
-import org.apache.arrow.vector.*
 import org.apache.arrow.vector.types.pojo.ArrowType
 import org.ballistacompute.datatypes.*
 import java.lang.IllegalStateException
@@ -9,7 +7,7 @@ import java.lang.IllegalStateException
 abstract class MathExpression(l: Expression, r: Expression): BinaryExpression(l,r) {
 
     override fun evaluate(l: ColumnVector, r: ColumnVector): ColumnVector {
-        val fieldVector = FieldVectorFactory.create(l.getType())
+        val fieldVector = FieldVectorFactory.create(l.getType(), l.size())
         val builder = ArrowVectorBuilder(fieldVector)
         (0 until l.size()).forEach {
             val value = evaluate(l.getValue(it), r.getValue(it), l.getType())
