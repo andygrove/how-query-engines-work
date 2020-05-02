@@ -165,7 +165,7 @@ spec:
     spec:
       containers:
       - name: ballista
-        image: ballistacompute/ballista-rust:0.2.3
+        image: ballistacompute/ballista-rust:0.2.4-SNAPSHOT
         resources:
           requests:
             cpu: "1"
@@ -215,12 +215,17 @@ ballista-6    1/1     Running   0          24s
 ballista-7    1/1     Running   0          22s
 ballista-8    1/1     Running   0          20s
 ballista-9    1/1     Running   0          18s
+```
 
+Run the `kubectl logs ballista-0` command to see logs from the first executor to confirm that the correct version is running and that there are no errors.
+
+```
+Ballista v0.2.4-SNAPSHOT Rust Executor listening on V4(0.0.0.0:50051)
 ```
 
 ## Teardown
 
-Remove cluster:
+Run the following kubectl command to delete the Ballista cluster.
 
 ```bash
 kubectl delete -f ballista-cluster.yaml
