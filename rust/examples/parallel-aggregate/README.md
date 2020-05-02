@@ -6,49 +6,7 @@ This example shows how to manually create a Ballista cluster of Rust executors a
 
 ## Prerequisites
 
-You will need a Kubernetes cluster to deploy to. I recommend using [Minikube](https://kubernetes.io/docs/tutorials/hello-minikube).
-
-## Create minkube cluster
-
-These instructions are based on my usage on Ubuntu.
-
-```bash
-minikube start --driver=podman
-```
-
-Ballista will need some permissions.
-
-```bash
-kubectl apply -f rbac.yaml
-```
-
-You should see the following output:
-
-```bash
-clusterrole.rbac.authorization.k8s.io/list-pods created
-clusterrolebinding.rbac.authorization.k8s.io/ballista-list-pods created
-```
-
-You will need to run [download-nyctaxi-files.sh](download-nyctaxi-files.sh) to download a subset of the [NYC Taxi data set](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page) and then edit [pv.yaml](pv.yaml) to provide the correct path to these files.
-
-Mount the host path into the Minikube VM.
-
-```bash
-minikube mount /mnt/nyctaxi/:/mnt/nyctaxi
-```
-
-Create a persistent volume.
-
-```bash
-kubectl apply -f pv.yaml
-```
-
-You should see the following output:
-
-```bash
-persistentvolume/nyctaxi-pv created
-persistentvolumeclaim/nyctaxi-pv-claim created
-```
+You will need to create a Ballista cluster in Kubernetes. This is documented in the [README](../../../kubernetes/README.md) in the top-level kubernetes folder. 
 
 ## Build Example Docker Image
 
@@ -62,30 +20,6 @@ From this directory.
 
 ```bash
 ./build-docker-image.sh
-```
-
-## Create Ballista Cluster
-
-Run the following kubectl command to deploy the ballista cluster.
-
-```bash
-kubectl apply -f cluster-deployment.yaml
-```
-
-You should see the following output:
-
-```
-service/ballista created
-statefulset.apps/ballista created
-```
-
-Run the `kubectl get pods` command to confirm that the pods are running.
-
-```
-kubectl get pods
-NAME         READY   STATUS    RESTARTS   AGE
-ballista-0   1/1     Running   0          44s
-ballista-1   1/1     Running   0          41s
 ```
 
 ## Deploy Example
