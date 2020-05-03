@@ -1,12 +1,17 @@
-package org.ballistacompute.spark.benchmarks;
+package org.ballistacompute.spark.benchmarks
+
+import java.io.{File, FileWriter}
+
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.types.{DataTypes, StructField, StructType}
 
 object Benchmarks {
 
-  def run(format: String, path: String, sql: String, iterations: Int): Unit = {
+  def run(format: String, path: String, sql: String, iterations: Int, outputFile: String): Unit = {
 
     val spark: SparkSession = SparkSession.builder
       .appName(this.getClass.getName)
-      .master("local[12]") // use as many threads as needed
+      .master(s"local[*]")
       .getOrCreate()
 
     format match {
@@ -30,10 +35,15 @@ object Benchmarks {
 
     spark.close()
 
+    println(s"Writing results to $outputFile")
+    val w = new FileWriter(new File(outputFile))
+    w.write("iteration,time_millis\n")
     durations.zipWithIndex.foreach {
       case (duration,iter) =>
         println(s"Iteration ${iter+1} took ${duration/1000.0} seconds")
+        w.write(s"${iter+1},$duration\n")
     }
+    w.close()
 
   }
 

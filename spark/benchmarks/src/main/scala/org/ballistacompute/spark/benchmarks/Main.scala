@@ -1,46 +1,24 @@
-package org.ballistacompute.benchmarks.spark
+package org.ballistacompute.spark.benchmarks
 
-import org.rogach.scallop._
-
-class Conf(arguments: Seq[String]) extends ScallopConf(arguments) {
-
-  val bench = new Subcommand("bench") {
-    val format = trailArg[String](required = true)
-    val sourcePath = trailArg[String](required = true)
-    val sql = trailArg[String](required = true)
-    val iterations = trailArg[String](required = false)
-  }
-
-  val convert = new Subcommand("convert") {
-    val sourcePath = trailArg[String](required = true)
-    val destPath = trailArg[String](required = true)
-  }
-
-  val server = new Subcommand("server")
-
-  addSubcommand(bench)
-  addSubcommand(convert)
-  addSubcommand(server)
-
-  requireSubcommand()
-  verify()
-}
-
+/**
+ * This benchmark is designed to be called as a Docker container.
+ */
 object Main {
 
   def main(args: Array[String]): Unit = {
-    val conf = new Conf(args)
-    conf.subcommand match {
 
-      case Some(conf.convert) =>
-        DataPrep.convertToParquet(conf.convert.sourcePath(), conf.convert.destPath())
+    val format = sys.env("BENCH_FORMAT")
+    val path = sys.env("BENCH_PATH")
+    val sql = sys.env("BENCH_SQL")
+    val resultFile = sys.env("BENCH_RESULT_FILE")
+    val iterations = sys.env("BENCH_ITERATIONS").toInt
 
-      case Some(conf.bench) =>
-        Benchmarks.run(conf.bench.format(), conf.bench.sourcePath(), conf.bench.sql(), conf.bench.iterations.getOrElse("1").toInt)
+    Benchmarks.run(format,
+      path,
+      sql,
+      iterations,
+      resultFile)
 
-      case _ =>
-        println("invalid subcommand")
-    }
   }
 
 }
