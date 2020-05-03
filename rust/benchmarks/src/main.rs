@@ -45,10 +45,10 @@ async fn main() -> Result<()> {
 
     let mode = env::var("BENCH_MODE").unwrap();
     let path = env::var("BENCH_PATH").unwrap();
-    let resultFile = env::var("BENCH_RESULT_FILE").unwrap();
+    let result_filename = env::var("BENCH_RESULT_FILE").unwrap();
 
     match mode.as_str() {
-        "local" => local_mode_benchmark(&path, &resultFile).await?,
+        "local" => local_mode_benchmark(&path, &result_filename).await?,
         "k8s" => k8s(&path).await?,
         _ => {
             println!("Invalid mode {}", mode);
@@ -62,6 +62,8 @@ async fn local_mode_benchmark(path: &str, results_filename: &str) -> Result<()> 
     let start = Instant::now();
     let ctx = Context::local();
     let df = create_csv_query(&ctx, path)?;
+    df.explain();
+
     let response = df.collect().await?;
     utils::print_batches(&response).map_err(|e| BallistaError::DataFusionError(e) )?;
     let duration = start.elapsed().as_millis();

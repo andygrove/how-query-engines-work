@@ -55,9 +55,9 @@ private fun sqlAggregate(path: String, sqlPartial: String, sqlFinal: String, res
     val deferred = files.map { file ->
         GlobalScope.async {
             println("Executing query against $file ...")
-            val start = System.currentTimeMillis()
+            val partitionStart = System.currentTimeMillis()
             val result = executeQuery(File(File(path), file).absolutePath, sqlPartial)
-            val duration = System.currentTimeMillis() - start
+            val duration = System.currentTimeMillis() - partitionStart
             println("Query against $file took $duration ms")
             result
         }

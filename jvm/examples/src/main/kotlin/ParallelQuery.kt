@@ -21,9 +21,9 @@ fun main() {
                     "FROM tripdata " +
                     "GROUP BY passenger_count"
 
-            val start = System.currentTimeMillis()
+            val partitionStart = System.currentTimeMillis()
             val result = executeQuery(path, month, sql)
-            val duration = System.currentTimeMillis() - start
+            val duration = System.currentTimeMillis() - partitionStart
             println("Query against month $month took $duration ms")
             result
         }
