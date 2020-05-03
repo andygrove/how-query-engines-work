@@ -22,7 +22,7 @@ dependencies = [
 
 [[package]]
 name = "benchmarks"
-version = "0.2.4-SNAPSHOT"
+version = "0.2.4"
 dependencies = [
  "clap",
 ]

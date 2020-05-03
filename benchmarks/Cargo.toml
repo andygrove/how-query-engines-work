@@ -1,6 +1,6 @@
 [package]
 name = "benchmarks"
-version = "0.2.4-SNAPSHOT"
+version = "0.2.4"
 authors = ["Andy Grove <andygrove73@gmail.com>"]
 edition = "2018"
 

@@ -165,7 +165,7 @@ spec:
     spec:
       containers:
       - name: ballista
-        image: ballistacompute/ballista-rust:0.2.4-SNAPSHOT
+        image: ballistacompute/ballista-rust:0.2.4
         resources:
           requests:
             cpu: "1"
@@ -220,7 +220,7 @@ ballista-9    1/1     Running   0          18s
 Run the `kubectl logs ballista-0` command to see logs from the first executor to confirm that the correct version is running and that there are no errors.
 
 ```
-Ballista v0.2.4-SNAPSHOT Rust Executor listening on V4(0.0.0.0:50051)
+Ballista v0.2.4 Rust Executor listening on V4(0.0.0.0:50051)
 ```
 
 ## Teardown
