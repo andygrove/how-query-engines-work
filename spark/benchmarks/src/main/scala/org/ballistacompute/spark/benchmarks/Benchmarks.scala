@@ -1,7 +1,4 @@
-package org.ballistacompute.benchmarks.spark
-
-import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.types.{DataType, DataTypes, StructField, StructType}
+package org.ballistacompute.spark.benchmarks;
 
 object Benchmarks {
 
@@ -9,7 +6,7 @@ object Benchmarks {
 
     val spark: SparkSession = SparkSession.builder
       .appName(this.getClass.getName)
-      .master("local[*]") // use as many threads as needed
+      .master("local[12]") // use as many threads as needed
       .getOrCreate()
 
     format match {
@@ -61,7 +58,7 @@ object Benchmarks {
       StructField("improvement_surcharge", DataTypes.DoubleType),
       StructField("total_amount", DataTypes.DoubleType)
     ))
-    
+
     val df = spark.read.format("csv")
       .option("header", "true")
       .schema(schema)

@@ -12,19 +12,18 @@ fun main() {
 
     val path = "/mnt/nyctaxi/"
 
-    sqlAggregate(path)
-    sqlAggregate(path)
-    sqlAggregate(path)
-    sqlAggregate(path)
+    sqlAggregate(path, 1)
+
+    sqlAggregate(path, 12)
 
 }
 
-private fun sqlAggregate(path: String) {
+private fun sqlAggregate(path: String, months: Int) {
 
     println("BEGIN sqlAggregate")
 
     val start = System.currentTimeMillis()
-    val deferred = (1..12).map { month ->
+    val deferred = (1..months).map { month ->
         GlobalScope.async {
 
             val sql = "SELECT passenger_count, " +
