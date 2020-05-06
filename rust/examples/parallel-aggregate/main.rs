@@ -15,6 +15,7 @@ use ballista::BALLISTA_VERSION;
 
 use datafusion::utils;
 
+use std::collections::HashMap;
 use tokio::task;
 
 #[tokio::main]
@@ -98,7 +99,7 @@ async fn main() -> Result<()> {
     println!("Received {} batches from executors", batches.len());
 
     // perform secondary aggregate query on the results collected from the executors
-    let ctx = Context::local();
+    let ctx = Context::local(HashMap::new());
 
     let results = ctx
         .create_dataframe(&batches)?
@@ -119,7 +120,7 @@ async fn execute_remote(host: &str, port: usize, filename: &str) -> Result<Vec<R
     println!("Executing query against executor at {}:{}", host, port);
     let start = Instant::now();
 
-    let ctx = Context::remote(host, port);
+    let ctx = Context::remote(host, port, HashMap::new());
 
     let response = ctx
         .read_csv(filename, Some(nyctaxi_schema()), None, true)?

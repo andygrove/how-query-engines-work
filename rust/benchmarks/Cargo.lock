@@ -179,7 +179,7 @@ dependencies = [
 
 [[package]]
 name = "ballista"
-version = "0.2.4"
+version = "0.2.5-SNAPSHOT"
 dependencies = [
  "arrow",
  "arrow-flight",
@@ -201,12 +201,11 @@ dependencies = [
 
 [[package]]
 name = "ballista-benchmarks"
-version = "0.2.4"
+version = "0.2.5-SNAPSHOT"
 dependencies = [
  "arrow",
  "arrow-flight",
  "ballista",
- "clap",
  "datafusion",
  "tokio 0.2.19",
 ]

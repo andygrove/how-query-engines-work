@@ -1,3 +1,4 @@
+# Base image extends rust:nightly which extends debian:buster-slim
 FROM ballistacompute/rust-cached-deps:0.2.3 as build
 
 # Compile Ballista
@@ -11,25 +12,14 @@ COPY proto/ballista.proto /tmp/ballista/proto/
 COPY rust/format/Flight.proto /format
 
 RUN cargo build --release
-ENTRYPOINT ["target/release/executor"]
 
-#TODO the following makes the runtime extremely slow!
+# Copy the binary into a new container for a smaller docker image
+FROM debian:buster-slim
 
-#RUN cargo build --release --target x86_64-unknown-linux-musl
-#
-### Copy the statically-linked binary into a scratch container.
-#FROM alpine:3.10
-#
-## Install Tini for better signal handling
-#RUN apk add --no-cache tini
-#ENTRYPOINT ["/sbin/tini", "--"]
-#
-#COPY --from=build /tmp/ballista/target/x86_64-unknown-linux-musl/release/executor /
-#USER 1000
-#
-#EXPOSE 9090
-#
-#ENV RUST_LOG=info
-#ENV RUST_BACKTRACE=1
-#
-#CMD ["/executor"]
+COPY --from=build /tmp/ballista/target/release/executor /
+USER root
+
+ENV RUST_LOG=info
+ENV RUST_BACKTRACE=full
+
+CMD ["/executor"]

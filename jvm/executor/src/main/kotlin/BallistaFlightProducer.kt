@@ -9,7 +9,6 @@ import java.lang.IllegalStateException
 
 class BallistaFlightProducer : FlightProducer {
 
-    val ctx = ExecutionContext()
 
     override fun getStream(context: FlightProducer.CallContext?, ticket: Ticket?, listener: FlightProducer.ServerStreamListener?) {
 
@@ -26,11 +25,16 @@ class BallistaFlightProducer : FlightProducer {
             val schema = logicalPlan.schema()
             println(schema)
 
+            //TODO get from protobuf request
+            val settings = mapOf<String, String>()
+
+            val ctx = ExecutionContext(settings)
+
             val results = ctx.execute(logicalPlan)
 
             val allocator = RootAllocator(Long.MAX_VALUE)
 
-            var batchSize = 2
+            var batchSize = 1024
 
             val root = VectorSchemaRoot.create(schema.toArrow(), allocator)
             listener.start(root, null)
@@ -38,15 +42,14 @@ class BallistaFlightProducer : FlightProducer {
             //val loader = VectorLoader(root)
             var counter = 0
             results.iterator().forEach { batch ->
+                root.clear()
 
                 val rowCount = batch.rowCount()
                 println("Received batch with $rowCount rows")
 
-                if (rowCount > batchSize) {
-                    batchSize = rowCount
-                    root.fieldVectors.forEach { it.setInitialCapacity(batchSize) }
-                    root.allocateNew()
-                }
+                batchSize = rowCount
+                root.fieldVectors.forEach { it.setInitialCapacity(batchSize) }
+                root.allocateNew()
 
                 (0 until schema.fields.size).forEach { columnIndex ->
 
@@ -136,6 +139,7 @@ class BallistaFlightProducer : FlightProducer {
                 counter++
             }
 
+            root.close()
             listener.completed()
         } catch (ex: Exception) {
             ex.printStackTrace()
