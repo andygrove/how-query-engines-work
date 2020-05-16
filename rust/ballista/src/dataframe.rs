@@ -5,7 +5,9 @@ use datafusion;
 
 use crate::client;
 use crate::error::{BallistaError, Result};
-use crate::logicalplan::{exprlist_to_fields, Expr, LogicalPlan, Operator, ScalarValue};
+use crate::logicalplan::{
+    exprlist_to_fields, translate_plan, Expr, LogicalPlan, Operator, ScalarValue,
+};
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -411,94 +413,6 @@ pub fn aggregate_expr(name: &str, expr: &Expr) -> Expr {
         name: name.to_string(),
         args: vec![expr.clone()],
         return_type,
-    }
-}
-
-/// Translate Ballista plan to DataFusion plan
-pub fn translate_plan(
-    ctx: &mut datafusion::execution::context::ExecutionContext,
-    plan: &LogicalPlan,
-) -> Result<datafusion::logicalplan::LogicalPlan> {
-    match plan {
-        LogicalPlan::MemoryScan(batches) => {
-            let table_name = "df_t0"; //TODO generate unique table name
-            let schema = (&batches[0]).schema().as_ref();
-            let provider = MemTable::new(Arc::new(schema.clone()), batches.clone())?;
-            ctx.register_table(table_name, Box::new(provider));
-            Ok(datafusion::logicalplan::LogicalPlan::TableScan {
-                schema_name: "default".to_owned(),
-                table_name: table_name.to_owned(),
-                table_schema: Arc::new(schema.clone()),
-                projected_schema: Arc::new(schema.clone()),
-                projection: None,
-            })
-        }
-        LogicalPlan::FileScan {
-            path,
-            file_type,
-            schema,
-            projection,
-            ..
-        } => {
-            //TODO generate unique table name
-            let table_name = "tbd".to_owned();
-
-            match file_type.as_str() {
-                "csv" => ctx.register_csv(&table_name, path.as_str(), &schema, true),
-                "parquet" => ctx.register_parquet(&table_name, path.as_str())?,
-                _ => unimplemented!(),
-            };
-
-            let table = ctx.table(&table_name)?;
-            let schema = table.to_logical_plan().schema().clone();
-
-            Ok(datafusion::logicalplan::LogicalPlan::TableScan {
-                schema_name: "default".to_owned(),
-                table_name: table_name.clone(),
-                table_schema: schema.clone(),
-                projected_schema: schema.clone(), //TODO apply projection
-                projection: projection.clone(),
-            })
-        }
-        LogicalPlan::Projection {
-            expr,
-            input,
-            schema,
-        } => Ok(datafusion::logicalplan::LogicalPlan::Projection {
-            expr: expr
-                .iter()
-                .map(|e| translate_expr(e))
-                .collect::<Result<Vec<_>>>()?,
-            input: Arc::new(translate_plan(ctx, input)?),
-            schema: Arc::new(schema.clone()),
-        }),
-        LogicalPlan::Selection { expr, input } => {
-            Ok(datafusion::logicalplan::LogicalPlan::Selection {
-                expr: translate_expr(expr)?,
-                input: Arc::new(translate_plan(ctx, input)?),
-            })
-        }
-        LogicalPlan::Aggregate {
-            group_expr,
-            aggr_expr,
-            input,
-            schema,
-        } => Ok(datafusion::logicalplan::LogicalPlan::Aggregate {
-            group_expr: group_expr
-                .iter()
-                .map(|e| translate_expr(e))
-                .collect::<Result<Vec<_>>>()?,
-            aggr_expr: aggr_expr
-                .iter()
-                .map(|e| translate_expr(e))
-                .collect::<Result<Vec<_>>>()?,
-            input: Arc::new(translate_plan(ctx, input)?),
-            schema: Arc::new(schema.clone()),
-        }),
-        other => Err(BallistaError::General(format!(
-            "Cannot translate operator to DataFusion: {:?}",
-            other
-        ))),
     }
 }
 
