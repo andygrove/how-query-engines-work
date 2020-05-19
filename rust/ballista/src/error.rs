@@ -1,5 +1,7 @@
 //! Ballista error types
 
+use std::error::Error;
+use std::fmt::{Display, Formatter};
 use std::io;
 use std::result;
 
@@ -80,3 +82,25 @@ impl From<k8s_openapi::ResponseError> for BallistaError {
 //         BallistaError::TonicError(e)
 //     }
 // }
+
+impl Display for BallistaError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            BallistaError::NotImplemented(ref desc) => write!(f, "Not implemented: {}", desc),
+            BallistaError::General(ref desc) => write!(f, "General error: {}", desc),
+            BallistaError::ArrowError(ref desc) => write!(f, "Arrow error: {}", desc),
+            BallistaError::DataFusionError(ref desc) => write!(f, "DataFusion error: {:?}", desc),
+            BallistaError::IoError(ref desc) => write!(f, "IO error: {}", desc),
+            BallistaError::ReqwestError(ref desc) => write!(f, "Reqwest error: {}", desc),
+            BallistaError::HttpError(ref desc) => write!(f, "HTTP error: {}", desc),
+            BallistaError::KubeAPIRequestError(ref desc) => {
+                write!(f, "KubeAPI request error: {}", desc)
+            }
+            BallistaError::KubeAPIResponseError(ref desc) => {
+                write!(f, "KubeAPI response error: {}", desc)
+            }
+        }
+    }
+}
+
+impl Error for BallistaError {}
