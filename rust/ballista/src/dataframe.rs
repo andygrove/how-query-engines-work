@@ -1,17 +1,15 @@
-use crate::arrow::datatypes::{DataType, Schema};
-use crate::arrow::record_batch::RecordBatch;
-
-use datafusion;
-
-use crate::client;
-use crate::error::{BallistaError, Result};
-use crate::logicalplan::{exprlist_to_fields, translate_plan, Expr, LogicalPlan, ScalarValue};
-
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use crate::arrow::datatypes::{DataType, Schema};
+use crate::arrow::record_batch::RecordBatch;
+use crate::client;
+use crate::datafusion;
 use crate::datafusion::datasource::parquet::ParquetTable;
 use crate::datafusion::datasource::TableProvider;
+use crate::datafusion::logicalplan::{Expr, LogicalPlan, ScalarValue};
+use crate::datafusion::optimizer::utils::exprlist_to_fields;
+use crate::error::{BallistaError, Result};
 use crate::plan::Action;
 
 pub const CSV_BATCH_SIZE: &'static str = "ballista.csv.batchSize";
@@ -135,7 +133,13 @@ impl Context {
 
     /// Create a DataFrame from an existing set of RecordBatch instances
     pub fn create_dataframe(&self, batches: &[RecordBatch]) -> Result<DataFrame> {
-        let plan = LogicalPlan::MemoryScan(batches.to_vec());
+        let schema = batches[0].schema().as_ref();
+        let plan = LogicalPlan::InMemoryScan {
+            data: vec![batches.to_vec()],
+            schema: Box::new(schema.clone()),
+            projection: None,
+            projected_schema: Box::new(schema.clone()),
+        };
         Ok(DataFrame::from(self.state.clone(), &plan))
     }
 
@@ -144,11 +148,12 @@ impl Context {
         path: &str,
         schema: Option<Schema>,
         projection: Option<Vec<usize>>,
-        _has_header: bool,
+        has_header: bool,
     ) -> Result<DataFrame> {
         Ok(DataFrame::scan_csv(
             self.state.clone(),
             path,
+            has_header,
             &schema.unwrap(), //TODO schema should be optional here
             projection,
         )?)
@@ -199,7 +204,7 @@ impl DataFrame {
         Self::from(
             ctx,
             &LogicalPlan::EmptyRelation {
-                schema: Schema::empty(),
+                schema: Box::new(Schema::empty()),
             },
         )
     }
@@ -208,6 +213,7 @@ impl DataFrame {
     pub fn scan_csv(
         ctx: Arc<ContextState>,
         path: &str,
+        has_header: bool,
         schema: &Schema,
         projection: Option<Vec<usize>>,
     ) -> Result<Self> {
@@ -216,11 +222,12 @@ impl DataFrame {
             .map(|p| Schema::new(p.iter().map(|i| schema.field(*i).clone()).collect()));
         Ok(Self::from(
             ctx,
-            &LogicalPlan::FileScan {
+            &LogicalPlan::CsvScan {
                 path: path.to_owned(),
-                file_type: "csv".to_owned(),
-                schema: schema.clone(),
-                projected_schema: projected_schema.or(Some(schema.clone())).unwrap(),
+                has_header,
+                delimiter: None,
+                schema: Box::new(schema.clone()),
+                projected_schema: Box::new(projected_schema.or(Some(schema.clone())).unwrap()),
                 projection,
             },
         ))
@@ -240,12 +247,11 @@ impl DataFrame {
 
         Ok(Self::from(
             ctx,
-            &LogicalPlan::FileScan {
+            &LogicalPlan::ParquetScan {
                 path: path.to_owned(),
-                file_type: "parquet".to_owned(),
-                schema: schema.clone(),
+                schema: Box::new(schema.clone()),
                 projection,
-                projected_schema: projected_schema.or(Some(schema.clone())).unwrap(),
+                projected_schema: Box::new(projected_schema.or(Some(schema.clone())).unwrap()),
             },
         ))
     }
@@ -274,7 +280,7 @@ impl DataFrame {
             &LogicalPlan::Projection {
                 expr: projected_expr,
                 input: Box::new(self.plan.clone()),
-                schema,
+                schema: Box::new(schema.clone()),
             },
         );
 
@@ -317,7 +323,7 @@ impl DataFrame {
                 input: Box::new(self.plan.clone()),
                 group_expr,
                 aggr_expr,
-                schema: aggr_schema,
+                schema: Box::new(aggr_schema),
             },
         ))
     }
@@ -347,7 +353,7 @@ impl DataFrame {
                 // create local execution context
                 let mut ctx = datafusion::execution::context::ExecutionContext::new();
 
-                let datafusion_plan = translate_plan(&mut ctx, &self.plan)?;
+                let datafusion_plan = &self.plan;
 
                 // create the query plan
                 let optimized_plan = ctx.optimize(&datafusion_plan)?;

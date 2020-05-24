@@ -2,7 +2,7 @@ use crate::error::BallistaError;
 use crate::plan::Action;
 use crate::protobuf;
 
-use crate::logicalplan::{Expr, LogicalPlan, ScalarValue};
+use crate::datafusion::logicalplan::{Expr, LogicalPlan, ScalarValue};
 
 use crate::arrow::datatypes::{DataType, Schema};
 
@@ -73,7 +73,32 @@ impl TryInto<protobuf::LogicalPlanNode> for LogicalPlan {
 
     fn try_into(self) -> Result<protobuf::LogicalPlanNode, Self::Error> {
         match self {
-            LogicalPlan::FileScan {
+            LogicalPlan::CsvScan {
+                path,
+                schema,
+                projection,
+                has_header,
+                ..
+            } => {
+                let mut node = empty_plan_node();
+
+                let projected_field_names = match projection {
+                    Some(p) => p.iter().map(|i| schema.field(*i).name().clone()).collect(),
+                    _ => vec![],
+                };
+
+                let schema: protobuf::Schema = schema.as_ref().to_owned().try_into()?;
+
+                node.scan = Some(protobuf::ScanNode {
+                    path: path.clone(),
+                    projection: projected_field_names,
+                    schema: Some(schema),
+                    has_header,
+                    file_format: "csv".to_owned(),
+                });
+                Ok(node)
+            }
+            LogicalPlan::ParquetScan {
                 path,
                 schema,
                 projection,
@@ -86,12 +111,14 @@ impl TryInto<protobuf::LogicalPlanNode> for LogicalPlan {
                     _ => vec![],
                 };
 
-                let schema: protobuf::Schema = schema.to_owned().try_into()?;
+                let schema: protobuf::Schema = schema.as_ref().to_owned().try_into()?;
 
                 node.scan = Some(protobuf::ScanNode {
                     path: path.clone(),
                     projection: projected_field_names,
                     schema: Some(schema),
+                    has_header: false,
+                    file_format: "parquet".to_owned(),
                 });
                 Ok(node)
             }

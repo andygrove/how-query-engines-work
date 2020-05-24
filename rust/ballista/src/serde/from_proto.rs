@@ -1,12 +1,14 @@
+use std::convert::TryInto;
+
+use crate::arrow::datatypes::{DataType, Field, Schema};
+use crate::datafusion::execution::physical_plan::csv::CsvReadOptions;
+use crate::datafusion::logicalplan::{
+    Expr, LogicalPlan, LogicalPlanBuilder, Operator, ScalarValue,
+};
+
 use crate::error::{ballista_error, BallistaError};
 use crate::plan::Action;
 use crate::protobuf;
-
-use crate::logicalplan::{Expr, LogicalPlan, LogicalPlanBuilder, Operator, ScalarValue};
-
-use crate::arrow::datatypes::{DataType, Field, Schema};
-
-use std::convert::TryInto;
 
 impl TryInto<LogicalPlan> for protobuf::LogicalPlanNode {
     type Error = BallistaError;
@@ -49,7 +51,6 @@ impl TryInto<LogicalPlan> for protobuf::LogicalPlanNode {
                 .map_err(|e| e.into())
         } else if let Some(scan) = self.scan {
             let schema: Schema = scan.schema.unwrap().try_into()?;
-            println!("schema: {:?}", schema);
 
             let projection: Vec<usize> = scan
                 .projection
@@ -59,9 +60,25 @@ impl TryInto<LogicalPlan> for protobuf::LogicalPlanNode {
 
             println!("projection: {:?}", projection);
 
-            LogicalPlanBuilder::scan_csv(&scan.path, &schema, None)? //TODO
-                .build()
-                .map_err(|e| e.into())
+            match scan.file_format.as_str() {
+                "csv" => {
+                    let options = CsvReadOptions::new()
+                        .schema(&schema)
+                        .has_header(scan.has_header);
+                    LogicalPlanBuilder::scan_csv(
+                        &scan.path, options, None, //TODO projection
+                    )?
+                    .build()
+                    .map_err(|e| e.into())
+                }
+                "parquet" => LogicalPlanBuilder::scan_parquet(&scan.path, None)? //TODO projection
+                    .build()
+                    .map_err(|e| e.into()),
+                other => Err(ballista_error(&format!(
+                    "Unsupported file format '{}' for file scan",
+                    other
+                ))),
+            }
         } else {
             Err(ballista_error(&format!(
                 "Unsupported logical plan '{:?}'",
