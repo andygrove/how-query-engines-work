@@ -10,6 +10,7 @@ Ballista is an experimental distributed compute platform, powered by Apache Arro
 
 The foundational technologies in Ballista are:
 
+- **Apache Arrow** memory model and compute kernels for efficient processing of data.
 - **Apache Arrow Flight** protocol for efficient data transfer between processes.
 - **Google Protocol Buffers** for serializing query plans.
 - **Docker** for packaging up executors along with user-defined code.
