@@ -6,8 +6,13 @@ on:
   pull_request:
     branches: [ master ]
 
+# Note, toolchain version must match the rustup version: either "nightly" or "nightly-YYYY-MM-DD"
+# and must contain the toolchain for the OS at the end.
+
 env:
   VCPKGRS_DYNAMIC: 1
+  RUSTUP_VERSION: nightly-2020-05-14
+  TOOLCHAIN_VERSION: nightly-2020-05-14-x86_64-pc-windows-msvc
 
 jobs:
   Ubuntu:
@@ -15,10 +20,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Setup
-      run: rustup default nightly-2020-05-14 && rustup component add rustfmt
-    - name: Build
+      run: rustup default ${RUSTUP_VERSION} && rustup component add rustfmt
+    - name: Build Ballista
       run: cd rust && cargo build
-    - name: Build IT
+    - name: Build Integration Tests
       run: cd integration-tests/rust && cargo build
     - name: Build Benchmarks
       run: cd benchmarks && cargo build
@@ -32,10 +37,10 @@ jobs:
     - name: Setup
       run: |
         brew install rustup
-        rustup default nightly-2020-05-14 && rustup component add rustfmt
-    - name: Build
+        rustup default ${RUSTUP_VERSION} && rustup component add rustfmt
+    - name: Build Ballista
       run: cd rust && cargo build
-    - name: Build IT
+    - name: Build Integration Tests
       run: cd integration-tests/rust && cargo build
     - name: Build Benchmarks
       run: cd benchmarks && cargo build
@@ -46,23 +51,20 @@ jobs:
     runs-on: windows-2016
     steps:
     - uses: actions/checkout@v2
-    - name: Pre-requisite for Windows vcpkg
-      uses: actions/checkout@v2
-      with:
-        repository: Microsoft/vcpkg
-        path: vcpkg
-    - name: Install vcpkg
+    - name: Prepare the Windows Build Environment
       run: |
-        cd vcpkg && ./bootstrap-vcpkg.bat
+        vcpkg update
         vcpkg integrate install
         vcpkg install openssl:x64-windows
-    - name: Setup
+    - name: Setup Rust Nightly
       run: |
-        rustup default nightly-2020-05-14 && rustup component add rustfmt
-    - name: Build
+        rustup default nightly-2020-05-14
+        rustup toolchain install nightly-2020-05-14
+        rustup component add rustfmt --toolchain nightly-2020-05-14-x86_64-pc-windows-msvc
+    - name: Build Ballista
       run: |
         cd rust && cargo build
-    - name: Build IT
+    - name: Build Integration Tests
       run: |
         cd integration-tests/rust && cargo build
     - name: Build Becnhmarks
