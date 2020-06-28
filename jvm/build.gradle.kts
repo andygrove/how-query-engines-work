@@ -5,7 +5,11 @@ plugins {
     `java-library`
     kotlin("jvm") version "1.3.50" apply false
     `maven-publish`
-    id("org.datlowe.maven-publish-auth") version "2.0.2"
+
+    //TODO: this has to be uncommented when pushing a release to sonatype but commented out
+    // for github actions to work ... would be nice to find a better solution for this
+    //id("org.hibernate.build.maven-repo-auth") version "3.0.0"
+
     id("org.jetbrains.dokka") version "0.10.1"
     signing
 }
@@ -25,7 +29,6 @@ subprojects {
     apply {
         plugin("org.jetbrains.kotlin.jvm")
         plugin("maven-publish")
-        plugin("maven-publish-auth")
         plugin("signing")
         plugin("org.jetbrains.dokka")
     }
