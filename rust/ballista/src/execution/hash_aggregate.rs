@@ -12,26 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Ballista is a proof-of-concept distributed compute platform based on Kubernetes and Apache Arrow.
+use crate::error::Result;
+use crate::execution::physical_plan::{ColumnarBatchStream, ExecutionPlan, Expression};
+use std::rc::Rc;
 
-pub use arrow;
-pub use datafusion;
-pub use sqlparser;
-
-// include the generated protobuf source as a submodule
-#[allow(clippy::all)]
-pub mod protobuf {
-    include!(concat!(env!("OUT_DIR"), "/ballista.protobuf.rs"));
+#[allow(dead_code)]
+pub struct HashAggregateExec {
+    group_expr: Vec<Rc<dyn Expression>>,
+    aggr_expr: Vec<Rc<dyn Expression>>,
+    child: Box<Rc<dyn ExecutionPlan>>,
 }
 
-pub const BALLISTA_VERSION: &str = env!("CARGO_PKG_VERSION");
+impl ExecutionPlan for HashAggregateExec {
+    fn execute(&self, partition_index: usize) -> Result<ColumnarBatchStream> {
+        let _input = self.child.execute(partition_index)?;
 
-pub mod client;
-pub mod cluster;
-pub mod dataframe;
-pub mod error;
-pub mod execution;
-pub mod logical_plan;
-pub mod scheduler;
-pub mod serde;
-pub mod utils;
+        unimplemented!()
+    }
+}

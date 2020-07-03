@@ -12,26 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Ballista is a proof-of-concept distributed compute platform based on Kubernetes and Apache Arrow.
+use crate::error::Result;
+use crate::execution::physical_plan::{ColumnarBatchStream, ExecutionPlan};
+use uuid::Uuid;
 
-pub use arrow;
-pub use datafusion;
-pub use sqlparser;
-
-// include the generated protobuf source as a submodule
-#[allow(clippy::all)]
-pub mod protobuf {
-    include!(concat!(env!("OUT_DIR"), "/ballista.protobuf.rs"));
+struct ShuffleReader {
+    partitions: Vec<ShufflePartition>,
 }
 
-pub const BALLISTA_VERSION: &str = env!("CARGO_PKG_VERSION");
+#[allow(dead_code)]
+struct ShufflePartition {
+    executor_uuid: Uuid,
+    partition_uuid: Vec<Uuid>,
+}
 
-pub mod client;
-pub mod cluster;
-pub mod dataframe;
-pub mod error;
-pub mod execution;
-pub mod logical_plan;
-pub mod scheduler;
-pub mod serde;
-pub mod utils;
+impl ExecutionPlan for ShuffleReader {
+    fn execute(&self, partition_index: usize) -> Result<ColumnarBatchStream> {
+        let _part = &self.partitions[partition_index];
+
+        // TODO send Flight request to the executor asking for the partition(s)
+
+        unimplemented!()
+    }
+}
