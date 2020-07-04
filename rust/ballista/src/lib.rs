@@ -16,6 +16,7 @@
 
 pub use arrow;
 pub use datafusion;
+pub use parquet;
 pub use sqlparser;
 
 // include the generated protobuf source as a submodule
@@ -32,6 +33,5 @@ pub mod dataframe;
 pub mod error;
 pub mod execution;
 pub mod logical_plan;
-pub mod scheduler;
 pub mod serde;
 pub mod utils;

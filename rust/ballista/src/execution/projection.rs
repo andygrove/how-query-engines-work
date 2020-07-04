@@ -13,27 +13,32 @@
 // limitations under the License.
 
 use crate::error::Result;
-use crate::execution::physical_plan::{ColumnarBatchStream, ExecutionPlan};
-use uuid::Uuid;
+use crate::execution::physical_plan::{
+    ColumnarBatchStream, ExecutionPlan, Partitioning, PhysicalPlan,
+};
+use std::rc::Rc;
 
 #[derive(Debug, Clone)]
-struct ShuffleReaderExec {
-    partitions: Vec<ShufflePartition>,
+pub struct ProjectionExec {
+    child: Rc<PhysicalPlan>,
 }
 
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-struct ShufflePartition {
-    executor_uuid: Uuid,
-    partition_uuid: Vec<Uuid>,
+impl ProjectionExec {
+    pub fn new(child: Rc<PhysicalPlan>) -> Self {
+        Self { child }
+    }
 }
 
-impl ExecutionPlan for ShuffleReaderExec {
-    fn execute(&self, partition_index: usize) -> Result<ColumnarBatchStream> {
-        let _part = &self.partitions[partition_index];
+impl ExecutionPlan for ProjectionExec {
+    fn children(&self) -> Vec<Rc<PhysicalPlan>> {
+        vec![self.child.clone()]
+    }
 
-        // TODO send Flight request to the executor asking for the partition(s)
+    fn output_partitioning(&self) -> Partitioning {
+        self.child.as_execution_plan().output_partitioning()
+    }
 
+    fn execute(&self, _partition_index: usize) -> Result<ColumnarBatchStream> {
         unimplemented!()
     }
 }

@@ -16,15 +16,13 @@ use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 
 use ballista::arrow::datatypes::Schema;
-use ballista::arrow::ipc;
 use ballista::datafusion::execution::context::ExecutionContext;
 use ballista::serde::decode_protobuf;
 
 use ballista::{logical_plan, BALLISTA_VERSION};
 
 use arrow::record_batch::RecordBatch;
-use ballista::scheduler::create_job;
-use flatbuffers::FlatBufferBuilder;
+use ballista::execution::scheduler::{create_physical_plan, ensure_requirements};
 use flight::{
     flight_service_server::FlightService, flight_service_server::FlightServiceServer, Action,
     ActionType, Criteria, Empty, FlightData, FlightDescriptor, FlightInfo, HandshakeRequest,
@@ -125,27 +123,35 @@ impl FlightService for FlightServiceImpl {
             logical_plan::Action::Collect { plan: logical_plan } => {
                 println!("Logical plan: {:?}", logical_plan);
 
-                let job = create_job(logical_plan).map_err(|e| to_tonic_err(&e))?;
-                println!("Job: {:?}", job);
+                let plan = create_physical_plan(&logical_plan).map_err(|e| to_tonic_err(&e))?;
+                println!("Physical plan: {:?}", plan);
 
-                //TODO execute stages
+                let plan = ensure_requirements(&plan).map_err(|e| to_tonic_err(&e))?;
+                println!("Optimized physical plan: {:?}", plan);
 
-                let uuid = "tbd";
+                Err(Status::invalid_argument("not implemented yet"))
 
-                match self.results.lock().unwrap().get(uuid) {
-                    Some(results) => {
-                        let schema_bytes = schema_to_bytes(&results.schema);
-
-                        Ok(Response::new(FlightInfo {
-                            schema: schema_bytes,
-                            endpoint: vec![],
-                            flight_descriptor: None,
-                            total_bytes: -1,
-                            total_records: -1,
-                        }))
-                    }
-                    _ => Err(Status::not_found("Invalid uuid")),
-                }
+                //     let job = create_job(logical_plan).map_err(|e| to_tonic_err(&e))?;
+                //     println!("Job: {:?}", job);
+                //
+                //     //TODO execute stages
+                //
+                //     let uuid = "tbd";
+                //
+                //     match self.results.lock().unwrap().get(uuid) {
+                //         Some(results) => {
+                //             let schema_bytes = schema_to_bytes(&results.schema);
+                //
+                //             Ok(Response::new(FlightInfo {
+                //                 schema: schema_bytes,
+                //                 endpoint: vec![],
+                //                 flight_descriptor: None,
+                //                 total_bytes: -1,
+                //                 total_records: -1,
+                //             }))
+                //         }
+                //         _ => Err(Status::not_found("Invalid uuid")),
+                //     }
             }
             _ => Err(Status::invalid_argument("Invalid action")),
         }
@@ -220,25 +226,25 @@ impl FlightService for FlightServiceImpl {
 }
 
 //TODO this is private in arrow so copied here
-fn schema_to_bytes(schema: &Schema) -> Vec<u8> {
-    let mut fbb = FlatBufferBuilder::new();
-    let schema = {
-        let fb = ipc::convert::schema_to_fb_offset(&mut fbb, schema);
-        fb.as_union_value()
-    };
-
-    let mut message = ipc::MessageBuilder::new(&mut fbb);
-    message.add_version(ipc::MetadataVersion::V4);
-    message.add_header_type(ipc::MessageHeader::Schema);
-    message.add_bodyLength(0);
-    message.add_header(schema);
-    // TODO: custom metadata
-    let data = message.finish();
-    fbb.finish(data, None);
-
-    let data = fbb.finished_data();
-    data.to_vec()
-}
+// fn schema_to_bytes(schema: &Schema) -> Vec<u8> {
+//     let mut fbb = FlatBufferBuilder::new();
+//     let schema = {
+//         let fb = ipc::convert::schema_to_fb_offset(&mut fbb, schema);
+//         fb.as_union_value()
+//     };
+//
+//     let mut message = ipc::MessageBuilder::new(&mut fbb);
+//     message.add_version(ipc::MetadataVersion::V4);
+//     message.add_header_type(ipc::MessageHeader::Schema);
+//     message.add_bodyLength(0);
+//     message.add_header(schema);
+//     // TODO: custom metadata
+//     let data = message.finish();
+//     fbb.finish(data, None);
+//
+//     let data = fbb.finished_data();
+//     data.to_vec()
+// }
 
 fn execute_action(action: &logical_plan::Action) -> Result<Results, Status> {
     match &action {

@@ -15,27 +15,31 @@
 use std::rc::Rc;
 
 use crate::error::Result;
-use crate::execution::physical_plan::{ColumnarBatchStream, ExecutionPlan};
+use crate::execution::physical_plan::{
+    ColumnarBatchStream, ExecutionPlan, Partitioning, PhysicalPlan,
+};
 
+#[derive(Debug, Clone)]
 pub struct ShuffleExchangeExec {
-    child: Rc<dyn ExecutionPlan>,
+    child: Rc<PhysicalPlan>,
+    output_partitioning: Partitioning,
+}
+
+impl ShuffleExchangeExec {
+    pub fn new(child: Rc<PhysicalPlan>, output_partitioning: Partitioning) -> Self {
+        Self {
+            child,
+            output_partitioning,
+        }
+    }
 }
 
 impl ExecutionPlan for ShuffleExchangeExec {
-    fn execute(&self, partition_index: usize) -> Result<ColumnarBatchStream> {
-        let _input = self.child.execute(partition_index)?;
-
-        /*
-        for each batch {
-            for each row {
-                apply hash to partition expression output to determine partition number
-                add row to partition (could be in memory or on disk)
-            }
-        }
-        */
-
-        // note that this operator doesn't return a stream of data like the others and the
-        // next stage in the plan will use a ShuffleReader to read the results
+    fn execute(&self, _partition_index: usize) -> Result<ColumnarBatchStream> {
+        //let stream = self.child.execute(partition_index)?;
+        // Ok(Box::pin(stream.map(move |batch| {
+        //     //TODO perform shuffle here
+        // })))
         unimplemented!()
     }
 }

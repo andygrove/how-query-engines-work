@@ -12,12 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-pub mod filter;
-pub mod hash_aggregate;
-pub mod parquet_scan;
-pub mod physical_plan;
-pub mod projection;
-pub mod scheduler;
-pub mod shuffle_exchange;
-pub mod shuffle_reader;
-pub mod shuffled_hash_join;
+use crate::error::Result;
+use crate::execution::physical_plan::{ColumnarBatchStream, ExecutionPlan, PhysicalPlan};
+use std::rc::Rc;
+
+#[derive(Debug, Clone)]
+pub struct FilterExec {
+    child: Rc<PhysicalPlan>,
+}
+
+impl ExecutionPlan for FilterExec {
+    fn children(&self) -> Vec<Rc<PhysicalPlan>> {
+        vec![self.child.clone()]
+    }
+
+    fn execute(&self, _partition_index: usize) -> Result<ColumnarBatchStream> {
+        unimplemented!()
+    }
+}

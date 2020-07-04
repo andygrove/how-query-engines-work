@@ -23,13 +23,20 @@
 //! The physical plan also accounts for partitioning and ordering of data between operators.
 
 use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::arrow::array::ArrayRef;
+use crate::arrow::record_batch::RecordBatch;
 use crate::datafusion::logicalplan::ScalarValue;
 use crate::error::Result;
 use crate::execution::hash_aggregate::HashAggregateExec;
-
 use crate::execution::shuffle_exchange::ShuffleExchangeExec;
+
+use crate::datafusion::logicalplan::Expr;
+use crate::execution::filter::FilterExec;
+use crate::execution::parquet_scan::ParquetScanExec;
+use crate::execution::projection::ProjectionExec;
+use crate::execution::shuffled_hash_join::ShuffledHashJoinExec;
 use futures::stream::BoxStream;
 
 /// Stream of columnar batches using futures
@@ -42,6 +49,11 @@ pub trait ExecutionPlan {
         Partitioning::UnknownPartitioning(0)
     }
 
+    /// Specifies the data distribution requirements of all the children for this operator
+    fn required_child_distribution(&self) -> Distribution {
+        Distribution::UnspecifiedDistribution
+    }
+
     /// Specifies how data is ordered in each partition
     fn output_ordering(&self) -> Option<Vec<SortOrder>> {
         None
@@ -52,8 +64,14 @@ pub trait ExecutionPlan {
         None
     }
 
+    /// Get the children of this plan. Leaf nodes have no children. Unary nodes have a single
+    /// child. Binary nodes have two children.
+    fn children(&self) -> Vec<Rc<PhysicalPlan>> {
+        vec![]
+    }
+
     /// Runs this query against one partition returning a stream of columnar batches
-    fn execute(&self, partition_index: usize) -> Result<ColumnarBatchStream>;
+    fn execute(&self, _partition_index: usize) -> Result<ColumnarBatchStream>;
 }
 
 pub trait Expression {
@@ -63,12 +81,21 @@ pub trait Expression {
 
 /// Batch of columnar data.
 #[allow(dead_code)]
+#[derive(Clone)]
 pub struct ColumnarBatch {
-    columns: Vec<ColumnarValue>,
+    columns: Vec<Arc<ColumnarValue>>,
+}
+
+impl ColumnarBatch {
+    pub fn from_arrow(_batch: &RecordBatch) -> Self {
+        //TODO implement
+        Self { columns: vec![] }
+    }
 }
 
 /// A columnar value can either be a scalar value or an Arrow array.
 #[allow(dead_code)]
+#[derive(Clone)]
 pub enum ColumnarValue {
     Scalar(ScalarValue),
     Columnar(ArrayRef),
@@ -76,62 +103,106 @@ pub enum ColumnarValue {
 
 /// Enumeration wrapping physical plan structs so that they can be represented in a tree easily
 /// and processed using pattern matching
-#[derive(Clone)]
-pub enum PhysicalPlanNode {
-    // /// Projection.
-    // Project(ProjectPlan),
-    // /// Filter a.k.a predicate.
-    // Filter(FilterPlan),
-    // /// Take the first `limit` elements of the child's single output partition.
-    // GlobalLimit(GlobalLimitPlan),
-    // /// Limit to be applied to each partition.
-    // LocalLimit(LocalLimitPlan),
-    // /// Sort on one or more sorting expressions.
-    // Sort(SortPlan),
+#[derive(Debug, Clone)]
+pub enum PhysicalPlan {
+    /// Projection.
+    Projection(ProjectionExec),
+    /// Filter a.k.a predicate.
+    Filter(FilterExec),
     /// Hash aggregate
     HashAggregate(Rc<HashAggregateExec>),
-    // /// Performs a hash join of two child relations by first shuffling the data using the join keys.
-    // ShuffledHashJoin(ShuffledHashJoinPlan),
+    /// Performs a hash join of two child relations by first shuffling the data using the join keys.
+    ShuffledHashJoin(ShuffledHashJoinExec),
     /// Performs a shuffle that will result in the desired partitioning.
     ShuffleExchange(Rc<ShuffleExchangeExec>),
-    // /// Scans a partitioned data source
-    // FileScan(FileScanPlan),
+    /// Scans a partitioned data source
+    ParquetScan(ParquetScanExec),
 }
 
-#[derive(Clone)]
+impl PhysicalPlan {
+    pub fn as_execution_plan(&self) -> Rc<dyn ExecutionPlan> {
+        match self {
+            Self::Projection(exec) => Rc::new(exec.clone()),
+            _ => unimplemented!(),
+        }
+    }
+
+    pub fn with_new_children(&self, new_children: Vec<Rc<PhysicalPlan>>) -> PhysicalPlan {
+        match self {
+            Self::HashAggregate(exec) => {
+                Self::HashAggregate(Rc::new(exec.with_new_children(new_children)))
+            }
+            _ => unimplemented!(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum Distribution {
+    UnspecifiedDistribution,
+    SinglePartition,
+    BroadcastDistribution,
+    ClusteredDistribution {
+        required_num_partitions: usize,
+        clustering: Vec<Expr>,
+    },
+    HashClusteredDistribution {
+        required_num_partitions: usize,
+        clustering: Vec<Expr>,
+    },
+    OrderedDistribution(Vec<SortOrder>),
+}
+
+#[derive(Debug, Clone)]
 pub enum JoinType {
     Inner,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum BuildSide {
     BuildLeft,
     BuildRight,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum SortDirection {
     Ascending,
     Descending,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
+pub enum AggregateMode {
+    Partial,
+    Final,
+}
+
+#[derive(Debug, Clone)]
 pub struct SortOrder {
-    child: Rc<dyn Expression>,
+    child: Rc<Expr>,
     direction: SortDirection,
     null_ordering: NullOrdering,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum NullOrdering {
     NullsFirst,
     NullsLast,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum Partitioning {
     UnknownPartitioning(usize),
-    HashPartitioning(usize, Vec<Rc<dyn Expression>>),
+    HashPartitioning(usize, Vec<Rc<Expr>>),
+}
+
+impl Partitioning {
+    pub fn partition_count(&self) -> usize {
+        use Partitioning::*;
+        match self {
+            UnknownPartitioning(n) => *n,
+            HashPartitioning(n, _) => *n,
+        }
+    }
 }
 
 // #[derive(Clone)]
