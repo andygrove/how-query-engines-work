@@ -26,6 +26,8 @@ use std::fmt;
 use std::rc::Rc;
 use std::sync::Arc;
 
+use futures::stream::BoxStream;
+
 use crate::arrow::array::ArrayRef;
 use crate::arrow::record_batch::RecordBatch;
 use crate::datafusion::logicalplan::ScalarValue;
@@ -37,8 +39,8 @@ use crate::datafusion::logicalplan::Expr;
 use crate::execution::filter::FilterExec;
 use crate::execution::parquet_scan::ParquetScanExec;
 use crate::execution::projection::ProjectionExec;
+use crate::execution::shuffle_reader::ShuffleReaderExec;
 use crate::execution::shuffled_hash_join::ShuffledHashJoinExec;
-use futures::stream::BoxStream;
 
 /// Stream of columnar batches using futures
 pub type ColumnarBatchStream = BoxStream<'static, ColumnarBatch>;
@@ -107,27 +109,30 @@ pub enum ColumnarValue {
 #[derive(Clone)]
 pub enum PhysicalPlan {
     /// Projection.
-    Projection(ProjectionExec),
+    Projection(Rc<ProjectionExec>),
     /// Filter a.k.a predicate.
-    Filter(FilterExec),
+    Filter(Rc<FilterExec>),
     /// Hash aggregate
     HashAggregate(Rc<HashAggregateExec>),
     /// Performs a hash join of two child relations by first shuffling the data using the join keys.
     ShuffledHashJoin(ShuffledHashJoinExec),
     /// Performs a shuffle that will result in the desired partitioning.
     ShuffleExchange(Rc<ShuffleExchangeExec>),
+    /// Reads results from a ShuffleExchange
+    ShuffleReader(Rc<ShuffleReaderExec>),
     /// Scans a partitioned data source
-    ParquetScan(ParquetScanExec),
+    ParquetScan(Rc<ParquetScanExec>),
 }
 
 impl PhysicalPlan {
     pub fn as_execution_plan(&self) -> Rc<dyn ExecutionPlan> {
         match self {
-            Self::Projection(exec) => Rc::new(exec.clone()),
-            Self::Filter(exec) => Rc::new(exec.clone()),
-            Self::HashAggregate(exec) => Rc::new(exec.as_ref().clone()),
-            Self::ParquetScan(exec) => Rc::new(exec.clone()),
-            Self::ShuffleExchange(exec) => Rc::new(exec.as_ref().clone()),
+            Self::Projection(exec) => exec.clone(),
+            Self::Filter(exec) => exec.clone(),
+            Self::HashAggregate(exec) => exec.clone(),
+            Self::ParquetScan(exec) => exec.clone(),
+            Self::ShuffleExchange(exec) => exec.clone(),
+            Self::ShuffleReader(exec) => exec.clone(),
             _ => unimplemented!(),
         }
     }
@@ -149,7 +154,12 @@ impl PhysicalPlan {
             }
         }
         match self {
-            PhysicalPlan::ParquetScan(exec) => write!(f, "ParquetScan: {:?}", exec.path),
+            PhysicalPlan::ParquetScan(exec) => write!(
+                f,
+                "ParquetScan: {:?}, partitions={}",
+                exec.path,
+                exec.filenames.len()
+            ),
             PhysicalPlan::HashAggregate(exec) => {
                 write!(
                     f,
@@ -161,6 +171,9 @@ impl PhysicalPlan {
             PhysicalPlan::ShuffleExchange(exec) => {
                 write!(f, "Shuffle: {:?}", exec.as_ref().output_partitioning())?;
                 exec.as_ref().child.fmt_with_indent(f, indent + 1)
+            }
+            PhysicalPlan::ShuffleReader(exec) => {
+                write!(f, "ShuffleReader: stage_id={}", exec.stage_id)
             }
             PhysicalPlan::Projection(_exec) => write!(f, "Projection:"),
             PhysicalPlan::Filter(_exec) => write!(f, "Filter:"),
