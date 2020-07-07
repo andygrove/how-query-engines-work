@@ -1,17 +1,25 @@
 extern crate ballista;
 
 use ballista::error::Result;
+use ballista::execution::hash_aggregate::HashAggregateExec;
 use ballista::execution::parquet_scan::ParquetScanExec;
-use ballista::execution::physical_plan::{ColumnarBatchStream, ExecutionPlan};
-use futures::StreamExt;
+use ballista::execution::physical_plan::{AggregateMode, ColumnarBatchStream, PhysicalPlan};
 
-// #[tokio::test]
-// async fn async_query() -> Result<()> {
+use std::rc::Rc;
+
+// #[test]
+// fn hash_aggregate() -> Result<()> {
 //     let path = nyc_path();
-//     let exec = ParquetScanExec::try_new(&path, None)?;
-//     let mut stream: ColumnarBatchStream = exec.execute(0)?;
-//     while let Some(batch) = stream.next().await {
-//         let batch = batch?;
+//     let parquet = PhysicalPlan::ParquetScan(Rc::new(ParquetScanExec::try_new(&path, None)?));
+//     let hash_agg = PhysicalPlan::HashAggregate(Rc::new(HashAggregateExec::new(
+//         AggregateMode::Partial,
+//         vec![],
+//         vec![],
+//         Rc::new(parquet),
+//     )));
+//
+//     let stream: ColumnarBatchStream = hash_agg.as_execution_plan().execute(0)?;
+//     while let Some(batch) = stream.next()? {
 //         println!(
 //             "batch with {} rows and {} columns",
 //             batch.num_rows(),

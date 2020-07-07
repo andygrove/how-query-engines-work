@@ -24,8 +24,7 @@
 
 use std::fmt;
 use std::rc::Rc;
-
-use futures::stream::BoxStream;
+use std::sync::Arc;
 
 use crate::arrow::array::ArrayRef;
 use crate::arrow::record_batch::RecordBatch;
@@ -42,7 +41,11 @@ use crate::execution::shuffle_reader::ShuffleReaderExec;
 use crate::execution::shuffled_hash_join::ShuffledHashJoinExec;
 
 /// Stream of columnar batches using futures
-pub type ColumnarBatchStream = BoxStream<'static, Result<ColumnarBatch>>;
+pub type ColumnarBatchStream = Arc<dyn ColumnarBatchIterator>;
+
+pub trait ColumnarBatchIterator {
+    fn next(&self) -> Result<Option<ColumnarBatch>>;
+}
 
 /// Base trait for all operators
 pub trait ExecutionPlan {
