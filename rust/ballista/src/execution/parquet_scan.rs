@@ -33,7 +33,7 @@ use crossbeam::channel::{unbounded, Receiver, Sender};
 use futures::task::{Context, Poll};
 use tokio::stream::Stream;
 
-type MaybeColumnarBatch = Result<Option<ColumnarBatch>>;
+type MaybeColumnarBatch = Option<Result<ColumnarBatch>>;
 
 #[derive(Debug, Clone)]
 pub struct ParquetScanExec {
@@ -61,15 +61,16 @@ impl ExecutionPlan for ParquetScanExec {
         Partitioning::UnknownPartitioning(self.filenames.len())
     }
 
-    fn execute(&self, _partition_index: usize) -> Result<ColumnarBatchStream> {
-        unimplemented!()
+    fn execute(&self, partition_index: usize) -> Result<ColumnarBatchStream> {
+        let stream =
+            ParquetStream::try_new(&self.filenames[partition_index], self.projection.clone())?;
+        Ok(Box::pin(stream))
     }
 }
 
-struct ParquetStream {
+pub struct ParquetStream {
     // schema: Arc<Schema>,
-    request_tx: Sender<()>,
-    response_rx: Receiver<Result<Option<ColumnarBatch>>>,
+    response_rx: Receiver<MaybeColumnarBatch>,
 }
 
 #[allow(dead_code)]
@@ -94,7 +95,6 @@ impl ParquetStream {
 
         // because the parquet implementation is not thread-safe, it is necessary to execute
         // on a thread and communicate with channels
-        let (request_tx, request_rx): (Sender<()>, Receiver<()>) = unbounded();
         let (response_tx, response_rx): (Sender<MaybeColumnarBatch>, Receiver<MaybeColumnarBatch>) =
             unbounded();
 
@@ -102,43 +102,40 @@ impl ParquetStream {
 
         thread::spawn(move || {
             //TODO error handling, remove unwraps
-
             let batch_size = 64 * 1024; //TODO
-
-            // open file
             let file = File::open(&filename).unwrap();
             match SerializedFileReader::new(file) {
                 Ok(file_reader) => {
                     let file_reader = Rc::new(file_reader);
-
                     let mut arrow_reader = ParquetFileArrowReader::new(file_reader);
-
                     match arrow_reader.get_record_reader_by_columns(projection, batch_size) {
-                        Ok(mut batch_reader) => {
-                            while request_rx.recv().is_ok() {
-                                match batch_reader.next_batch() {
-                                    Ok(Some(batch)) => {
-                                        response_tx
-                                            .send(Ok(Some(ColumnarBatch::from_arrow(&batch))))
-                                            .unwrap();
-                                    }
-                                    Ok(None) => {
-                                        response_tx.send(Ok(None)).unwrap();
-                                        break;
-                                    }
-                                    Err(e) => {
-                                        response_tx
-                                            .send(Err(BallistaError::General(format!("{:?}", e))))
-                                            .unwrap();
-                                        break;
-                                    }
+                        Ok(mut batch_reader) => loop {
+                            println!("reading batch");
+                            match batch_reader.next_batch() {
+                                Ok(Some(batch)) => {
+                                    println!("sending batch");
+                                    response_tx
+                                        .send(Some(Ok(ColumnarBatch::from_arrow(&batch))))
+                                        .unwrap();
+                                }
+                                Ok(None) => {
+                                    println!("sending eof");
+                                    response_tx.send(None).unwrap();
+                                    break;
+                                }
+                                Err(e) => {
+                                    println!("sending error");
+                                    response_tx
+                                        .send(Some(Err(BallistaError::General(format!("{:?}", e)))))
+                                        .unwrap();
+                                    break;
                                 }
                             }
-                        }
+                        },
 
                         Err(e) => {
                             response_tx
-                                .send(Err(BallistaError::General(format!("{:?}", e))))
+                                .send(Some(Err(BallistaError::General(format!("{:?}", e)))))
                                 .unwrap();
                         }
                     }
@@ -146,37 +143,25 @@ impl ParquetStream {
 
                 Err(e) => {
                     response_tx
-                        .send(Err(BallistaError::General(format!("{:?}", e))))
+                        .send(Some(Err(BallistaError::General(format!("{:?}", e)))))
                         .unwrap();
                 }
             }
         });
 
-        println!("try_new ok");
-
-        Ok(Self {
-            // schema: projected_schema,
-            request_tx,
-            response_rx,
-        })
+        Ok(Self { response_rx })
     }
 }
 
 impl Stream for ParquetStream {
-    type Item = ColumnarBatch;
+    type Item = Result<ColumnarBatch>;
 
-    fn poll_next(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        println!("poll_next()");
-
-        self.request_tx.send(()).unwrap();
-
-        match self.response_rx.recv().unwrap().unwrap() {
-            Some(batch) => {
-                println!("ready");
-                Poll::Ready(Some(batch))
-            }
-            _ => {
-                println!("pending");
+    fn poll_next(self: Pin<&mut Self>, ctx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        match self.response_rx.try_recv() {
+            Ok(item) => Poll::Ready(item),
+            Err(_) => {
+                // this isn't efficient but it works
+                ctx.waker().wake_by_ref();
                 Poll::Pending
             }
         }

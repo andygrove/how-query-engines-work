@@ -24,7 +24,6 @@
 
 use std::fmt;
 use std::rc::Rc;
-use std::sync::Arc;
 
 use futures::stream::BoxStream;
 
@@ -43,7 +42,7 @@ use crate::execution::shuffle_reader::ShuffleReaderExec;
 use crate::execution::shuffled_hash_join::ShuffledHashJoinExec;
 
 /// Stream of columnar batches using futures
-pub type ColumnarBatchStream = BoxStream<'static, ColumnarBatch>;
+pub type ColumnarBatchStream = BoxStream<'static, Result<ColumnarBatch>>;
 
 /// Base trait for all operators
 pub trait ExecutionPlan {
@@ -84,24 +83,48 @@ pub trait Expression {
 
 /// Batch of columnar data.
 #[allow(dead_code)]
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ColumnarBatch {
-    columns: Vec<Arc<ColumnarValue>>,
+    columns: Vec<ColumnarValue>,
 }
 
 impl ColumnarBatch {
-    pub fn from_arrow(_batch: &RecordBatch) -> Self {
-        //TODO implement
-        Self { columns: vec![] }
+    pub fn from_arrow(batch: &RecordBatch) -> Self {
+        let columns = batch
+            .columns()
+            .iter()
+            .map(|c| ColumnarValue::Columnar(c.clone()))
+            .collect();
+        Self { columns }
+    }
+
+    pub fn num_columns(&self) -> usize {
+        self.columns.len()
+    }
+
+    pub fn num_rows(&self) -> usize {
+        self.columns[0].len()
     }
 }
 
 /// A columnar value can either be a scalar value or an Arrow array.
 #[allow(dead_code)]
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum ColumnarValue {
-    Scalar(ScalarValue),
+    Scalar(ScalarValue, usize),
     Columnar(ArrayRef),
+}
+
+impl ColumnarValue {
+    pub fn len(&self) -> usize {
+        match self {
+            ColumnarValue::Scalar(_, n) => *n,
+            ColumnarValue::Columnar(array) => array.len(),
+        }
+    }
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 /// Enumeration wrapping physical plan structs so that they can be represented in a tree easily
