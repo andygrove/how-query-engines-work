@@ -12,16 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::sync::{Arc, Mutex};
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::arrow::array;
 use crate::arrow::compute;
 use crate::arrow::datatypes::{DataType, Schema};
 use crate::datafusion::logicalplan::ScalarValue;
 use crate::error::{ballista_error, Result};
-use crate::execution::expressions::simple::ColumnReference;
 use crate::execution::physical_plan::{
-    Accumulator, AggregateExpr, ColumnarBatch, ColumnarValue, Expression,
+    Accumulator, AggregateExpr, AggregateMode, ColumnarBatch, ColumnarValue, Expression,
 };
 
 /// MAX aggregate expression
@@ -64,12 +65,9 @@ impl AggregateExpr for Max {
         self.expr.evaluate(batch)
     }
 
-    fn create_accumulator(&self) -> Arc<Mutex<dyn Accumulator>> {
-        Arc::new(Mutex::new(MaxAccumulator { max: None }))
-    }
-
-    fn create_reducer(&self, column_index: usize) -> Arc<dyn AggregateExpr> {
-        Arc::new(Max::new(Arc::new(ColumnReference::new(column_index))))
+    fn create_accumulator(&self, _mode: &AggregateMode) -> Rc<RefCell<dyn Accumulator>> {
+        // the accumulator for MAX is always MAX regardless of the aggregation mode
+        Rc::new(RefCell::new(MaxAccumulator { max: None }))
     }
 }
 

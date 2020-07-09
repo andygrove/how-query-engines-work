@@ -18,8 +18,9 @@
 //! Ballista Hash Aggregate operator. This is based on the implementation from DataFusion in the
 //! Apache Arrow project.
 
+use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use crossbeam::channel::{unbounded, Receiver, Sender};
@@ -102,14 +103,14 @@ impl ExecutionPlan for HashAggregateExec {
     fn output_partitioning(&self) -> Partitioning {
         match self.mode {
             AggregateMode::Partial => self.child.as_execution_plan().output_partitioning(),
-            AggregateMode::Final => Partitioning::UnknownPartitioning(1),
+            _ => Partitioning::UnknownPartitioning(1),
         }
     }
 
     fn required_child_distribution(&self) -> Distribution {
         match self.mode {
             AggregateMode::Partial => Distribution::UnspecifiedDistribution,
-            AggregateMode::Final => Distribution::SinglePartition,
+            _ => Distribution::SinglePartition,
         }
     }
 
@@ -120,6 +121,7 @@ impl ExecutionPlan for HashAggregateExec {
     fn execute(&self, partition_index: usize) -> Result<ColumnarBatchStream> {
         let input = self.child.as_execution_plan().execute(partition_index)?;
         Ok(Arc::new(HashAggregateIter::new(
+            &self.mode,
             input,
             self.group_expr.clone(),
             self.aggr_expr.clone(),
@@ -155,7 +157,7 @@ macro_rules! extract_aggr_value {
         let mut builder = array::$BUILDER::new($MAP.len());
         let mut err = false;
         for v in $MAP.values() {
-            match v[$COL_INDEX].as_ref().lock().unwrap().get_value()? {
+            match v[$COL_INDEX].as_ref().borrow().get_value()? {
                 Some(ScalarValue::$TY(n)) => builder.append_value(n as $TY2).unwrap(),
                 None => builder.append_null().unwrap(),
                 _ => err = true,
@@ -198,7 +200,7 @@ macro_rules! update_accumulators {
         for row in 0..$ARRAY.len() {
             if $ARRAY.is_valid(row) {
                 let value = $SCALAR_TY(primitive_array.value(row));
-                let mut accum = $ACCUM[row][$COL].lock().unwrap();
+                let mut accum = $ACCUM[row][$COL].borrow_mut();
                 accum.accumulate(&ColumnarValue::Scalar(Some(value), 1))?;
             }
         }
@@ -206,7 +208,7 @@ macro_rules! update_accumulators {
 }
 
 /// AccumularSet is the value in the hash map
-type AccumulatorSet = Vec<Arc<Mutex<dyn Accumulator>>>;
+type AccumulatorSet = Vec<Rc<RefCell<dyn Accumulator>>>;
 
 #[allow(dead_code)]
 struct HashAggregateIter {
@@ -216,23 +218,34 @@ struct HashAggregateIter {
 
 impl HashAggregateIter {
     fn new(
+        mode: &AggregateMode,
         input: ColumnarBatchStream,
         group_expr: Vec<Arc<dyn Expression>>,
         aggr_expr: Vec<Arc<dyn AggregateExpr>>,
     ) -> Self {
         let (tx, rx): (Sender<MaybeColumnarBatch>, Receiver<MaybeColumnarBatch>) = unbounded();
-        let task = create_task(input.clone(), group_expr.clone(), aggr_expr.clone(), tx);
+
+        let task = create_task(
+            mode,
+            input.clone(),
+            group_expr.clone(),
+            aggr_expr.clone(),
+            tx,
+        );
         Self { task, rx }
     }
 }
 
 fn create_task(
+    mode: &AggregateMode,
     input: ColumnarBatchStream,
     group_expr: Vec<Arc<dyn Expression>>,
     aggr_expr: Vec<Arc<dyn AggregateExpr>>,
     tx: Sender<MaybeColumnarBatch>,
 ) -> Task<Result<()>> {
-    Task::spawn(async move {
+    let mode = mode.to_owned();
+
+    Task::local(async move {
         let start = Instant::now();
         let mut batch_count = 0;
         let mut row_count = 0;
@@ -271,7 +284,7 @@ fn create_task(
                 } else {
                     let accumulator_set: AccumulatorSet = aggr_expr
                         .iter()
-                        .map(|expr| expr.create_accumulator())
+                        .map(|expr| expr.create_accumulator(&mode))
                         .collect();
 
                     map.insert(key.clone(), accumulator_set.clone());
