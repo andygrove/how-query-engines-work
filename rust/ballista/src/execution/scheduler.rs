@@ -168,8 +168,8 @@ impl Scheduler {
 /// Convert a logical plan into a physical plan
 pub fn create_physical_plan(plan: &LogicalPlan) -> Result<Rc<PhysicalPlan>> {
     match plan {
-        LogicalPlan::Projection { input, .. } => {
-            let exec = ProjectionExec::new(create_physical_plan(input)?);
+        LogicalPlan::Projection { input, expr, .. } => {
+            let exec = ProjectionExec::try_new(expr, create_physical_plan(input)?)?;
             Ok(Rc::new(PhysicalPlan::Projection(Rc::new(exec))))
         }
         LogicalPlan::Aggregate {
@@ -185,31 +185,33 @@ pub fn create_physical_plan(plan: &LogicalPlan) -> Result<Rc<PhysicalPlan>> {
                 .partition_count()
                 == 1
             {
-                Ok(Rc::new(PhysicalPlan::HashAggregate(Rc::new(
-                    HashAggregateExec::new(
-                        AggregateMode::Final,
-                        group_expr.clone(),
-                        aggr_expr.clone(),
-                        input,
-                    ),
-                ))))
+                let exec = HashAggregateExec::try_new(
+                    AggregateMode::Final,
+                    group_expr.clone(),
+                    aggr_expr.clone(),
+                    input,
+                )?;
+                Ok(Rc::new(PhysicalPlan::HashAggregate(Rc::new(exec))))
             } else {
-                let partial = Rc::new(PhysicalPlan::HashAggregate(Rc::new(
-                    HashAggregateExec::new(
-                        AggregateMode::Partial,
-                        group_expr.clone(),
-                        aggr_expr.clone(),
-                        input,
-                    ),
-                )));
+                // Create partial hash aggregate to run against partitions in parallel
+                let partial_hash_exec = HashAggregateExec::try_new(
+                    AggregateMode::Partial,
+                    group_expr.clone(),
+                    aggr_expr.clone(),
+                    input,
+                )?;
+                let partial = Rc::new(PhysicalPlan::HashAggregate(Rc::new(partial_hash_exec)));
+                // Create final hash aggregate to run on the coalesced partition of the results
+                // from the partial hash aggregate
                 // TODO these are not the correct expressions being passed in here for the final agg
+                let final_hash_exec = HashAggregateExec::try_new(
+                    AggregateMode::Final,
+                    group_expr.clone(),
+                    aggr_expr.clone(),
+                    partial,
+                )?;
                 Ok(Rc::new(PhysicalPlan::HashAggregate(Rc::new(
-                    HashAggregateExec::new(
-                        AggregateMode::Final,
-                        group_expr.clone(),
-                        aggr_expr.clone(),
-                        partial,
-                    ),
+                    final_hash_exec,
                 ))))
             }
         }
