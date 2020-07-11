@@ -45,7 +45,7 @@ pub struct HashAggregateExec {
     pub(crate) mode: AggregateMode,
     pub(crate) group_expr: Vec<Expr>,
     pub(crate) aggr_expr: Vec<Expr>,
-    pub(crate) child: Rc<PhysicalPlan>,
+    pub(crate) child: Arc<PhysicalPlan>,
     schema: Arc<Schema>,
 }
 
@@ -54,7 +54,7 @@ impl HashAggregateExec {
         mode: AggregateMode,
         group_expr: Vec<Expr>,
         aggr_expr: Vec<Expr>,
-        child: Rc<PhysicalPlan>,
+        child: Arc<PhysicalPlan>,
     ) -> Result<Self> {
         //TODO should just use schema from logical plan rather than derive it here?
 
@@ -84,7 +84,7 @@ impl HashAggregateExec {
         })
     }
 
-    pub fn with_new_children(&self, new_children: Vec<Rc<PhysicalPlan>>) -> HashAggregateExec {
+    pub fn with_new_children(&self, new_children: Vec<Arc<PhysicalPlan>>) -> HashAggregateExec {
         assert!(new_children.len() == 1);
         HashAggregateExec {
             mode: self.mode.clone(),
@@ -96,6 +96,7 @@ impl HashAggregateExec {
     }
 }
 
+#[async_trait]
 impl ExecutionPlan for HashAggregateExec {
     fn schema(&self) -> Arc<Schema> {
         self.schema.clone()
@@ -115,14 +116,14 @@ impl ExecutionPlan for HashAggregateExec {
         }
     }
 
-    fn children(&self) -> Vec<Rc<PhysicalPlan>> {
+    fn children(&self) -> Vec<Arc<PhysicalPlan>> {
         vec![self.child.clone()]
     }
 
-    fn execute(&self, partition_index: usize) -> Result<ColumnarBatchStream> {
+    async fn execute(&self, partition_index: usize) -> Result<ColumnarBatchStream> {
         let child_exec = self.child.as_execution_plan();
         let input_schema = child_exec.schema();
-        let input = child_exec.execute(partition_index)?;
+        let input = child_exec.execute(partition_index).await?;
         let group_expr = compile_expressions(&self.group_expr, &input_schema)?;
         let aggr_expr = compile_aggregate_expressions(&self.aggr_expr, &input_schema)?;
         Ok(Arc::new(HashAggregateIter::new(

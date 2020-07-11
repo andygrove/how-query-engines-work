@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use std::rc::Rc;
+use std::sync::Arc;
 
 use crate::arrow::datatypes::Schema;
 use crate::error::Result;
@@ -20,16 +20,16 @@ use crate::execution::physical_plan::{
     ColumnarBatchStream, ExecutionPlan, Partitioning, PhysicalPlan,
 };
 
-use tonic::codegen::Arc;
+use async_trait::async_trait;
 
 #[derive(Debug, Clone)]
 pub struct ShuffleExchangeExec {
-    pub(crate) child: Rc<PhysicalPlan>,
+    pub(crate) child: Arc<PhysicalPlan>,
     output_partitioning: Partitioning,
 }
 
 impl ShuffleExchangeExec {
-    pub fn new(child: Rc<PhysicalPlan>, output_partitioning: Partitioning) -> Self {
+    pub fn new(child: Arc<PhysicalPlan>, output_partitioning: Partitioning) -> Self {
         Self {
             child,
             output_partitioning,
@@ -37,12 +37,13 @@ impl ShuffleExchangeExec {
     }
 }
 
+#[async_trait]
 impl ExecutionPlan for ShuffleExchangeExec {
     fn schema(&self) -> Arc<Schema> {
         unimplemented!()
     }
 
-    fn execute(&self, _partition_index: usize) -> Result<ColumnarBatchStream> {
+    async fn execute(&self, _partition_index: usize) -> Result<ColumnarBatchStream> {
         unimplemented!()
     }
 }
