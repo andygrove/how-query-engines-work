@@ -61,6 +61,15 @@ pub trait ColumnarBatchIter: Sync + Send {
     async fn close(&self) {}
 }
 
+pub trait ExecutionContext: Send + Sync {
+    fn shuffle_manager(&self) -> Arc<dyn ShuffleManager>;
+}
+
+#[async_trait]
+pub trait ShuffleManager: Send + Sync {
+    async fn read_shuffle(&self, shuffle_id: &ShuffleId) -> Result<Vec<ColumnarBatch>>;
+}
+
 /// Base trait for all operators
 #[async_trait]
 pub trait ExecutionPlan: Send + Sync {
@@ -94,7 +103,11 @@ pub trait ExecutionPlan: Send + Sync {
     }
 
     /// Runs this query against one partition returning a stream of columnar batches
-    async fn execute(&self, partition_index: usize) -> Result<ColumnarBatchStream>;
+    async fn execute(
+        &self,
+        ctx: Arc<dyn ExecutionContext>,
+        partition_index: usize,
+    ) -> Result<ColumnarBatchStream>;
 }
 
 pub trait Expression: Send + Sync + Debug {
@@ -154,11 +167,7 @@ pub enum Action {
     /// Execute a query and store the results in memory
     Execute(ExecutionTask),
     /// Collect a shuffle
-    Collect(ShuffleId),
-    /// Execute the query and write the results to CSV
-    WriteCsv { plan: LogicalPlan, path: String },
-    /// Execute the query and write the results to Parquet
-    WriteParquet { plan: LogicalPlan, path: String },
+    FetchShuffle(ShuffleId),
 }
 
 pub type MaybeColumnarBatch = Result<Option<ColumnarBatch>>;
@@ -329,7 +338,7 @@ impl PhysicalPlan {
                 exec.as_ref().child.fmt_with_indent(f, indent + 1)
             }
             PhysicalPlan::ShuffleReader(exec) => {
-                write!(f, "ShuffleReader: stage_id={}", exec.stage_id)
+                write!(f, "ShuffleReader: shuffle_id={:?}", exec.shuffle_id)
             }
             PhysicalPlan::Projection(_exec) => write!(f, "Projection:"),
             PhysicalPlan::Filter(_exec) => write!(f, "Filter:"),
