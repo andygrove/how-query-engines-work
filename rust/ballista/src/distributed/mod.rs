@@ -12,17 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Ballista Logical Plan
-
-use crate::datafusion::logicalplan::LogicalPlan;
-
-/// Action that can be sent to an executor
-#[derive(Debug, Clone)]
-pub enum Action {
-    /// Execute the query and return the results
-    Collect { plan: LogicalPlan },
-    /// Execute the query and write the results to CSV
-    WriteCsv { plan: LogicalPlan, path: String },
-    /// Execute the query and write the results to Parquet
-    WriteParquet { plan: LogicalPlan, path: String },
-}
+pub mod executor;
+pub mod flight_service;

@@ -18,6 +18,7 @@
 
 pub use arrow;
 pub use datafusion;
+pub use flight;
 pub use parquet;
 pub use sqlparser;
 
@@ -33,8 +34,8 @@ pub mod client;
 pub mod cluster;
 pub mod dataframe;
 pub mod datagen;
+pub mod distributed;
 pub mod error;
 pub mod execution;
-pub mod logical_plan;
 pub mod serde;
 pub mod utils;

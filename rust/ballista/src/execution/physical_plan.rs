@@ -31,6 +31,7 @@ use crate::arrow::array::ArrayRef;
 use crate::arrow::datatypes::{DataType, Field, Schema};
 use crate::arrow::record_batch::RecordBatch;
 use crate::datafusion::logicalplan::Expr;
+use crate::datafusion::logicalplan::LogicalPlan;
 use crate::datafusion::logicalplan::ScalarValue;
 use crate::error::{ballista_error, Result};
 use crate::execution::expressions::{col, max, min};
@@ -142,6 +143,17 @@ pub trait Accumulator: Send + Sync {
     fn get_value(&self) -> Result<Option<ScalarValue>>;
 }
 
+/// Action that can be sent to an executor
+#[derive(Debug, Clone)]
+pub enum Action {
+    /// Execute the query with DataFusion and return the results
+    Collect { plan: LogicalPlan },
+    /// Execute the query and write the results to CSV
+    WriteCsv { plan: LogicalPlan, path: String },
+    /// Execute the query and write the results to Parquet
+    WriteParquet { plan: LogicalPlan, path: String },
+}
+
 pub type MaybeColumnarBatch = Result<Option<ColumnarBatch>>;
 
 /// Batch of columnar data.
@@ -177,6 +189,21 @@ impl ColumnarBatch {
             schema: Arc::new(schema),
             columns: values.to_vec(),
         }
+    }
+
+    pub fn to_arrow(&self) -> Result<RecordBatch> {
+        let arrays = self
+            .columns
+            .iter()
+            .map(|c| match c {
+                ColumnarValue::Columnar(array) => Ok(array.clone()),
+                ColumnarValue::Scalar(_, _) => {
+                    // note that this can be implemented easily if needed
+                    Err(ballista_error("Cannot convert scalar value to Arrow array"))
+                }
+            })
+            .collect::<Result<Vec<_>>>()?;
+        Ok(RecordBatch::try_new(self.schema.clone(), arrays)?)
     }
 
     pub fn schema(&self) -> Arc<Schema> {
@@ -383,6 +410,8 @@ impl Partitioning {
         }
     }
 }
+
+pub struct ShuffleId {}
 
 /// Create a physical expression from a logical expression
 pub fn compile_expression(expr: &Expr, _input: &Schema) -> Result<Arc<dyn Expression>> {
