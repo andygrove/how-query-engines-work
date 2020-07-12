@@ -63,8 +63,8 @@ the memory efficiency and increased performance from offloading certain operatio
 
 The following examples should help illustrate the current capabilities of Ballista
 
-- [Distributed query execution in Rust](https://github.com/ballista-compute/ballista/tree/master/rust/examples/distributed-query)
-- [Rust bindings for Apache Spark](https://github.com/ballista-compute/ballista/tree/master/rust/examples/apache-spark-rust-bindings)
+- [Distributed query execution in Rust](https://github.com/ballista-compute/ballista/tree/main/rust/examples/distributed-query)
+- [Rust bindings for Apache Spark](https://github.com/ballista-compute/ballista/tree/main/rust/examples/apache-spark-rust-bindings)
 
 ## Documentation
 
