@@ -64,7 +64,7 @@ pub trait ColumnarBatchIter: Sync + Send {
 #[async_trait]
 pub trait ExecutionContext: Send + Sync {
     async fn get_executor_ids(&self) -> Result<Vec<Uuid>>;
-    async fn execute_task(&self, executor_id: &Uuid, task: &ExecutionTask) -> Result<ShuffleId>;
+    async fn execute_task(&self, executor_id: Uuid, task: ExecutionTask) -> Result<ShuffleId>;
     async fn read_shuffle(&self, shuffle_id: &ShuffleId) -> Result<Vec<ColumnarBatch>>;
 }
 
@@ -426,7 +426,7 @@ impl Partitioning {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ShuffleId {
     pub(crate) job_uuid: Uuid,
     pub(crate) stage_id: usize,

@@ -43,10 +43,7 @@ async fn main() -> Result<()> {
     // print the results
     pretty::print_batches(&results)?;
 
-    println!(
-        "Distributed query took {} seconds",
-        start.elapsed().as_secs()
-    );
+    println!("Distributed query took {} ms", start.elapsed().as_millis());
 
     Ok(())
 }

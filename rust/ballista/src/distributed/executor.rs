@@ -120,16 +120,14 @@ impl ExecutionContext for DefaultContext {
         }
     }
 
-    async fn execute_task(&self, _executor_id: &Uuid, task: &ExecutionTask) -> Result<ShuffleId> {
-        // TODO etcd lookup to find executor
-        let _batches = execute_action("localhost", 50051, Action::Execute(task.clone())).await?;
-
+    async fn execute_task(&self, _executor_id: Uuid, task: ExecutionTask) -> Result<ShuffleId> {
         // TODO what is the point of returning this info since it is based on input arg?
-        Ok(ShuffleId::new(
-            task.job_uuid,
-            task.stage_id,
-            task.partition_id,
-        ))
+        let shuffle_id = ShuffleId::new(task.job_uuid, task.stage_id, task.partition_id);
+
+        // TODO etcd lookup to find executor
+        let _batches = execute_action("localhost", 50051, Action::Execute(task)).await?;
+
+        Ok(shuffle_id)
     }
 
     async fn read_shuffle(&self, shuffle_id: &ShuffleId) -> Result<Vec<ColumnarBatch>> {
@@ -145,7 +143,8 @@ impl ExecutionContext for DefaultContext {
                     .collect())
             }
             _ => Err(ballista_error(&format!(
-                "Failed to resolve executor UUID for shuffle ID {:?}", shuffle_id
+                "Failed to resolve executor UUID for shuffle ID {:?}",
+                shuffle_id
             ))),
         }
     }

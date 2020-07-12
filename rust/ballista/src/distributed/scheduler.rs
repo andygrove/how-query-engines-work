@@ -19,9 +19,11 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Arc;
+use std::thread;
 use uuid::Uuid;
 
 use crate::datafusion::logicalplan::LogicalPlan;
+use crate::distributed::executor::{DefaultContext, DiscoveryMode, ExecutorConfig};
 use crate::error::{ballista_error, BallistaError, Result};
 use crate::execution::operators::HashAggregateExec;
 use crate::execution::operators::ParquetScanExec;
@@ -32,7 +34,7 @@ use crate::execution::physical_plan::{
     AggregateMode, ColumnarBatch, Distribution, ExecutionContext, ExecutionPlan, Partitioning,
     PhysicalPlan, ShuffleId,
 };
-use crate::distributed::executor::{DefaultContext, ExecutorConfig, DiscoveryMode};
+use smol::Task;
 
 /// A Job typically represents a single query and the query is executed in stages. Stages are
 /// separated by map operations (shuffles) to re-partition data before the next stage starts.
@@ -262,8 +264,8 @@ pub async fn execute_job(job: &Job, ctx: Arc<dyn ExecutionContext>) -> Result<Ve
                         let exec = plan.as_execution_plan();
                         let parts = exec.output_partitioning().partition_count();
 
-                        let mut shuffle_ids = vec![];
-
+                        let mut threads = vec![];
+                        let mut executors_ids = vec![];
                         for partition in 0..parts {
                             println!("Running stage {} partition {}", stage.id, partition);
                             let task = ExecutionTask::new(
@@ -276,22 +278,41 @@ pub async fn execute_job(job: &Job, ctx: Arc<dyn ExecutionContext>) -> Result<Ve
 
                             //TODO balance load across the executors
                             let executor_id = &executors[0];
+                            let executor_id = executor_id.clone();
 
-                            println!("BEFORE execute_task");
-                            let shuffle_id = ctx.execute_task(executor_id, &task).await?;
-                            println!("AFTER execute_task");
+                            let ctx = ctx.clone();
+                            let handle = thread::spawn(move || {
+                                smol::run(async {
+                                    Task::blocking(async move {
+                                        ctx.execute_task(executor_id.clone(), task).await
+                                    })
+                                    .await
+                                })
+                            });
+                            threads.push(handle);
+                            executors_ids.push(executor_id);
+                        }
 
-                            shuffle_location_map.insert(shuffle_id.clone(), *executor_id);
+                        let mut shuffle_ids = vec![];
+                        for thread in threads {
+                            let shuffle_id = thread.join().unwrap()?;
                             shuffle_ids.push(shuffle_id);
                         }
 
+                        for (shuffle_id, executor_id) in shuffle_ids.iter().zip(executors_ids) {
+                            shuffle_location_map.insert(shuffle_id.clone(), executor_id.clone());
+                        }
                         stage_status_map.insert(stage.id, StageStatus::Completed);
 
                         if stage.id == job.root_stage_id {
                             println!("reading final results from query!");
                             //TODO remove hack
-                            let config = ExecutorConfig::new(DiscoveryMode::Etcd, "", 0, "localhost:2379");
-                            let ctx = Arc::new(DefaultContext::new(&config, shuffle_location_map.clone()));
+                            let config =
+                                ExecutorConfig::new(DiscoveryMode::Etcd, "", 0, "localhost:2379");
+                            let ctx = Arc::new(DefaultContext::new(
+                                &config,
+                                shuffle_location_map.clone(),
+                            ));
                             let data = ctx.read_shuffle(&shuffle_ids[0]).await?;
                             return Ok(data);
                         }
