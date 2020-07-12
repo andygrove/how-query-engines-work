@@ -19,11 +19,44 @@ use crate::arrow::datatypes::Schema;
 use crate::arrow::record_batch::RecordBatch;
 use crate::datafusion::execution::context::ExecutionContext as DFContext;
 use crate::datafusion::logicalplan::LogicalPlan;
+use crate::distributed::client::execute_action;
+use crate::distributed::scheduler::{
+    create_job, create_physical_plan, ensure_requirements, execute_job, ExecutionTask,
+};
 use crate::error::{ballista_error, Result};
-use crate::execution::physical_plan::{ExecutionContext, ShuffleId, ShuffleManager};
-use crate::execution::scheduler::ExecutionTask;
+use crate::execution::physical_plan::{
+    Action, ColumnarBatch, ExecutionContext, PhysicalPlan, ShuffleId,
+};
 
 use async_trait::async_trait;
+use etcd_client::{Client, GetOptions, PutOptions};
+use uuid::Uuid;
+
+#[derive(Debug, Clone)]
+pub struct ExecutorConfig {
+    pub(crate) discovery_mode: DiscoveryMode,
+    host: String,
+    port: usize,
+    etcd_urls: String,
+}
+
+impl ExecutorConfig {
+    pub fn new(discovery_mode: DiscoveryMode, host: &str, port: usize, etcd_urls: &str) -> Self {
+        Self {
+            discovery_mode,
+            host: host.to_owned(),
+            port,
+            etcd_urls: etcd_urls.to_owned(),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum DiscoveryMode {
+    Etcd,
+    Kubernetes,
+    Standalone,
+}
 
 #[derive(Clone)]
 pub struct ShufflePartition {
@@ -43,43 +76,129 @@ pub trait Executor: Send + Sync {
     async fn execute_query(&self, plan: &LogicalPlan) -> Result<ShufflePartition>;
 }
 
-pub struct ExecutorContext {}
-
-impl ExecutionContext for ExecutorContext {
-    fn shuffle_manager(&self) -> Arc<dyn ShuffleManager> {
-        unimplemented!()
-    }
+pub struct DefaultContext {
+    /// map from shuffle id to executor uuid
+    pub(crate) shuffle_locations: HashMap<ShuffleId, Uuid>,
+    config: ExecutorConfig,
 }
 
-pub struct BallistaExecutor {
-    ctx: Arc<dyn ExecutionContext>,
-    shuffle_partitions: Arc<Mutex<HashMap<String, ShufflePartition>>>,
-}
-
-impl BallistaExecutor {
-    pub fn new(ctx: Arc<dyn ExecutionContext>) -> Self {
+impl DefaultContext {
+    pub fn new(config: &ExecutorConfig, shuffle_locations: HashMap<ShuffleId, Uuid>) -> Self {
         Self {
-            ctx,
-            shuffle_partitions: Arc::new(Mutex::new(HashMap::new())),
+            config: config.clone(),
+            shuffle_locations,
         }
     }
 }
 
-impl Default for BallistaExecutor {
-    fn default() -> Self {
-        BallistaExecutor::new(Arc::new(ExecutorContext {}))
+impl DefaultContext {}
+
+#[async_trait]
+impl ExecutionContext for DefaultContext {
+    async fn get_executor_ids(&self) -> Result<Vec<Uuid>> {
+        println!("get_executor_ids");
+        match Client::connect([&self.config.etcd_urls], None).await {
+            Ok(mut client) => {
+                println!("get_executor_ids got client");
+                let cluster_name = "default";
+                let key = format!("/ballista/{}", cluster_name);
+                let options = GetOptions::new();
+                println!("get_executor_ids calling get");
+                match client.get(key.clone(), Some(options)).await {
+                    Ok(response) => {
+                        println!("{:?}", response);
+                        Ok(vec![])
+                    }
+                    Err(e) => Err(ballista_error(&format!("etcd error {:?}", e.to_string()))),
+                }
+            }
+            Err(e) => Err(ballista_error(&format!(
+                "Failed to connect to etcd {:?}",
+                e.to_string()
+            ))),
+        }
+    }
+
+    async fn execute_task(&self, _executor_id: &Uuid, task: &ExecutionTask) -> Result<ShuffleId> {
+        // TODO etcd lookup to find executor
+        let _batches = execute_action("localhost", 50051, Action::Execute(task.clone())).await?;
+
+        // TODO what is the point of returning this info since it is based on input arg?
+        Ok(ShuffleId::new(
+            task.job_uuid,
+            task.stage_id,
+            task.partition_id,
+        ))
+    }
+
+    async fn read_shuffle(&self, shuffle_id: &ShuffleId) -> Result<Vec<ColumnarBatch>> {
+        match self.shuffle_locations.get(shuffle_id) {
+            Some(_uuid) => {
+                // TODO etcd lookup to find executor
+                let batches =
+                    execute_action("localhost", 50051, Action::FetchShuffle(shuffle_id.clone()))
+                        .await?;
+                Ok(batches
+                    .iter()
+                    .map(|b| ColumnarBatch::from_arrow(b))
+                    .collect())
+            }
+            _ => Err(ballista_error(
+                "Failed to resolve executor UUID for shuffle ID",
+            )),
+        }
+    }
+}
+
+pub struct BallistaExecutor {
+    config: ExecutorConfig,
+    shuffle_partitions: Arc<Mutex<HashMap<String, ShufflePartition>>>,
+}
+
+impl BallistaExecutor {
+    pub fn new(config: ExecutorConfig) -> Self {
+        let uuid = Uuid::new_v4();
+
+        match &config.discovery_mode {
+            DiscoveryMode::Etcd => {
+                println!("Running in etcd mode");
+                smol::run(async {
+                    //TODO remove unwraps
+                    let mut client = Client::connect([&config.etcd_urls], None).await.unwrap();
+                    let cluster_name = "default";
+                    let lease_time_seconds = 60;
+                    let key = format!("/ballista/{}/{}", cluster_name, &uuid);
+                    let value = format!("{}:{}", config.host, config.port);
+                    let lease = client.lease_grant(lease_time_seconds, None).await.unwrap();
+                    let options = PutOptions::new().with_lease(lease.id());
+                    let resp = client.put(key.clone(), value, Some(options)).await.unwrap();
+                    println!("Registered with etcd as {}. Response: {:?}.", key, resp);
+                });
+            }
+            DiscoveryMode::Kubernetes => println!("Running in k8s mode"),
+            DiscoveryMode::Standalone => println!("Running in standalone mode"),
+        }
+
+        Self {
+            config,
+            shuffle_partitions: Arc::new(Mutex::new(HashMap::new())),
+        }
     }
 }
 
 #[async_trait]
 impl Executor for BallistaExecutor {
     async fn do_task(&self, task: &ExecutionTask) -> Result<ShuffleId> {
+        // create new execution contrext specifically for this query
+        let ctx = Arc::new(DefaultContext::new(
+            &self.config,
+            task.shuffle_locations.clone(),
+        ));
+
         let shuffle_id = ShuffleId::new(task.job_uuid, task.stage_id, task.partition_id);
 
         let exec_plan = task.plan.as_execution_plan();
-        let stream = exec_plan
-            .execute(self.ctx.clone(), task.partition_id)
-            .await?;
+        let stream = exec_plan.execute(ctx, task.partition_id).await?;
         let mut batches = vec![];
         while let Some(batch) = stream.next().await? {
             batches.push(batch.to_arrow()?);
@@ -114,26 +233,53 @@ impl Executor for BallistaExecutor {
     }
 
     async fn execute_query(&self, logical_plan: &LogicalPlan) -> Result<ShufflePartition> {
-        // note that this used DataFusion and not the new Ballista async / distributed
-        // query execution
-
-        // create local execution context
+        println!("Logical plan:\n{:?}", logical_plan);
         let ctx = DFContext::new();
+        let logical_plan = ctx.optimize(&logical_plan)?;
+        println!("Optimized logical plan:\n{:?}", logical_plan);
 
-        // create the query plan
-        let optimized_plan = ctx.optimize(&logical_plan)?;
+        match &self.config.discovery_mode {
+            DiscoveryMode::Standalone => {
+                println!("Running standalone query");
 
-        let batch_size = 1024 * 1024;
-        let physical_plan = ctx.create_physical_plan(&optimized_plan, batch_size)?;
+                // legacy DataFusion execution
+                let batch_size = 1024 * 1024;
+                let physical_plan = ctx.create_physical_plan(&logical_plan, batch_size)?;
+                let results = ctx.collect(physical_plan.as_ref())?;
+                let schema = physical_plan.schema();
+                Ok(ShufflePartition {
+                    schema: schema.as_ref().clone(),
+                    data: results,
+                })
+            }
+            _ => {
+                println!("Running distributed query");
 
-        // execute the query
-        let results = ctx.collect(physical_plan.as_ref())?;
+                // experimental distributed support, not fully working yet
+                smol::run(async {
+                    let plan: Arc<PhysicalPlan> = create_physical_plan(&logical_plan)?;
+                    println!("Physical plan:\n{:?}", plan);
 
-        let schema = physical_plan.schema();
+                    let plan = ensure_requirements(plan.as_ref())?;
+                    println!("Optimized physical plan:\n{:?}", plan);
 
-        Ok(ShufflePartition {
-            schema: schema.as_ref().clone(),
-            data: results,
-        })
+                    let job = create_job(plan)?;
+                    job.explain();
+
+                    // create new execution contrext specifically for this query
+                    let ctx = Arc::new(DefaultContext::new(&self.config, HashMap::new()));
+
+                    let batches = execute_job(&job, ctx.clone()).await?;
+
+                    Ok(ShufflePartition {
+                        schema: batches[0].schema().as_ref().clone(),
+                        data: batches
+                            .iter()
+                            .map(|b| b.to_arrow())
+                            .collect::<Result<Vec<_>>>()?,
+                    })
+                })
+            }
+        }
     }
 }

@@ -21,15 +21,17 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::datafusion::logicalplan::LogicalPlan;
-use crate::error::{BallistaError, Result};
+use crate::error::{ballista_error, BallistaError, Result};
 use crate::execution::operators::HashAggregateExec;
 use crate::execution::operators::ParquetScanExec;
 use crate::execution::operators::ProjectionExec;
 use crate::execution::operators::ShuffleExchangeExec;
 use crate::execution::operators::ShuffleReaderExec;
 use crate::execution::physical_plan::{
-    AggregateMode, Distribution, Partitioning, PhysicalPlan, ShuffleId,
+    AggregateMode, ColumnarBatch, Distribution, ExecutionContext, ExecutionPlan, Partitioning,
+    PhysicalPlan, ShuffleId,
 };
+use std::collections::HashMap;
 
 /// A Job typically represents a single query and the query is executed in stages. Stages are
 /// separated by map operations (shuffles) to re-partition data before the next stage starts.
@@ -40,6 +42,8 @@ pub struct Job {
     /// A list of stages within this job. There can be dependencies between stages to form
     /// a directed acyclic graph (DAG).
     pub stages: Vec<Rc<RefCell<Stage>>>,
+    /// The root stage id that produces the final results
+    pub root_stage_id: usize,
 }
 
 impl Job {
@@ -94,9 +98,27 @@ impl Stage {
 pub struct ExecutionTask {
     pub(crate) job_uuid: Uuid,
     pub(crate) stage_id: usize,
-    pub(crate) task_id: usize,
     pub(crate) partition_id: usize,
     pub(crate) plan: PhysicalPlan,
+    pub(crate) shuffle_locations: HashMap<ShuffleId, Uuid>,
+}
+
+impl ExecutionTask {
+    pub fn new(
+        job_uuid: Uuid,
+        stage_id: usize,
+        partition_id: usize,
+        plan: PhysicalPlan,
+        shuffle_locations: HashMap<ShuffleId, Uuid>,
+    ) -> Self {
+        Self {
+            job_uuid,
+            stage_id,
+            partition_id,
+            plan,
+            shuffle_locations,
+        }
+    }
 }
 
 /// Create a Job (DAG of stages) from a physical execution plan.
@@ -116,6 +138,7 @@ impl Scheduler {
         let job = Job {
             id: Uuid::new_v4(),
             stages: vec![],
+            root_stage_id: 0,
         };
         Self {
             job,
@@ -160,14 +183,13 @@ impl Scheduler {
                     .push(new_stage_id);
 
                 // return a shuffle reader to read the results from the stage
+                let shuffle_id = ShuffleId {
+                    job_uuid: self.job.id,
+                    stage_id: new_stage_id,
+                    partition_id: 0, // not used in this context
+                };
                 Ok(Arc::new(PhysicalPlan::ShuffleReader(Arc::new(
-                    ShuffleReaderExec {
-                        shuffle_id: ShuffleId {
-                            job_uuid: self.job.id,
-                            stage_id: new_stage_id,
-                            partition_id: 0, // not used in this context
-                        },
-                    },
+                    ShuffleReaderExec::new(exec.schema(), shuffle_id),
                 ))))
             }
             PhysicalPlan::HashAggregate(exec) => {
@@ -180,6 +202,101 @@ impl Scheduler {
             _ => unimplemented!(),
         }
     }
+}
+
+enum StageStatus {
+    Pending,
+    Completed,
+}
+
+/// Execute a job directly against executors as starting point
+pub async fn execute_job(job: &Job, ctx: Arc<dyn ExecutionContext>) -> Result<Vec<ColumnarBatch>> {
+    let executors = ctx.get_executor_ids().await?;
+    println!("Executors: {:?}", executors);
+
+    if executors.is_empty() {
+        return Err(ballista_error("no executors available"));
+    }
+
+    let mut shuffle_location_map: HashMap<ShuffleId, Uuid> = HashMap::new();
+
+    let mut stage_status_map = HashMap::new();
+
+    for stage in &job.stages {
+        let stage = stage.borrow_mut();
+        stage_status_map.insert(stage.id, StageStatus::Pending);
+    }
+
+    // loop until all stages are complete
+    let mut num_completed = 0;
+    while num_completed < job.stages.len() {
+        num_completed = 0;
+
+        //TODO do stages in parallel when possible
+        for stage in &job.stages {
+            let stage = stage.borrow_mut();
+            let status = stage_status_map.get(&stage.id).unwrap();
+            match status {
+                StageStatus::Pending => {
+                    // have prior stages already completed ?
+                    if stage
+                        .prior_stages
+                        .iter()
+                        .all(|id| match stage_status_map.get(id) {
+                            Some(StageStatus::Completed) => true,
+                            _ => false,
+                        })
+                    {
+                        println!("Running stage {}", stage.id);
+                        let plan = stage
+                            .plan
+                            .as_ref()
+                            .expect("all stages should have plans at execution time");
+
+                        let exec = plan.as_execution_plan();
+                        let parts = exec.output_partitioning().partition_count();
+
+                        //TODO do partitions in parallel
+                        let mut shuffle_ids = vec![];
+                        for partition in 0..parts {
+                            println!("Running stage {} partition {}", stage.id, partition);
+                            let task = ExecutionTask::new(
+                                job.id,
+                                stage.id,
+                                0,
+                                plan.as_ref().clone(),
+                                shuffle_location_map.clone(),
+                            );
+
+                            //TODO balance load across the executors
+                            let executor_id = &executors[0];
+
+                            println!("BEFORE execute_task");
+                            let shuffle_id = ctx.execute_task(executor_id, &task).await?;
+                            println!("AFTER execute_task");
+
+                            shuffle_location_map.insert(shuffle_id.clone(), *executor_id);
+                            shuffle_ids.push(shuffle_id);
+                        }
+
+                        stage_status_map.insert(stage.id, StageStatus::Completed);
+
+                        if stage.id == job.root_stage_id {
+                            let data = ctx.read_shuffle(&shuffle_ids[0]).await?;
+                            return Ok(data);
+                        }
+                    } else {
+                        println!("Cannot run stage {} yet", stage.id);
+                    }
+                }
+                StageStatus::Completed => {
+                    num_completed += 1;
+                }
+            }
+        }
+    }
+
+    Err(ballista_error("oops"))
 }
 
 /// Convert a logical plan into a physical plan
@@ -232,8 +349,10 @@ pub fn create_physical_plan(plan: &LogicalPlan) -> Result<Arc<PhysicalPlan>> {
                 ))))
             }
         }
-        LogicalPlan::ParquetScan { path, .. } => {
-            let exec = ParquetScanExec::try_new(&path, None)?;
+        LogicalPlan::ParquetScan {
+            path, projection, ..
+        } => {
+            let exec = ParquetScanExec::try_new(&path, projection.clone())?;
             Ok(Arc::new(PhysicalPlan::ParquetScan(Arc::new(exec))))
         }
         other => Err(BallistaError::General(format!("unsupported {:?}", other))),

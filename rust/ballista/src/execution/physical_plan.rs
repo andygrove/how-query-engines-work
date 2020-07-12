@@ -40,7 +40,7 @@ use crate::execution::operators::{
     ShuffleExchangeExec, ShuffleReaderExec, ShuffledHashJoinExec,
 };
 
-use crate::execution::scheduler::ExecutionTask;
+use crate::distributed::scheduler::ExecutionTask;
 use async_trait::async_trait;
 use uuid::Uuid;
 
@@ -61,12 +61,10 @@ pub trait ColumnarBatchIter: Sync + Send {
     async fn close(&self) {}
 }
 
-pub trait ExecutionContext: Send + Sync {
-    fn shuffle_manager(&self) -> Arc<dyn ShuffleManager>;
-}
-
 #[async_trait]
-pub trait ShuffleManager: Send + Sync {
+pub trait ExecutionContext: Send + Sync {
+    async fn get_executor_ids(&self) -> Result<Vec<Uuid>>;
+    async fn execute_task(&self, executor_id: &Uuid, task: &ExecutionTask) -> Result<ShuffleId>;
     async fn read_shuffle(&self, shuffle_id: &ShuffleId) -> Result<Vec<ColumnarBatch>>;
 }
 
@@ -321,9 +319,10 @@ impl PhysicalPlan {
         match self {
             PhysicalPlan::ParquetScan(exec) => write!(
                 f,
-                "ParquetScan: {:?}, partitions={}",
+                "ParquetScan: {:?}, partitions={}; projection={:?}",
                 exec.path,
-                exec.filenames.len()
+                exec.filenames.len(),
+                exec.projection
             ),
             PhysicalPlan::HashAggregate(exec) => {
                 write!(
@@ -427,7 +426,7 @@ impl Partitioning {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ShuffleId {
     pub(crate) job_uuid: Uuid,
     pub(crate) stage_id: usize,
@@ -445,9 +444,10 @@ impl ShuffleId {
 }
 
 /// Create a physical expression from a logical expression
-pub fn compile_expression(expr: &Expr, _input: &Schema) -> Result<Arc<dyn Expression>> {
+pub fn compile_expression(expr: &Expr, input: &Schema) -> Result<Arc<dyn Expression>> {
     match expr {
         Expr::Column(n) => Ok(col(*n)),
+        Expr::UnresolvedColumn(name) => Ok(col(input.index_of(name)?)),
         other => Err(ballista_error(&format!(
             "Unsupported expression {:?}",
             other
