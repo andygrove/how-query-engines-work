@@ -16,6 +16,7 @@
 //! and co-ordinating execution of these stages and tasks across the cluster.
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Arc;
 use uuid::Uuid;
@@ -31,7 +32,7 @@ use crate::execution::physical_plan::{
     AggregateMode, ColumnarBatch, Distribution, ExecutionContext, ExecutionPlan, Partitioning,
     PhysicalPlan, ShuffleId,
 };
-use std::collections::HashMap;
+use crate::distributed::executor::{DefaultContext, ExecutorConfig, DiscoveryMode};
 
 /// A Job typically represents a single query and the query is executed in stages. Stages are
 /// separated by map operations (shuffles) to re-partition data before the next stage starts.
@@ -211,10 +212,15 @@ enum StageStatus {
 
 /// Execute a job directly against executors as starting point
 pub async fn execute_job(job: &Job, ctx: Arc<dyn ExecutionContext>) -> Result<Vec<ColumnarBatch>> {
-    let executors = ctx.get_executor_ids().await?;
+    let _executors = ctx.get_executor_ids().await?;
+
+    // for testing
+    let executors = vec![Uuid::new_v4()];
+
     println!("Executors: {:?}", executors);
 
     if executors.is_empty() {
+        println!("no executors found");
         return Err(ballista_error("no executors available"));
     }
 
@@ -256,8 +262,8 @@ pub async fn execute_job(job: &Job, ctx: Arc<dyn ExecutionContext>) -> Result<Ve
                         let exec = plan.as_execution_plan();
                         let parts = exec.output_partitioning().partition_count();
 
-                        //TODO do partitions in parallel
                         let mut shuffle_ids = vec![];
+
                         for partition in 0..parts {
                             println!("Running stage {} partition {}", stage.id, partition);
                             let task = ExecutionTask::new(
@@ -282,6 +288,10 @@ pub async fn execute_job(job: &Job, ctx: Arc<dyn ExecutionContext>) -> Result<Ve
                         stage_status_map.insert(stage.id, StageStatus::Completed);
 
                         if stage.id == job.root_stage_id {
+                            println!("reading final results from query!");
+                            //TODO remove hack
+                            let config = ExecutorConfig::new(DiscoveryMode::Etcd, "", 0, "localhost:2379");
+                            let ctx = Arc::new(DefaultContext::new(&config, shuffle_location_map.clone()));
                             let data = ctx.read_shuffle(&shuffle_ids[0]).await?;
                             return Ok(data);
                         }

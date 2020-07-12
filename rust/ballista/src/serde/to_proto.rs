@@ -18,7 +18,7 @@ use crate::arrow::datatypes::{DataType, Schema};
 use crate::datafusion::logicalplan::{Expr, LogicalPlan, ScalarValue};
 use crate::distributed::scheduler::ExecutionTask;
 use crate::error::BallistaError;
-use crate::execution::physical_plan::Action;
+use crate::execution::physical_plan::{Action, ExecutionPlan, ShuffleId};
 use crate::execution::physical_plan::{AggregateMode, PhysicalPlan};
 use crate::protobuf;
 
@@ -40,13 +40,11 @@ impl TryInto<protobuf::Action> for Action {
                 task: Some(task.try_into()?),
                 fetch_shuffle: None,
             }),
-            Action::FetchShuffle(_shuffle_id) => {
-                Ok(protobuf::Action {
-                    query: None,
-                    task: None,
-                    fetch_shuffle: None, //TODO
-                })
-            }
+            Action::FetchShuffle(shuffle_id) => Ok(protobuf::Action {
+                query: None,
+                task: None,
+                fetch_shuffle: Some(shuffle_id.try_into()?),
+            }),
         }
     }
 }
@@ -191,7 +189,10 @@ impl TryInto<protobuf::LogicalPlanNode> for LogicalPlan {
                 });
                 Ok(node)
             }
-            _ => Err(BallistaError::NotImplemented(format!("{:?}", self))),
+            _ => Err(BallistaError::NotImplemented(format!(
+                "logical plan to_proto {:?}",
+                self
+            ))),
         }
     }
 }
@@ -249,7 +250,10 @@ impl TryInto<protobuf::LogicalExprNode> for Expr {
                 }));
                 Ok(expr)
             }
-            _ => Err(BallistaError::NotImplemented(format!("{:?}", self))),
+            _ => Err(BallistaError::NotImplemented(format!(
+                "logical expr to_proto {:?}",
+                self
+            ))),
         }
     }
 }
@@ -286,22 +290,56 @@ impl TryInto<protobuf::PhysicalPlanNode> for PhysicalPlan {
             }
             PhysicalPlan::ParquetScan(exec) => {
                 let mut node = empty_physical_plan_node();
-                let schema = &exec.parquet_schema;
-                let projection: Vec<String> = match &exec.projection {
-                    Some(p) => p.iter().map(|i| schema.field(*i).name().clone()).collect(),
-                    _ => vec![],
-                };
+                let _schema = &exec.parquet_schema;
+                // let projection: Vec<String> = match &exec.projection {
+                //     Some(p) => p.iter().map(|i| schema.field(*i).name().clone()).collect(),
+                //     _ => vec![],
+                // };
                 node.scan = Some(protobuf::ScanExecNode {
                     path: exec.path.clone(),
-                    projection,
+                    projection: exec
+                        .projection
+                        .as_ref()
+                        .unwrap()
+                        .iter()
+                        .map(|n| *n as u32)
+                        .collect(),
                     file_format: "parquet".to_owned(),
                     schema: None,
                     has_header: false,
                 });
                 Ok(node)
             }
-            _ => Err(BallistaError::NotImplemented(format!("{:?}", self))),
+            PhysicalPlan::ShuffleReader(exec) => {
+                let schema: protobuf::Schema = exec.schema().as_ref().to_owned().try_into()?;
+                let mut node = empty_physical_plan_node();
+                node.shuffle_reader = Some(protobuf::ShuffleReaderExecNode {
+                    schema: Some(schema),
+                    shuffle_id: Some(protobuf::ShuffleId {
+                        job_uuid: exec.shuffle_id.job_uuid.to_string(),
+                        stage_id: exec.shuffle_id.stage_id as u32,
+                        partition_id: exec.shuffle_id.partition_id as u32,
+                    }),
+                });
+                Ok(node)
+            }
+            _ => Err(BallistaError::NotImplemented(format!(
+                "physical plan to_proto {:?}",
+                self
+            ))),
         }
+    }
+}
+
+impl TryInto<protobuf::ShuffleId> for ShuffleId {
+    type Error = BallistaError;
+
+    fn try_into(self) -> Result<protobuf::ShuffleId, Self::Error> {
+        Ok(protobuf::ShuffleId {
+            job_uuid: self.job_uuid.to_string(),
+            stage_id: self.stage_id as u32,
+            partition_id: self.partition_id as u32,
+        })
     }
 }
 
@@ -370,7 +408,7 @@ fn empty_physical_plan_node() -> protobuf::PhysicalPlanNode {
         selection: None,
         global_limit: None,
         local_limit: None,
-        shuffle: None,
+        shuffle_reader: None,
         hash_aggregate: None,
     }
 }
