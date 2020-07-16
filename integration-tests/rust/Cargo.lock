@@ -85,7 +85,7 @@ checksum = "cff77d8686867eceff3105329d4698d96c2391c176d5d03adc90c7389162b5b8"
 [[package]]
 name = "arrow"
 version = "1.0.0-SNAPSHOT"
-source = "git+https://github.com/apache/arrow#e559dd080a27875bab3d5cdb0da115c62e2f60bb"
+source = "git+https://github.com/apache/arrow#3586292d62c8c348e9fb85676eb524cde53179cf"
 dependencies = [
  "arrow-flight",
  "chrono",
@@ -106,7 +106,7 @@ dependencies = [
 [[package]]
 name = "arrow-flight"
 version = "1.0.0-SNAPSHOT"
-source = "git+https://github.com/apache/arrow#e559dd080a27875bab3d5cdb0da115c62e2f60bb"
+source = "git+https://github.com/apache/arrow#3586292d62c8c348e9fb85676eb524cde53179cf"
 dependencies = [
  "bytes 0.5.6",
  "futures 0.3.5",
@@ -238,7 +238,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ballista-benchmarks"
+name = "ballista-integration-tests"
 version = "0.3.0-SNAPSHOT"
 dependencies = [
  "ballista",
@@ -586,7 +586,7 @@ dependencies = [
 [[package]]
 name = "datafusion"
 version = "1.0.0-SNAPSHOT"
-source = "git+https://github.com/apache/arrow#e559dd080a27875bab3d5cdb0da115c62e2f60bb"
+source = "git+https://github.com/apache/arrow#3586292d62c8c348e9fb85676eb524cde53179cf"
 dependencies = [
  "arrow",
  "clap",
@@ -657,14 +657,6 @@ name = "discard"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "212d0f5754cb6769937f4501cc0e67f4f4483c8d2c3e1e922ee9edbe4ab4c7c0"
-
-[[package]]
-name = "distributed-query"
-version = "0.3.0-SNAPSHOT"
-dependencies = [
- "ballista",
- "tokio 0.2.21",
-]
 
 [[package]]
 name = "dtoa"
@@ -1653,9 +1645,9 @@ dependencies = [
 
 [[package]]
 name = "parking"
-version = "1.0.4"
+version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1efcee3c6d23b94012e240525f131c6abaa9e5eeb8f211002d93beec3b7be350"
+checksum = "50d4a6da31f8144a32532fe38fe8fb439a6842e0ec633f0037f0144c14e7f907"
 
 [[package]]
 name = "parking_lot"
@@ -1686,7 +1678,7 @@ dependencies = [
 [[package]]
 name = "parquet"
 version = "1.0.0-SNAPSHOT"
-source = "git+https://github.com/apache/arrow#e559dd080a27875bab3d5cdb0da115c62e2f60bb"
+source = "git+https://github.com/apache/arrow#3586292d62c8c348e9fb85676eb524cde53179cf"
 dependencies = [
  "arrow",
  "brotli",
@@ -2510,14 +2502,6 @@ dependencies = [
  "libc",
  "redox_syscall",
  "winapi 0.3.9",
-]
-
-[[package]]
-name = "spark-rust-bindings"
-version = "0.3.0-SNAPSHOT"
-dependencies = [
- "ballista",
- "tokio 0.2.21",
 ]
 
 [[package]]
