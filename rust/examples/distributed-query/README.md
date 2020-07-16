@@ -6,7 +6,7 @@ plan is submitted to an executor which then takes on the role of scheduler and o
 across the cluster.
 
 ```rust
-let ctx = Context::remote("localhost", 50051, HashMapk8s_get_executors::new());
+let ctx = Context::remote("localhost", 50051, HashMap::new());
 
 let results = ctx
     .read_parquet(nyc_taxi_path, None)?
