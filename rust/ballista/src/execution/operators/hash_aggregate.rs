@@ -26,8 +26,9 @@ use std::time::Instant;
 use crate::arrow::array::StringBuilder;
 use crate::arrow::array::{self, ArrayRef};
 use crate::arrow::datatypes::{DataType, Field, Schema};
+use crate::cast_array;
 use crate::datafusion::logicalplan::{Expr, ScalarValue};
-use crate::error::{BallistaError, Result};
+use crate::error::{ballista_error, BallistaError, Result};
 use crate::execution::physical_plan::{
     compile_aggregate_expressions, compile_expressions, Accumulator, AggregateExpr, AggregateMode,
     ColumnarBatch, ColumnarBatchIter, ColumnarBatchStream, ColumnarValue, Distribution,
@@ -445,39 +446,39 @@ fn create_key(
         match col {
             ColumnarValue::Columnar(col) => match col.data_type() {
                 DataType::UInt8 => {
-                    let array = col.as_any().downcast_ref::<array::UInt8Array>().unwrap();
+                    let array = cast_array!(col, UInt8Array)?;
                     vec[i] = GroupByScalar::UInt8(array.value(row))
                 }
                 DataType::UInt16 => {
-                    let array = col.as_any().downcast_ref::<array::UInt16Array>().unwrap();
+                    let array = cast_array!(col, UInt16Array)?;
                     vec[i] = GroupByScalar::UInt16(array.value(row))
                 }
                 DataType::UInt32 => {
-                    let array = col.as_any().downcast_ref::<array::UInt32Array>().unwrap();
+                    let array = cast_array!(col, UInt32Array)?;
                     vec[i] = GroupByScalar::UInt32(array.value(row))
                 }
                 DataType::UInt64 => {
-                    let array = col.as_any().downcast_ref::<array::UInt64Array>().unwrap();
+                    let array = cast_array!(col, UInt64Array)?;
                     vec[i] = GroupByScalar::UInt64(array.value(row))
                 }
                 DataType::Int8 => {
-                    let array = col.as_any().downcast_ref::<array::Int8Array>().unwrap();
+                    let array = cast_array!(col, Int8Array)?;
                     vec[i] = GroupByScalar::Int8(array.value(row))
                 }
                 DataType::Int16 => {
-                    let array = col.as_any().downcast_ref::<array::Int16Array>().unwrap();
+                    let array = cast_array!(col, Int16Array)?;
                     vec[i] = GroupByScalar::Int16(array.value(row))
                 }
                 DataType::Int32 => {
-                    let array = col.as_any().downcast_ref::<array::Int32Array>().unwrap();
+                    let array = cast_array!(col, Int32Array)?;
                     vec[i] = GroupByScalar::Int32(array.value(row))
                 }
                 DataType::Int64 => {
-                    let array = col.as_any().downcast_ref::<array::Int64Array>().unwrap();
+                    let array = cast_array!(col, Int64Array)?;
                     vec[i] = GroupByScalar::Int64(array.value(row))
                 }
                 DataType::Utf8 => {
-                    let array = col.as_any().downcast_ref::<array::StringArray>().unwrap();
+                    let array = cast_array!(col, StringArray)?;
                     vec[i] = GroupByScalar::Utf8(String::from(array.value(row)))
                 }
                 _ => {
