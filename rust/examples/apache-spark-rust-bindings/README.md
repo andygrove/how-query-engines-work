@@ -60,7 +60,7 @@ Aggregate: groupBy=[[#passenger_count]], aggr=[[MIN(#fare_amount), MAX(#fare_amo
 
 ## Spark Executor
 
-The Ballista [Spark Executor](https://github.com/ballista-compute/ballista/blob/master/spark/src/main/scala/org/ballistacompute/spark/executor/SparkExecutor.scala) receives the protobuf-encoded logical query plan and [translates it](https://github.com/ballista-compute/ballista/blob/master/spark/src/main/scala/org/ballistacompute/spark/executor/BallistaSparkContext.scala) into the following Spark execution plan.
+The Ballista [Spark Executor](https://github.com/ballista-compute/ballista/blob/main/spark/src/main/scala/org/ballistacompute/spark/executor/SparkExecutor.scala) receives the protobuf-encoded logical query plan and [translates it](https://github.com/ballista-compute/ballista/blob/master/spark/src/main/scala/org/ballistacompute/spark/executor/BallistaSparkContext.scala) into the following Spark execution plan.
 
 ```
 == Physical Plan ==
