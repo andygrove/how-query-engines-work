@@ -210,8 +210,9 @@ impl Scheduler {
                     exec.with_new_children(vec![child]),
                 ))))
             }
+            PhysicalPlan::CsvScan(_) => Ok(plan.clone()),
             PhysicalPlan::ParquetScan(_) => Ok(plan.clone()),
-            _ => unimplemented!(),
+            _ => Err(ballista_error("visit_plan unsupported operator")),
         }
     }
 }
@@ -362,8 +363,9 @@ pub fn create_physical_plan(plan: &LogicalPlan) -> Result<Arc<PhysicalPlan>> {
                 .partition_count()
                 == 1
             {
+                println!("scheduler: single partition, so complete");
                 let exec = HashAggregateExec::try_new(
-                    AggregateMode::Final,
+                    AggregateMode::Complete,
                     group_expr.clone(),
                     aggr_expr.clone(),
                     input,
@@ -444,7 +446,7 @@ pub fn ensure_requirements(plan: &PhysicalPlan) -> Result<Arc<PhysicalPlan>> {
                             ),
                         )))
                     } else {
-                        Arc::new(plan.clone())
+                        c.clone()
                     }
                 })
                 .collect();
