@@ -3,7 +3,7 @@ extern crate ballista;
 use std::sync::Arc;
 
 use ballista::arrow::datatypes::{DataType, Field, Schema};
-use ballista::dataframe::max;
+use ballista::dataframe::{avg, count, max, min, sum};
 use ballista::datafusion::logicalplan::col_index;
 use ballista::distributed::executor::{DefaultContext, DiscoveryMode, ExecutorConfig};
 use ballista::execution::operators::HashAggregateExec;
@@ -11,6 +11,7 @@ use ballista::execution::operators::InMemoryTableScanExec;
 use ballista::execution::physical_plan::{AggregateMode, ColumnarBatchStream, PhysicalPlan};
 use ballista::utils::datagen::DataGen;
 use std::collections::HashMap;
+use std::time::Instant;
 
 #[test]
 fn hash_aggregate() -> std::io::Result<()> {
@@ -20,10 +21,10 @@ fn hash_aggregate() -> std::io::Result<()> {
         let mut gen = DataGen::default();
 
         let schema = Schema::new(vec![
-            Field::new("c0", DataType::Int64, true),
-            Field::new("c1", DataType::UInt64, false),
+            Field::new("c0", DataType::Int8, true),
+            Field::new("c1", DataType::Int32, false),
         ]);
-        let batch = gen.create_batch(&schema, 4096).unwrap();
+        let batch = gen.create_batch(&schema, 1024 * 1024).unwrap();
 
         let in_memory_exec =
             PhysicalPlan::InMemoryTableScan(Arc::new(InMemoryTableScanExec::new(vec![
@@ -35,7 +36,13 @@ fn hash_aggregate() -> std::io::Result<()> {
             HashAggregateExec::try_new(
                 AggregateMode::Partial,
                 vec![col_index(0)],
-                vec![max(col_index(1))],
+                vec![
+                    min(col_index(1)),
+                    max(col_index(1)),
+                    avg(col_index(1)),
+                    sum(col_index(1)),
+                    count(col_index(1)),
+                ],
                 Arc::new(in_memory_exec),
             )
             .unwrap(),
@@ -45,6 +52,7 @@ fn hash_aggregate() -> std::io::Result<()> {
 
         let ctx = Arc::new(DefaultContext::new(&config, HashMap::new()));
 
+        let start = Instant::now();
         let stream: ColumnarBatchStream =
             hash_agg.as_execution_plan().execute(ctx, 0).await.unwrap();
         let mut results = vec![];
@@ -52,12 +60,15 @@ fn hash_aggregate() -> std::io::Result<()> {
             results.push(batch);
         }
 
+        let duration = start.elapsed();
+        println!("Took {} ms", duration.as_millis());
+
         assert_eq!(1, results.len());
 
         let batch = &results[0];
 
-        assert_eq!(3961, batch.num_rows());
-        assert_eq!(2, batch.num_columns());
+        assert_eq!(256, batch.num_rows());
+        assert_eq!(6, batch.num_columns());
 
         std::io::Result::Ok(())
     })

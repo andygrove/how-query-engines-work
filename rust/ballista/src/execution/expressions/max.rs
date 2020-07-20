@@ -19,6 +19,7 @@ use std::sync::Arc;
 use crate::arrow::array;
 use crate::arrow::compute;
 use crate::arrow::datatypes::{DataType, Schema};
+use crate::cast_array;
 use crate::datafusion::logicalplan::ScalarValue;
 use crate::error::{ballista_error, Result};
 use crate::execution::physical_plan::{
@@ -95,70 +96,38 @@ impl Accumulator for MaxAccumulator {
         match value {
             ColumnarValue::Columnar(array) => {
                 let max = match array.data_type() {
-                    DataType::UInt8 => {
-                        match compute::max(
-                            array.as_any().downcast_ref::<array::UInt8Array>().unwrap(),
-                        ) {
-                            Some(n) => Ok(Some(ScalarValue::UInt8(n))),
-                            None => Ok(None),
-                        }
-                    }
-                    DataType::UInt16 => {
-                        match compute::max(
-                            array.as_any().downcast_ref::<array::UInt16Array>().unwrap(),
-                        ) {
-                            Some(n) => Ok(Some(ScalarValue::UInt16(n))),
-                            None => Ok(None),
-                        }
-                    }
-                    DataType::UInt32 => {
-                        match compute::max(
-                            array.as_any().downcast_ref::<array::UInt32Array>().unwrap(),
-                        ) {
-                            Some(n) => Ok(Some(ScalarValue::UInt32(n))),
-                            None => Ok(None),
-                        }
-                    }
-                    DataType::UInt64 => {
-                        match compute::max(
-                            array.as_any().downcast_ref::<array::UInt64Array>().unwrap(),
-                        ) {
-                            Some(n) => Ok(Some(ScalarValue::UInt64(n))),
-                            None => Ok(None),
-                        }
-                    }
-                    DataType::Int8 => {
-                        match compute::max(
-                            array.as_any().downcast_ref::<array::Int8Array>().unwrap(),
-                        ) {
-                            Some(n) => Ok(Some(ScalarValue::Int8(n))),
-                            None => Ok(None),
-                        }
-                    }
-                    DataType::Int16 => {
-                        match compute::max(
-                            array.as_any().downcast_ref::<array::Int16Array>().unwrap(),
-                        ) {
-                            Some(n) => Ok(Some(ScalarValue::Int16(n))),
-                            None => Ok(None),
-                        }
-                    }
-                    DataType::Int32 => {
-                        match compute::max(
-                            array.as_any().downcast_ref::<array::Int32Array>().unwrap(),
-                        ) {
-                            Some(n) => Ok(Some(ScalarValue::Int32(n))),
-                            None => Ok(None),
-                        }
-                    }
-                    DataType::Int64 => {
-                        match compute::max(
-                            array.as_any().downcast_ref::<array::Int64Array>().unwrap(),
-                        ) {
-                            Some(n) => Ok(Some(ScalarValue::Int64(n))),
-                            None => Ok(None),
-                        }
-                    }
+                    DataType::UInt8 => match compute::max(cast_array!(array, UInt8Array)?) {
+                        Some(n) => Ok(Some(ScalarValue::UInt8(n))),
+                        None => Ok(None),
+                    },
+                    DataType::UInt16 => match compute::max(cast_array!(array, UInt16Array)?) {
+                        Some(n) => Ok(Some(ScalarValue::UInt16(n))),
+                        None => Ok(None),
+                    },
+                    DataType::UInt32 => match compute::max(cast_array!(array, UInt32Array)?) {
+                        Some(n) => Ok(Some(ScalarValue::UInt32(n))),
+                        None => Ok(None),
+                    },
+                    DataType::UInt64 => match compute::max(cast_array!(array, UInt64Array)?) {
+                        Some(n) => Ok(Some(ScalarValue::UInt64(n))),
+                        None => Ok(None),
+                    },
+                    DataType::Int8 => match compute::max(cast_array!(array, Int8Array)?) {
+                        Some(n) => Ok(Some(ScalarValue::Int8(n))),
+                        None => Ok(None),
+                    },
+                    DataType::Int16 => match compute::max(cast_array!(array, Int16Array)?) {
+                        Some(n) => Ok(Some(ScalarValue::Int16(n))),
+                        None => Ok(None),
+                    },
+                    DataType::Int32 => match compute::max(cast_array!(array, Int32Array)?) {
+                        Some(n) => Ok(Some(ScalarValue::Int32(n))),
+                        None => Ok(None),
+                    },
+                    DataType::Int64 => match compute::max(cast_array!(array, Int64Array)?) {
+                        Some(n) => Ok(Some(ScalarValue::Int64(n))),
+                        None => Ok(None),
+                    },
                     DataType::Float32 => {
                         match compute::max(
                             array

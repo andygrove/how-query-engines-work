@@ -32,17 +32,17 @@ use crate::arrow::datatypes::{DataType, Field, Schema};
 use crate::arrow::record_batch::RecordBatch;
 use crate::datafusion::logicalplan::Expr;
 use crate::datafusion::logicalplan::LogicalPlan;
+use crate::datafusion::logicalplan::Operator;
 use crate::datafusion::logicalplan::ScalarValue;
+use crate::distributed::scheduler::ExecutionTask;
 use crate::error::{ballista_error, Result};
-use crate::execution::expressions::{add, col, div, max, min, mult, subtract};
+use crate::execution::expressions::{add, avg, col, count, div, max, min, mult, subtract, sum};
 use crate::execution::operators::{
     CsvScanExec, FilterExec, HashAggregateExec, InMemoryTableScanExec, ParquetScanExec,
     ProjectionExec, ShuffleExchangeExec, ShuffleReaderExec,
 };
 
-use crate::distributed::scheduler::ExecutionTask;
 use async_trait::async_trait;
-use datafusion::logicalplan::Operator;
 use uuid::Uuid;
 
 /// Stream of columnar batches using futures
@@ -514,25 +514,17 @@ pub fn compile_aggregate_expression(
     input_schema: &Schema,
 ) -> Result<Arc<dyn AggregateExpr>> {
     match expr {
-        Expr::AggregateFunction { name, args, .. } => {
-            match name.to_lowercase().as_ref() {
-                // "sum" => Ok(Arc::new(Sum::new(
-                //     self.create_physical_expr(&args[0], input_schema)?,
-                // ))),
-                // "avg" => Ok(Arc::new(Avg::new(
-                //     self.create_physical_expr(&args[0], input_schema)?,
-                // ))),
-                "min" => Ok(min(compile_expression(&args[0], input_schema)?)),
-                "max" => Ok(max(compile_expression(&args[0], input_schema)?)),
-                // "count" => Ok(Arc::new(Count::new(
-                //     self.create_physical_expr(&args[0], input_schema)?,
-                // ))),
-                other => Err(ballista_error(&format!(
-                    "Unsupported aggregate function '{}'",
-                    other
-                ))),
-            }
-        }
+        Expr::AggregateFunction { name, args, .. } => match name.to_lowercase().as_ref() {
+            "avg" => Ok(avg(compile_expression(&args[0], input_schema)?)),
+            "count" => Ok(count(compile_expression(&args[0], input_schema)?)),
+            "max" => Ok(max(compile_expression(&args[0], input_schema)?)),
+            "min" => Ok(min(compile_expression(&args[0], input_schema)?)),
+            "sum" => Ok(sum(compile_expression(&args[0], input_schema)?)),
+            other => Err(ballista_error(&format!(
+                "Unsupported aggregate function '{}'",
+                other
+            ))),
+        },
         other => Err(ballista_error(&format!(
             "Unsupported aggregate expression {:?}",
             other

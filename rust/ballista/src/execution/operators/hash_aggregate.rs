@@ -223,7 +223,7 @@ macro_rules! extract_aggr_value {
 
 macro_rules! update_accumulators {
     ($ARRAY:ident, $ARRAY_TY:ident, $SCALAR_TY:expr, $COL:expr, $ACCUM:expr) => {{
-        let primitive_array = $ARRAY.as_any().downcast_ref::<array::$ARRAY_TY>().unwrap();
+        let primitive_array = cast_array!($ARRAY, $ARRAY_TY)?;
 
         for row in 0..$ARRAY.len() {
             if $ARRAY.is_valid(row) {

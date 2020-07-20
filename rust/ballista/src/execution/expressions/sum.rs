@@ -26,26 +26,24 @@ use crate::execution::physical_plan::{
     Accumulator, AggregateExpr, AggregateMode, ColumnarBatch, ColumnarValue, Expression,
 };
 
-/// MIN aggregate expression
 #[derive(Debug)]
-pub struct Min {
-    expr: Arc<dyn Expression>,
+pub struct Sum {
+    input: Arc<dyn Expression>,
 }
 
-impl Min {
-    /// Create a new MIN aggregate function
-    pub fn new(expr: Arc<dyn Expression>) -> Self {
-        Self { expr }
+impl Sum {
+    pub fn new(input: Arc<dyn Expression>) -> Self {
+        Self { input }
     }
 }
 
-impl AggregateExpr for Min {
+impl AggregateExpr for Sum {
     fn name(&self) -> String {
-        "MIN".to_string()
+        "SUM".to_owned()
     }
 
     fn data_type(&self, input_schema: &Schema) -> Result<DataType> {
-        match self.expr.data_type(input_schema)? {
+        match self.input.data_type(input_schema)? {
             DataType::Int8 | DataType::Int16 | DataType::Int32 | DataType::Int64 => {
                 Ok(DataType::Int64)
             }
@@ -54,7 +52,7 @@ impl AggregateExpr for Min {
             }
             DataType::Float32 => Ok(DataType::Float32),
             DataType::Float64 => Ok(DataType::Float64),
-            other => Err(ballista_error(&format!("MIN does not support {:?}", other))),
+            other => Err(ballista_error(&format!("SUM does not support {:?}", other))),
         }
     }
 
@@ -63,149 +61,131 @@ impl AggregateExpr for Min {
     }
 
     fn evaluate_input(&self, batch: &ColumnarBatch) -> Result<ColumnarValue> {
-        self.expr.evaluate(batch)
+        self.input.evaluate(batch)
     }
 
     fn create_accumulator(&self, _mode: &AggregateMode) -> Rc<RefCell<dyn Accumulator>> {
-        // the accumulator for MIN is always MIN regardless of the aggregation mode
-        Rc::new(RefCell::new(MinAccumulator { min: None }))
+        Rc::new(RefCell::new(SumAccumulator { sum: None }))
     }
 }
 
-macro_rules! min_accumulate {
+macro_rules! accumulate {
     ($SELF:ident, $VALUE:expr, $ARRAY_TYPE:ident, $SCALAR_VARIANT:ident, $TY:ty) => {{
-        $SELF.min = match $SELF.min {
+        $SELF.sum = match $SELF.sum {
             Some(ScalarValue::$SCALAR_VARIANT(n)) => {
-                if n < (*$VALUE as $TY) {
-                    Some(ScalarValue::$SCALAR_VARIANT(n))
-                } else {
-                    Some(ScalarValue::$SCALAR_VARIANT(*$VALUE as $TY))
-                }
+                Some(ScalarValue::$SCALAR_VARIANT(n + $VALUE as $TY))
             }
             Some(_) => return Err(ballista_error("Unexpected ScalarValue variant")),
-            None => Some(ScalarValue::$SCALAR_VARIANT(*$VALUE as $TY)),
+            None => Some(ScalarValue::$SCALAR_VARIANT($VALUE as $TY)),
         };
     }};
 }
-struct MinAccumulator {
-    min: Option<ScalarValue>,
+
+pub struct SumAccumulator {
+    pub sum: Option<ScalarValue>,
 }
 
-impl Accumulator for MinAccumulator {
+impl Accumulator for SumAccumulator {
     fn accumulate(&mut self, value: &ColumnarValue) -> Result<()> {
         match value {
             ColumnarValue::Columnar(array) => {
-                let min = match array.data_type() {
-                    DataType::UInt8 => match compute::min(cast_array!(array, UInt8Array)?) {
+                let sum = match array.data_type() {
+                    DataType::UInt8 => match compute::sum(cast_array!(array, UInt8Array)?) {
                         Some(n) => Ok(Some(ScalarValue::UInt8(n))),
                         None => Ok(None),
                     },
-                    DataType::UInt16 => match compute::min(cast_array!(array, UInt16Array)?) {
+                    DataType::UInt16 => match compute::sum(cast_array!(array, UInt16Array)?) {
                         Some(n) => Ok(Some(ScalarValue::UInt16(n))),
                         None => Ok(None),
                     },
-                    DataType::UInt32 => match compute::min(cast_array!(array, UInt32Array)?) {
+                    DataType::UInt32 => match compute::sum(cast_array!(array, UInt32Array)?) {
                         Some(n) => Ok(Some(ScalarValue::UInt32(n))),
                         None => Ok(None),
                     },
-                    DataType::UInt64 => match compute::min(cast_array!(array, UInt64Array)?) {
+                    DataType::UInt64 => match compute::sum(cast_array!(array, UInt64Array)?) {
                         Some(n) => Ok(Some(ScalarValue::UInt64(n))),
                         None => Ok(None),
                     },
-                    DataType::Int8 => match compute::min(cast_array!(array, Int8Array)?) {
+                    DataType::Int8 => match compute::sum(cast_array!(array, Int8Array)?) {
                         Some(n) => Ok(Some(ScalarValue::Int8(n))),
                         None => Ok(None),
                     },
-                    DataType::Int16 => match compute::min(cast_array!(array, Int16Array)?) {
+                    DataType::Int16 => match compute::sum(cast_array!(array, Int16Array)?) {
                         Some(n) => Ok(Some(ScalarValue::Int16(n))),
                         None => Ok(None),
                     },
-                    DataType::Int32 => match compute::min(cast_array!(array, Int32Array)?) {
+                    DataType::Int32 => match compute::sum(cast_array!(array, Int32Array)?) {
                         Some(n) => Ok(Some(ScalarValue::Int32(n))),
                         None => Ok(None),
                     },
-                    DataType::Int64 => match compute::min(cast_array!(array, Int64Array)?) {
+                    DataType::Int64 => match compute::sum(cast_array!(array, Int64Array)?) {
                         Some(n) => Ok(Some(ScalarValue::Int64(n))),
                         None => Ok(None),
                     },
-                    DataType::Float32 => {
-                        match compute::min(
-                            array
-                                .as_any()
-                                .downcast_ref::<array::Float32Array>()
-                                .unwrap(),
-                        ) {
-                            Some(n) => Ok(Some(ScalarValue::Float32(n))),
-                            None => Ok(None),
-                        }
-                    }
-                    DataType::Float64 => {
-                        match compute::min(
-                            array
-                                .as_any()
-                                .downcast_ref::<array::Float64Array>()
-                                .unwrap(),
-                        ) {
-                            Some(n) => Ok(Some(ScalarValue::Float64(n))),
-                            None => Ok(None),
-                        }
-                    }
-                    _ => Err(ballista_error("Unsupported data type for MIN")),
+                    DataType::Float32 => match compute::sum(cast_array!(array, Float32Array)?) {
+                        Some(n) => Ok(Some(ScalarValue::Float32(n))),
+                        None => Ok(None),
+                    },
+                    DataType::Float64 => match compute::sum(cast_array!(array, Float64Array)?) {
+                        Some(n) => Ok(Some(ScalarValue::Float64(n))),
+                        None => Ok(None),
+                    },
+                    _ => Err(ballista_error("Unsupported data type for SUM")),
                 }?;
-                self.accumulate(&ColumnarValue::Scalar(min, 1))
+                self.accumulate(&ColumnarValue::Scalar(sum, 1))?;
             }
-            ColumnarValue::Scalar(value, _n) => {
+            ColumnarValue::Scalar(value, _) => {
                 if let Some(value) = value {
                     match value {
                         ScalarValue::Int8(value) => {
-                            min_accumulate!(self, value, Int8Array, Int64, i64);
+                            accumulate!(self, *value, Int8Array, Int64, i64);
                         }
                         ScalarValue::Int16(value) => {
-                            min_accumulate!(self, value, Int16Array, Int64, i64)
+                            accumulate!(self, *value, Int16Array, Int64, i64);
                         }
                         ScalarValue::Int32(value) => {
-                            min_accumulate!(self, value, Int32Array, Int64, i64)
+                            accumulate!(self, *value, Int32Array, Int64, i64);
                         }
                         ScalarValue::Int64(value) => {
-                            min_accumulate!(self, value, Int64Array, Int64, i64)
+                            accumulate!(self, *value, Int64Array, Int64, i64);
                         }
                         ScalarValue::UInt8(value) => {
-                            min_accumulate!(self, value, UInt8Array, UInt64, u64)
+                            accumulate!(self, *value, UInt8Array, UInt64, u64);
                         }
                         ScalarValue::UInt16(value) => {
-                            min_accumulate!(self, value, UInt16Array, UInt64, u64)
+                            accumulate!(self, *value, UInt16Array, UInt64, u64);
                         }
                         ScalarValue::UInt32(value) => {
-                            min_accumulate!(self, value, UInt32Array, UInt64, u64)
+                            accumulate!(self, *value, UInt32Array, UInt64, u64);
                         }
                         ScalarValue::UInt64(value) => {
-                            min_accumulate!(self, value, UInt64Array, UInt64, u64)
+                            accumulate!(self, *value, UInt64Array, UInt64, u64);
                         }
                         ScalarValue::Float32(value) => {
-                            min_accumulate!(self, value, Float32Array, Float32, f32)
+                            accumulate!(self, *value, Float32Array, Float32, f32);
                         }
                         ScalarValue::Float64(value) => {
-                            min_accumulate!(self, value, Float64Array, Float64, f64)
+                            accumulate!(self, *value, Float64Array, Float64, f64);
                         }
                         other => {
                             return Err(ballista_error(&format!(
-                                "MIN does not support {:?}",
+                                "SUM does not support {:?}",
                                 other
                             )))
                         }
                     }
                 }
-                Ok(())
             }
         }
+        Ok(())
     }
 
     fn get_value(&self) -> Result<Option<ScalarValue>> {
-        Ok(self.min.clone())
+        Ok(self.sum.clone())
     }
 }
 
-/// Create a min expression
-pub fn min(expr: Arc<dyn Expression>) -> Arc<dyn AggregateExpr> {
-    Arc::new(Min::new(expr))
+/// Create a sum expression
+pub fn sum(expr: Arc<dyn Expression>) -> Arc<dyn AggregateExpr> {
+    Arc::new(Sum::new(expr))
 }
