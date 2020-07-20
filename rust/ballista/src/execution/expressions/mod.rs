@@ -14,17 +14,21 @@
 
 //! Relational expressions that can be used in query plans.
 
+pub use self::alias::alias;
 pub use self::arithmetic::{add, div, mult, subtract};
 pub use self::avg::avg;
 pub use self::column::col;
+pub use self::comparison::compare;
 pub use self::count::count;
 pub use self::max::max;
 pub use self::min::min;
 pub use self::sum::sum;
 
+mod alias;
 mod arithmetic;
 mod avg;
 mod column;
+mod comparison;
 mod count;
 mod max;
 mod min;
