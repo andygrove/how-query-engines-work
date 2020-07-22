@@ -7,7 +7,8 @@ object Tpch {
 
   def main(arg: Array[String]): Unit = {
     //convertToParquet("/mnt/tpch/10/lineitem.tbl", "./tmp")
-    q1()
+//    q1()
+    repartition(24)
   }
 
   def repartition(n: Int) {

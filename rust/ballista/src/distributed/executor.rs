@@ -105,7 +105,7 @@ impl ExecutionContext for DefaultContext {
     async fn get_executor_ids(&self) -> Result<Vec<ExecutorMeta>> {
         match &self.config.discovery_mode {
             DiscoveryMode::Etcd => etcd_get_executors(&self.config.etcd_urls, "default").await,
-            DiscoveryMode::Kubernetes => k8s_get_executors("default", "default").await,
+            DiscoveryMode::Kubernetes => k8s_get_executors("default", "ballista").await,
             DiscoveryMode::Standalone => unimplemented!(),
         }
     }

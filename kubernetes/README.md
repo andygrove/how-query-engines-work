@@ -4,7 +4,17 @@ This document explains how to create a Ballista cluster of executors in Kubernet
 
 ## Prerequisites
 
-You will need a Kubernetes cluster to deploy to. I recommend using [Minikube](https://kubernetes.io/docs/tutorials/hello-minikube) for local testing, or Amazon's Elastic Kubernetes Service (EKS). These instructions are for using Minikube on Ubuntu.
+You will need a Kubernetes cluster to deploy to. I recommend using 
+[Minikube](https://kubernetes.io/docs/tutorials/hello-minikube) for local testing, or Amazon's Elastic Kubernetes 
+Service (EKS). These instructions are for using Minikube on Ubuntu.
+
+You will either need to use published Ballista Docker images or you will need to build Docker images locally.
+
+Run the following command before building Docker images to ensure they go to the Docker context in Minikube.
+
+```bash
+eval $(minikube -p minikube docker-env)
+```
 
 ## Create Minikube cluster
 
@@ -16,7 +26,8 @@ minikube start --driver=docker --cpus=12
 
 ## RBAC 
 
-Ballista will need permissions to list pods. We will apply the following yaml to create `list-pods` cluster role and bind it to the default service account in the current namespace.
+Ballista will need permissions to list pods. We will apply the following yaml to create `list-pods` cluster role and 
+bind it to the default service account in the current namespace.
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -165,7 +176,7 @@ spec:
     spec:
       containers:
       - name: ballista
-        image: ballistacompute/ballista-rust:0.2.5
+        image: ballistacompute/ballista-rust:0.3.0-SNAPSHOT
         resources:
           requests:
             cpu: "1"
@@ -188,7 +199,7 @@ spec:
 Run the following kubectl command to deploy the Ballista cluster.
 
 ```bash
-kubectl apply -f ballista-cluster.yaml
+kubectl apply -f ballista-cluster-rust.yaml
 ```
 
 You should see the following output:
@@ -220,7 +231,18 @@ ballista-9    1/1     Running   0          18s
 Run the `kubectl logs ballista-0` command to see logs from the first executor to confirm that the correct version is running and that there are no errors.
 
 ```
-Ballista v0.2.4 Rust Executor listening on V4(0.0.0.0:50051)
+Ballista v0.3.0 Rust Executor listening on V4(0.0.0.0:50051)
+```
+
+## Port Forwarding
+
+```bash
+kubectl port-forward service/ballista 50051:50051
+```
+
+```
+Forwarding from 127.0.0.1:50051 -> 50051
+Forwarding from [::1]:50051 -> 50051
 ```
 
 ## Teardown
@@ -228,5 +250,5 @@ Ballista v0.2.4 Rust Executor listening on V4(0.0.0.0:50051)
 Run the following kubectl command to delete the Ballista cluster.
 
 ```bash
-kubectl delete -f ballista-cluster.yaml
+kubectl delete -f ballista-cluster-rust.yaml
 ```

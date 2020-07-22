@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
       - name: ballista
-        image: ballistacompute/ballista-jvm:0.2.5
+        image: ballistacompute/ballista-jvm:0.3.0-SNAPSHOT
         resources:
           requests:
             cpu: "1"
@@ -42,9 +42,9 @@ spec:
           - containerPort: 50051
             name: flight
         volumeMounts:
-          - mountPath: /mnt/nyctaxi
-            name: nyctaxi
+          - mountPath: /mnt
+            name: data
       volumes:
-      - name: nyctaxi
+      - name: data
         persistentVolumeClaim:
-          claimName: nyctaxi-pv-claim
+          claimName: data-pv-claim
