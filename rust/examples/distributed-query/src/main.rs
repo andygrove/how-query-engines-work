@@ -15,6 +15,8 @@
 use std::collections::HashMap;
 use std::time::Instant;
 
+use structopt::StructOpt;
+
 extern crate ballista;
 use ballista::arrow::util::pretty;
 use ballista::dataframe::{max, Context};
@@ -22,20 +24,36 @@ use ballista::datafusion::logicalplan::*;
 use ballista::error::Result;
 use ballista::BALLISTA_VERSION;
 
+#[derive(StructOpt, Debug)]
+#[structopt(name = "example")]
+struct Opt {
+    #[structopt()]
+    path: String,
+
+    #[structopt(short = "h", long = "host", default_value = "localhost")]
+    executor_host: String,
+
+    #[structopt(short = "p", long = "port", default_value = "50051")]
+    executor_port: usize
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
-    println!("Ballista v{} Distributed Query Example", BALLISTA_VERSION);
 
-    //TODO use command-line args
-    let nyc_taxi_path = "/mnt/nyctaxi/parquet/year=2019";
-    let executor_host = "localhost";
-    let executor_port = 50051;
+    let opt: Opt = Opt::from_args();
+    let path = opt.path.as_str();
+    let executor_host = opt.executor_host.as_str();
+    let executor_port = opt.executor_port;
+
+    println!("Ballista v{} Distributed Query Example", BALLISTA_VERSION);
+    println!("Path: {}", path);
+    println!("Host: {}:{}", executor_host, executor_port);
 
     let start = Instant::now();
     let ctx = Context::remote(executor_host, executor_port, HashMap::new());
 
     let results = ctx
-        .read_parquet(nyc_taxi_path, None)?
+        .read_parquet(path, None)?
         .aggregate(vec![col("passenger_count")], vec![max(col("fare_amount"))])?
         .collect()
         .await?;

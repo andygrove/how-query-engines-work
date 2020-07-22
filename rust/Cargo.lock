@@ -655,6 +655,7 @@ name = "distributed-query"
 version = "0.3.0-SNAPSHOT"
 dependencies = [
  "ballista",
+ "structopt",
  "tokio 0.2.21",
 ]
 
