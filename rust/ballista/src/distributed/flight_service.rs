@@ -17,21 +17,51 @@
 use std::collections::HashMap;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Instant;
 
 use crate::arrow::datatypes::{DataType, Field, Schema};
 use crate::distributed::executor::{Executor, ShufflePartition};
 use crate::distributed::scheduler::{create_job, create_physical_plan, ensure_requirements};
 use crate::execution::physical_plan;
-use crate::serde::decode_protobuf;
-
+use crate::execution::physical_plan::ShuffleId;
 use crate::flight::{
     flight_service_server::FlightService, Action, ActionType, Criteria, Empty, FlightData,
     FlightDescriptor, FlightInfo, HandshakeRequest, HandshakeResponse, PutResult, SchemaResult,
     Ticket,
 };
+use crate::serde::decode_protobuf;
 
 use futures::{Stream, StreamExt};
 use tonic::{Request, Response, Status, Streaming};
+
+enum TaskStatus {
+    Running,
+    Completed(ShuffleId),
+    Failed(String),
+}
+
+struct ConcurrencyGuard {
+    concurrency_level: usize,
+    max_concurrency: usize,
+}
+
+impl ConcurrencyGuard {
+    fn inc(&mut self) -> Result<usize, Status> {
+        if self.concurrency_level < self.max_concurrency {
+            self.concurrency_level += 1;
+            println!("Concurrency is {}", self.concurrency_level);
+            Ok(self.concurrency_level)
+        } else {
+            Err(Status::resource_exhausted("too many concurrent tasks"))
+        }
+    }
+
+    fn dec(&mut self) {
+        self.concurrency_level -= 1;
+        println!("Concurrency is {}", self.concurrency_level);
+    }
+}
 
 /// Service implementing the Apache Arrow Flight Protocol
 #[derive(Clone)]
@@ -40,13 +70,21 @@ pub struct BallistaFlightService {
     executor: Arc<dyn Executor>,
     /// Results cache
     results_cache: Arc<Mutex<HashMap<String, ShufflePartition>>>,
+    task_status_map: Arc<Mutex<HashMap<String, TaskStatus>>>,
+    /// Concurrency guard to prevent executor from being overwhelmed
+    concurrent_tasks: Arc<Mutex<ConcurrencyGuard>>,
 }
 
 impl BallistaFlightService {
-    pub fn new(executor: Arc<dyn Executor>) -> Self {
+    pub fn new(executor: Arc<dyn Executor>, max_concurrency: usize) -> Self {
         Self {
             executor,
             results_cache: Arc::new(Mutex::new(HashMap::new())),
+            task_status_map: Arc::new(Mutex::new(HashMap::new())),
+            concurrent_tasks: Arc::new(Mutex::new(ConcurrencyGuard {
+                concurrency_level: 0,
+                max_concurrency,
+            })),
         }
     }
 }
@@ -71,38 +109,103 @@ impl FlightService for BallistaFlightService {
 
         let action = decode_protobuf(&ticket.ticket.to_vec()).map_err(|e| to_tonic_err(&e))?;
 
-        println!("do_get: {:?}", action);
+        //println!("do_get: {:?}", action);
+
         match &action {
             physical_plan::Action::Execute(task) => {
-                let _shuffle_id = self
-                    .executor
-                    .do_task(task)
-                    .await
-                    .map_err(|e| to_tonic_err(&e))?;
+                let key = task.key();
+                let mut map = self.task_status_map.lock().unwrap();
+                match map.get(&key) {
+                    None => {
+                        {
+                            let mut counter = self.concurrent_tasks.lock().unwrap();
+                            counter.inc()?;
+                        }
 
-                let results = ShufflePartition {
-                    schema: Schema::new(vec![Field::new("shuffle_id", DataType::Utf8, false)]),
-                    data: vec![],
-                };
+                        println!("Accepted task {}", task.key());
 
-                // write results stream to client
-                let mut flights: Vec<Result<FlightData, Status>> =
-                    vec![Ok(FlightData::from(&results.schema))];
+                        map.insert(key.clone(), TaskStatus::Running);
 
-                let mut batches: Vec<Result<FlightData, Status>> = results
-                    .data
-                    .iter()
-                    .map(|batch| {
-                        println!("batch schema: {:?}", batch.schema());
+                        let task = task.clone();
+                        let map = self.task_status_map.clone();
+                        let key = key.clone();
+                        let key2 = key.clone();
+                        let concurrent_tasks = self.concurrent_tasks.clone();
+                        let executor = self.executor.clone();
 
-                        Ok(FlightData::from(batch))
-                    })
-                    .collect();
+                        thread::spawn(move || {
+                            smol::run(async {
+                                let start = Instant::now();
+                                match executor.do_task(&task).await {
+                                    Ok(shuffle_id) => {
+                                        println!(
+                                            "Task {} completed in {} ms",
+                                            task.key(),
+                                            start.elapsed().as_millis()
+                                        );
+                                        let mut map = map.lock().unwrap();
+                                        map.insert(key, TaskStatus::Completed(shuffle_id));
+                                        let mut counter = concurrent_tasks.lock().unwrap();
+                                        counter.dec();
+                                    }
+                                    Err(e) => {
+                                        println!(
+                                            "Task {} failed after {} ms: {:?}",
+                                            task.key(),
+                                            start.elapsed().as_millis(),
+                                            e
+                                        );
+                                        let mut map = map.lock().unwrap();
+                                        map.insert(key, TaskStatus::Failed(format!("{:?}", e)));
+                                        let mut counter = concurrent_tasks.lock().unwrap();
+                                        counter.dec();
+                                    }
+                                }
+                            })
+                        });
+                        println!("Telling scheduler that task {} has started running", key2);
+                        Err(Status::already_exists("task is now running"))
+                    }
+                    Some(status) => match status {
+                        TaskStatus::Failed(reason) => {
+                            println!("Telling scheduler that task {} has failed", task.key());
+                            Err(Status::aborted(reason.as_str()))
+                        }
+                        TaskStatus::Running => {
+                            println!(
+                                "Telling scheduler that task {} is still running",
+                                task.key()
+                            );
+                            Err(Status::already_exists("task is still running"))
+                        }
+                        TaskStatus::Completed(_) => {
+                            println!("Telling scheduler that task {} has completed", task.key());
+                            let results = ShufflePartition {
+                                schema: Schema::new(vec![Field::new(
+                                    "shuffle_id",
+                                    DataType::Utf8,
+                                    false,
+                                )]),
+                                data: vec![],
+                            };
 
-                flights.append(&mut batches);
+                            // write empty results stream to client
+                            let mut flights: Vec<Result<FlightData, Status>> =
+                                vec![Ok(FlightData::from(&results.schema))];
 
-                let output = futures::stream::iter(flights);
-                Ok(Response::new(Box::pin(output) as Self::DoGetStream))
+                            let mut batches: Vec<Result<FlightData, Status>> = results
+                                .data
+                                .iter()
+                                .map(|batch| Ok(FlightData::from(batch)))
+                                .collect();
+
+                            flights.append(&mut batches);
+
+                            let output = futures::stream::iter(flights);
+                            Ok(Response::new(Box::pin(output) as Self::DoGetStream))
+                        }
+                    },
+                }
             }
             physical_plan::Action::FetchShuffle(shuffle_id) => {
                 let results = self
@@ -117,11 +220,7 @@ impl FlightService for BallistaFlightService {
                 let mut batches: Vec<Result<FlightData, Status>> = results
                     .data
                     .iter()
-                    .map(|batch| {
-                        println!("batch schema: {:?}", batch.schema());
-
-                        Ok(FlightData::from(batch))
-                    })
+                    .map(|batch| Ok(FlightData::from(batch)))
                     .collect();
 
                 flights.append(&mut batches);
@@ -143,11 +242,7 @@ impl FlightService for BallistaFlightService {
                 let mut batches: Vec<Result<FlightData, Status>> = results
                     .data
                     .iter()
-                    .map(|batch| {
-                        println!("batch schema: {:?}", batch.schema());
-
-                        Ok(FlightData::from(batch))
-                    })
+                    .map(|batch| Ok(FlightData::from(batch)))
                     .collect();
 
                 flights.append(&mut batches);
