@@ -98,8 +98,3 @@ along with the [blog](https://ballistacompute.org/) where news and release notes
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for information on contributing to this project.
-
-
-
-
-
