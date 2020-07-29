@@ -3,58 +3,36 @@
 This directory contains documentation for developers that are contributing to Ballista. If you are looking for 
 end-user documentation for a published release, please start with the [user guide](https://ballistacompute.org/docs/).
 
-## Contents
+## Contributing to the Rust project
 
-- Setting up a [development environment](development-environment.md)
-- [Integration testing](integration-testing.md)
-- Where to find [NYC Taxi](nyctaxi.md)
-- How to generate [TPCH data](tpch.md)
+- Setting up a [development environment](dev-env-rust.md).
+- [How to test the Rust executor](testing-rust-executor.md).
+- How to [build the Rust docker image](rust-docker.md).
 
-### How to build rust's docker image
+## Contributing to the JVM project
 
-To build the docker image in development, use
+- Setting up a [development environment](dev-env-jvm.md).
 
-```
-docker build -f docker/rust.dockerfile ballista:latest .
-```
+## Test Data
 
-This uses a multi-stage build, on which the build stage is called `builder`.
-Our github has this target cached, that we use to speed-up the build time:
+- Where to find [NYC Taxi](nyctaxi.md) data.
+- How to generate [TPCH](tpch.md) data.
 
-```
-export BUILDER_IMAGE=docker.pkg.github.com/ballista-compute/ballista/ballista-rust-builder:main
+## Testing
 
-docker login docker.pkg.github.com -u ... -p ...  # a personal access token to read from the read:packages
-docker pull $BUILDER_IMAGE
+- [Running the integration test](integration-testing.md).
 
-docker build --cache-from $BUILDER_IMAGE -f docker/rust.dockerfile -t ballista:latest .
-```
+## Benchmarks
 
-will build the image by re-using a cached image.
+The goal is to be able to run the complete [TPC-H](tpch.md) benchmark and use that for comparisons with other 
+distributed platforms, but Ballista can't support many of the queries yet.
 
-### Docker images for development
+The [NYC Taxi](nyctaxi.md) data set can also be used for running some simple aggregate queries and is easier to get up and 
+running with because the source data can be downloaded from S3.
 
-This project often requires testing on kubernetes. For this reason, we have a github workflow to push images to 
-github's registry, both from this repo and its forks.
+## Release
 
-The basic principle is that every push to a git reference builds and publishes a docker image.
-Specifically, given a branch or tag `${REF}`,
+- [Release process](release-process.md)
 
-* `docker.pkg.github.com/ballista-compute/ballista/ballista-rust:${REF}` is the latest image from $REF
-* `docker.pkg.github.com/${USER}/ballista/ballista-rust:${REF}` is the latest image from $REF on your fork
 
-To pull them from a kubernetes cluster or your computer, you need to have a personal access token with scope `read:packages`,
-and login to the registry `docker.pkg.github.com`.
 
-The builder image - the large image with all the cargo caches - is available on the same registry as described above, and is also
-available in all forks and for all references.
-
-Please refer to the [rust workflow](.github/workflows/rust.yaml) and [rust dockerfile](docker/rust.dockerfile) for details on how we build and publish these images.
-
-### Get the binary
-
-If you do not aim to run this in docker but any linux-based machine, you can get the latest binary from a docker image on the registry: the binary is statically linked and thus runs on any linux-based machine. You can get it using
-
-```
-id=$(docker create $BUILDER_IMAGE) && docker cp $id:/executor executor && docker rm -v $id
-```

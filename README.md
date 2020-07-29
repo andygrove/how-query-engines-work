@@ -95,6 +95,8 @@ The following examples should help illustrate the current capabilities of Ballis
 The [user guide](https://ballistacompute.org/docs/) is hosted at [https://ballistacompute.org](https://ballistacompute.org/), 
 along with the [blog](https://ballistacompute.org/) where news and release notes are posted.
 
+Developer documentation can be found in the [docs](docs/README.md) directory.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for information on contributing to this project.
