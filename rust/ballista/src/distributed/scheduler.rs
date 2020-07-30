@@ -22,7 +22,10 @@ use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 
-use crate::dataframe::{avg, count, max, min, sum};
+use crate::dataframe::{
+    avg, count, max, min, sum, CSV_READER_BATCH_SIZE, PARQUET_READER_BATCH_SIZE,
+    PARQUET_READER_QUEUE_SIZE,
+};
 use crate::datafusion::execution::physical_plan::csv::CsvReadOptions;
 use crate::datafusion::logicalplan::LogicalPlan;
 use crate::datafusion::logicalplan::{col_index, Expr};
@@ -500,14 +503,17 @@ pub async fn execute_job(job: &Job, ctx: Arc<dyn ExecutionContext>) -> Result<Ve
 }
 
 /// Convert a logical plan into a physical plan
-pub fn create_physical_plan(plan: &LogicalPlan) -> Result<Arc<PhysicalPlan>> {
+pub fn create_physical_plan(
+    plan: &LogicalPlan,
+    settings: &HashMap<String, String>,
+) -> Result<Arc<PhysicalPlan>> {
     match plan {
         LogicalPlan::Projection { input, expr, .. } => {
-            let exec = ProjectionExec::try_new(expr, create_physical_plan(input)?)?;
+            let exec = ProjectionExec::try_new(expr, create_physical_plan(input, settings)?)?;
             Ok(Arc::new(PhysicalPlan::Projection(Arc::new(exec))))
         }
         LogicalPlan::Selection { input, expr, .. } => {
-            let input = create_physical_plan(input)?;
+            let input = create_physical_plan(input, settings)?;
             let exec = FilterExec::new(&input, expr);
             Ok(Arc::new(PhysicalPlan::Filter(Arc::new(exec))))
         }
@@ -517,7 +523,7 @@ pub fn create_physical_plan(plan: &LogicalPlan) -> Result<Arc<PhysicalPlan>> {
             aggr_expr,
             ..
         } => {
-            let input = create_physical_plan(input)?;
+            let input = create_physical_plan(input, settings)?;
             if input
                 .as_execution_plan()
                 .output_partitioning()
@@ -596,22 +602,27 @@ pub fn create_physical_plan(plan: &LogicalPlan) -> Result<Arc<PhysicalPlan>> {
             }
         }
         LogicalPlan::CsvScan {
-            path, schema, has_header, projection, ..
+            path,
+            schema,
+            has_header,
+            projection,
+            ..
         } => {
-            //TODO make batch size and other csv options configurable from the context
-            let batch_size = 64 * 1024;
-            let options = CsvReadOptions::new()
-                .schema(schema)
-                .has_header(*has_header);
+            // TODO this needs more work to re-use the config defaults defined in dataframe.rs
+            let batch_size: usize = settings[CSV_READER_BATCH_SIZE].parse().unwrap_or(64 * 1024);
+            let options = CsvReadOptions::new().schema(schema).has_header(*has_header);
             let exec = CsvScanExec::try_new(&path, options, projection.clone(), batch_size)?;
             Ok(Arc::new(PhysicalPlan::CsvScan(Arc::new(exec))))
         }
         LogicalPlan::ParquetScan {
             path, projection, ..
         } => {
-            //TODO make batch size configurable from the context
-            let batch_size = 64 * 1024;
-            let exec = ParquetScanExec::try_new(&path, projection.clone(), batch_size)?;
+            // TODO this needs more work to re-use the config defaults defined in dataframe.rs
+            let batch_size: usize = settings[PARQUET_READER_BATCH_SIZE]
+                .parse()
+                .unwrap_or(64 * 1024);
+            let queue_size: usize = settings[PARQUET_READER_QUEUE_SIZE].parse().unwrap_or(2);
+            let exec = ParquetScanExec::try_new(&path, projection.clone(), batch_size, queue_size)?;
             Ok(Arc::new(PhysicalPlan::ParquetScan(Arc::new(exec))))
         }
         other => Err(BallistaError::General(format!(

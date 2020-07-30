@@ -29,23 +29,35 @@ impl TryInto<protobuf::Action> for &Action {
 
     fn try_into(self) -> Result<protobuf::Action, Self::Error> {
         match self {
-            Action::InteractiveQuery { ref plan } => {
+            Action::InteractiveQuery { ref plan, settings } => {
                 let plan_proto: protobuf::LogicalPlanNode = plan.try_into()?;
+
+                let settings = settings
+                    .iter()
+                    .map(|e| protobuf::KeyValuePair {
+                        key: e.0.to_string(),
+                        value: e.1.to_string(),
+                    })
+                    .collect();
+
                 Ok(protobuf::Action {
                     query: Some(plan_proto),
                     task: None,
                     fetch_shuffle: None,
+                    settings,
                 })
             }
             Action::Execute(task) => Ok(protobuf::Action {
                 query: None,
                 task: Some(task.try_into()?),
                 fetch_shuffle: None,
+                settings: vec![],
             }),
             Action::FetchShuffle(shuffle_id) => Ok(protobuf::Action {
                 query: None,
                 task: None,
                 fetch_shuffle: Some(shuffle_id.try_into()?),
+                settings: vec![],
             }),
         }
     }
@@ -110,12 +122,11 @@ impl TryInto<protobuf::LogicalPlanNode> for &LogicalPlan {
                 let mut node = empty_logical_plan_node();
 
                 let projection = projection.as_ref().map(|column_indices| {
-                    let columns: Vec<String> = column_indices.iter()
+                    let columns: Vec<String> = column_indices
+                        .iter()
                         .map(|i| schema.field(*i).name().clone())
                         .collect();
-                    protobuf::ProjectionColumns {
-                        columns
-                    }
+                    protobuf::ProjectionColumns { columns }
                 });
 
                 let schema: protobuf::Schema = schema.as_ref().try_into()?;
@@ -138,12 +149,11 @@ impl TryInto<protobuf::LogicalPlanNode> for &LogicalPlan {
                 let mut node = empty_logical_plan_node();
 
                 let projection = projection.as_ref().map(|column_indices| {
-                    let columns: Vec<String> = column_indices.iter()
+                    let columns: Vec<String> = column_indices
+                        .iter()
                         .map(|i| schema.field(*i).name().clone())
                         .collect();
-                    protobuf::ProjectionColumns {
-                        columns
-                    }
+                    protobuf::ProjectionColumns { columns }
                 });
 
                 let schema: protobuf::Schema = schema.as_ref().try_into()?;
@@ -396,6 +406,7 @@ impl TryInto<protobuf::PhysicalPlanNode> for &PhysicalPlan {
                     schema: Some(exec.original_schema().as_ref().try_into()?),
                     has_header: exec.has_header,
                     batch_size: exec.batch_size as u32,
+                    queue_size: 0,
                 });
                 Ok(node)
             }
@@ -419,6 +430,7 @@ impl TryInto<protobuf::PhysicalPlanNode> for &PhysicalPlan {
                     schema: None,
                     has_header: false,
                     batch_size: exec.batch_size as u32,
+                    queue_size: exec.queue_size as u32,
                 });
                 Ok(node)
             }
