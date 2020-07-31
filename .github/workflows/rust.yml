@@ -95,7 +95,7 @@ jobs:
     # github does not provide a clean ref name. We build it here, see https://stackoverflow.com/a/58035262/931303
     - name: Extract git reference name
       shell: bash
-      run: echo "##[set-output name=ref;]echo $(A=${A#refs/heads/}; A=${A#refs/pulls/}; echo ${A////.})"
+      run: echo "##[set-output name=ref;]$(A=${GITHUB_REF#refs/heads/}; A=${A#refs/pulls/}; echo ${A////.})"
       id: extract_ref
     # login to docker so that we can pull images from it.
     - name: Docker login
