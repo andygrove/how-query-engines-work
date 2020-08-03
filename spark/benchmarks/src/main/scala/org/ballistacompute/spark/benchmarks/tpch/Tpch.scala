@@ -9,7 +9,7 @@ object Tpch {
 
     val spark: SparkSession = SparkSession.builder
       .appName(this.getClass.getName)
-      .master("local[*]")
+      .master("local[48]")
       .getOrCreate()
 
     q1(spark)
