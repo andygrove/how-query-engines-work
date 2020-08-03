@@ -52,7 +52,7 @@ services:
     ports:
       - "2379:2379"
   ballista-rust:
-    image: ballistacompute/ballista-rust:0.3.0-alpha-2
+    image: ballistacompute/ballista-rust:0.3.0-SNAPSHOT
     command: "/executor --mode etcd --etcd-urls etcd:2379 --external-host 0.0.0.0 --port 50051 --concurrent-tasks 2"
     ports:
       - "50051:50051"
