@@ -24,6 +24,8 @@
 
 use std::collections::HashMap;
 use std::fmt::{self, Debug};
+use std::rc::Rc;
+use std::cell::RefCell;
 use std::sync::Arc;
 
 use crate::arrow::array::{
@@ -51,7 +53,7 @@ use async_trait::async_trait;
 use uuid::Uuid;
 
 /// Stream of columnar batches using futures
-pub type ColumnarBatchStream = Arc<dyn ColumnarBatchIter>;
+pub type ColumnarBatchStream<'a> = Rc<RefCell<dyn ColumnarBatchIter + 'a>>;
 
 #[derive(Debug, Clone)]
 pub struct ExecutorMeta {
@@ -61,17 +63,16 @@ pub struct ExecutorMeta {
 }
 
 /// Async iterator over a stream of columnar batches
-#[async_trait]
-pub trait ColumnarBatchIter: Sync + Send {
+pub trait ColumnarBatchIter {
     /// Get the schema for the batches produced by this iterator.
     fn schema(&self) -> Arc<Schema>;
 
     /// Get the next batch from the stream, or None if the stream has ended
-    async fn next(&self) -> Result<Option<ColumnarBatch>>;
+    fn next(&self) -> Result<Option<ColumnarBatch>>;
 
     /// Notify the iterator that no more results will be fetched, so that resources
     /// can be freed immediately.
-    async fn close(&self) {}
+    fn close(&self) {}
 }
 
 #[async_trait]
@@ -88,7 +89,7 @@ pub trait ExecutionContext: Send + Sync {
 
 /// Base trait for all operators
 #[async_trait]
-pub trait ExecutionPlan: Send + Sync {
+pub trait ExecutionPlan<'a>: Send + Sync {
     /// Specified the output schema of this operator.
     fn schema(&self) -> Arc<Schema>;
 
@@ -123,7 +124,7 @@ pub trait ExecutionPlan: Send + Sync {
         &self,
         ctx: Arc<dyn ExecutionContext>,
         partition_index: usize,
-    ) -> Result<ColumnarBatchStream>;
+    ) -> Result<ColumnarBatchStream<'a>>;
 }
 
 pub trait Expression: Send + Sync + Debug {
@@ -177,14 +178,14 @@ pub trait Accumulator: Send + Sync {
 
 /// Action that can be sent to an executor
 #[derive(Debug, Clone)]
-pub enum Action {
+pub enum Action<'a> {
     /// Execute the query with DataFusion and return the results
     InteractiveQuery {
         plan: LogicalPlan,
         settings: HashMap<String, String>,
     },
     /// Execute a query and store the results in memory
-    Execute(ExecutionTask),
+    Execute(ExecutionTask<'a>),
     /// Collect a shuffle
     FetchShuffle(ShuffleId),
 }
@@ -361,15 +362,15 @@ impl ColumnarValue {
 /// Enumeration wrapping physical plan structs so that they can be represented in a tree easily
 /// and processed using pattern matching
 #[derive(Clone)]
-pub enum PhysicalPlan {
+pub enum PhysicalPlan<'a> {
     /// Projection.
-    Projection(Arc<ProjectionExec>),
+    Projection(Arc<ProjectionExec<'a>>),
     /// Filter a.k.a predicate.
-    Filter(Arc<FilterExec>),
+    Filter(Arc<FilterExec<'a>>),
     /// Hash aggregate
-    HashAggregate(Arc<HashAggregateExec>),
+    HashAggregate(Arc<HashAggregateExec<'a>>),
     /// Performs a shuffle that will result in the desired partitioning.
-    ShuffleExchange(Arc<ShuffleExchangeExec>),
+    ShuffleExchange(Arc<ShuffleExchangeExec<'a>>),
     /// Reads results from a ShuffleExchange
     ShuffleReader(Arc<ShuffleReaderExec>),
     /// Scans a partitioned Parquet data source
@@ -380,7 +381,7 @@ pub enum PhysicalPlan {
     InMemoryTableScan(Arc<InMemoryTableScanExec>),
 }
 
-impl PhysicalPlan {
+impl PhysicalPlan<'_> {
     pub fn as_execution_plan(&self) -> Arc<dyn ExecutionPlan> {
         match self {
             Self::Projection(exec) => exec.clone(),
@@ -447,7 +448,7 @@ impl PhysicalPlan {
     }
 }
 
-impl fmt::Debug for PhysicalPlan {
+impl fmt::Debug for PhysicalPlan<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.fmt_with_indent(f, 0)
     }

@@ -15,6 +15,8 @@
 //! Shuffle reader.
 
 use std::sync::Arc;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 use crate::arrow::datatypes::Schema;
 use crate::error::Result;
@@ -39,7 +41,7 @@ impl ShuffleReaderExec {
 }
 
 #[async_trait]
-impl ExecutionPlan for ShuffleReaderExec {
+impl ExecutionPlan<'_> for ShuffleReaderExec {
     fn schema(&self) -> Arc<Schema> {
         self.schema.clone()
     }
@@ -48,7 +50,7 @@ impl ExecutionPlan for ShuffleReaderExec {
         &self,
         ctx: Arc<dyn ExecutionContext>,
         partition_index: usize,
-    ) -> Result<ColumnarBatchStream> {
+    ) -> Result<ColumnarBatchStream<'_>> {
         //TODO read shuffles in parallel
         let mut batches = vec![];
         for shuffle_id in &self.shuffle_id {

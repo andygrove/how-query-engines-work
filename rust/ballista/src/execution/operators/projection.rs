@@ -14,6 +14,8 @@
 
 //! Projection operator.
 
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::sync::Arc;
 
 use crate::arrow::datatypes::Schema;
@@ -28,16 +30,16 @@ use async_trait::async_trait;
 
 /// Projection operator evaluates expressions against an input.
 #[derive(Debug, Clone)]
-pub struct ProjectionExec {
+pub struct ProjectionExec<'a> {
     /// Logical expressions for the projection.
     pub(crate) exprs: Vec<Expr>,
     /// The input operator to apply the projection to.
-    pub(crate) child: Arc<PhysicalPlan>,
+    pub(crate) child: Arc<PhysicalPlan<'a>>,
     /// The resulting schema of the projection.
     pub(crate) schema: Arc<Schema>,
 }
 
-impl ProjectionExec {
+impl ProjectionExec<'_> {
     pub fn try_new(exprs: &[Expr], child: Arc<PhysicalPlan>) -> Result<Self> {
         let input_schema = child.as_execution_plan().schema();
         let pexprs = compile_expressions(&exprs, &child.as_execution_plan().schema())?;
@@ -66,7 +68,7 @@ impl ProjectionExec {
 }
 
 #[async_trait]
-impl ExecutionPlan for ProjectionExec {
+impl<'a> ExecutionPlan<'a> for ProjectionExec<'a> {
     fn schema(&self) -> Arc<Schema> {
         self.schema.clone()
     }
@@ -83,32 +85,33 @@ impl ExecutionPlan for ProjectionExec {
         &self,
         ctx: Arc<dyn ExecutionContext>,
         partition_index: usize,
-    ) -> Result<ColumnarBatchStream> {
+    ) -> Result<ColumnarBatchStream<'a>> {
         let input = &self.child.as_execution_plan();
         let projection = compile_expressions(&self.exprs, &input.schema())?;
-        Ok(Arc::new(ProjectionIter {
+        Ok(Rc::new(RefCell::new(ProjectionIter {
             input: input.execute(ctx.clone(), partition_index).await?,
             projection,
             schema: self.schema.clone(),
-        }))
+        })))
     }
 }
 
 /// Iterator that applies a projection to the batches
-struct ProjectionIter {
-    input: ColumnarBatchStream,
+struct ProjectionIter<'a> {
+    input: ColumnarBatchStream<'a>,
     projection: Vec<Arc<dyn Expression>>,
     schema: Arc<Schema>,
 }
 
 #[async_trait]
-impl ColumnarBatchIter for ProjectionIter {
+impl ColumnarBatchIter for ProjectionIter<'_> {
     fn schema(&self) -> Arc<Schema> {
         self.schema.clone()
     }
 
     async fn next(&self) -> Result<Option<ColumnarBatch>> {
-        match self.input.next().await? {
+        let input = self.input.borrow();
+        match input.next().await? {
             Some(batch) => {
                 let projected_values: Vec<ColumnarValue> = self
                     .projection

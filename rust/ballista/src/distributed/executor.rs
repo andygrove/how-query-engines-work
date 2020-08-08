@@ -24,12 +24,13 @@ use crate::distributed::context::BallistaContext;
 use crate::distributed::etcd::start_etcd_thread;
 use crate::distributed::scheduler::ExecutionTask;
 use crate::error::{ballista_error, Result};
-use crate::execution::physical_plan::ShuffleId;
+use crate::execution::physical_plan::{ShuffleId, ColumnarBatchIter};
 
 use async_trait::async_trait;
 use crossbeam::crossbeam_channel::{unbounded, Receiver, Sender};
 use smol::Task;
 use uuid::Uuid;
+use std::borrow::{Borrow, BorrowMut};
 
 #[derive(Debug, Clone)]
 pub struct ExecutorConfig {
@@ -92,16 +93,16 @@ pub enum TaskStatus {
     Failed(String),
 }
 
-pub struct BallistaExecutor {
+pub struct BallistaExecutor<'a> {
     /// Task status
     pub(crate) task_status_map: Arc<Mutex<HashMap<String, TaskStatus>>>,
     /// Results from executing a task
     shuffle_partitions: Arc<Mutex<HashMap<String, ShufflePartition>>>,
     /// Channel for submitting tasks to workers
-    tx: Sender<ExecutionTask>,
+    tx: Sender<ExecutionTask<'a>>,
 }
 
-impl BallistaExecutor {
+impl BallistaExecutor<'_> {
     pub fn new(config: ExecutorConfig) -> Self {
         let uuid = Uuid::new_v4();
 
@@ -213,9 +214,9 @@ fn set_task_status(
     map.insert(task_key.to_owned(), task_status);
 }
 
-async fn execute_task(
+async fn execute_task<'a>(
     config: &ExecutorConfig,
-    task: &ExecutionTask,
+    task: &'a ExecutionTask<'_>,
 ) -> Result<(Schema, Vec<RecordBatch>)> {
     // create new execution context specifically for this query
     let ctx = Arc::new(BallistaContext::new(
@@ -225,16 +226,19 @@ async fn execute_task(
 
     let exec_plan = task.plan.as_execution_plan();
     let stream = exec_plan.execute(ctx, task.partition_id).await?;
-    let mut batches = vec![];
-    while let Some(batch) = stream.next().await? {
-        batches.push(batch.to_arrow()?);
-    }
 
-    Ok((stream.schema().as_ref().to_owned(), batches))
+    unimplemented!()
+    // let mut stream: &ColumnarBatchIter = stream.borrow();
+    // let mut batches = vec![];
+    // while let Some(batch) = stream.next()? {
+    //     batches.push(batch.to_arrow()?);
+    // }
+    //
+    // Ok((stream.schema().as_ref().to_owned(), batches))
 }
 
 #[async_trait]
-impl Executor for BallistaExecutor {
+impl Executor for BallistaExecutor<'_> {
     fn submit_task(&self, task: &ExecutionTask) -> Result<TaskStatus> {
         // is it already submitted?
         {

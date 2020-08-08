@@ -13,7 +13,8 @@
 // limitations under the License.
 
 //! Filter operator.
-
+use std::rc::Rc;
+use std::cell::RefCell;
 use std::sync::Arc;
 
 use crate::arrow;
@@ -35,21 +36,19 @@ use async_trait::async_trait;
 /// FilterExec evaluates a boolean expression against each row of input to determine which rows
 /// to include in output batches.
 #[derive(Debug, Clone)]
-pub struct FilterExec {
-    pub(crate) child: Arc<PhysicalPlan>,
+pub struct FilterExec<'a> {
+    pub(crate) child: Arc<PhysicalPlan<'a>>,
     pub(crate) filter_expr: Arc<Expr>,
 }
 
-impl FilterExec {
+impl FilterExec<'_> {
     pub fn new(child: &PhysicalPlan, filter_expr: &Expr) -> Self {
         Self {
             child: Arc::new(child.clone()),
             filter_expr: Arc::new(filter_expr.clone()),
         }
     }
-}
 
-impl FilterExec {
     pub fn with_new_children(&self, new_children: Vec<Arc<PhysicalPlan>>) -> FilterExec {
         assert!(new_children.len() == 1);
         FilterExec {
@@ -60,7 +59,7 @@ impl FilterExec {
 }
 
 #[async_trait]
-impl ExecutionPlan for FilterExec {
+impl<'a> ExecutionPlan<'a> for FilterExec<'a> {
     fn schema(&self) -> Arc<Schema> {
         // a filter does not alter the schema
         self.child.as_execution_plan().schema()
@@ -78,33 +77,37 @@ impl ExecutionPlan for FilterExec {
         &self,
         ctx: Arc<dyn ExecutionContext>,
         partition_index: usize,
-    ) -> Result<ColumnarBatchStream> {
+    ) -> Result<ColumnarBatchStream<'a>> {
         let expr = compile_expression(&self.filter_expr, &self.schema())?;
-        Ok(Arc::new(FilterIter {
-            input: self
-                .child
-                .as_execution_plan()
-                .execute(ctx.clone(), partition_index)
-                .await?,
+        let arc = self
+            .child
+            .as_execution_plan();
+        let x = arc
+            .execute(ctx.clone(), partition_index)
+            .await?;
+        Ok(Rc::new(RefCell::new(FilterIter {
+            input_plan: arc,
+            input: x,
             filter_expr: expr,
-        }))
+        })))
     }
 }
 
 #[allow(dead_code)]
-struct FilterIter {
-    input: ColumnarBatchStream,
+struct FilterIter<'a> {
+    input_plan: Arc<dyn ExecutionPlan<'a> + 'a>,
+    input: ColumnarBatchStream<'a>,
     filter_expr: Arc<dyn Expression>,
 }
 
-#[async_trait]
-impl ColumnarBatchIter for FilterIter {
+impl ColumnarBatchIter for FilterIter<'_> {
     fn schema(&self) -> Arc<Schema> {
         self.input.schema()
     }
 
-    async fn next(&self) -> Result<Option<ColumnarBatch>> {
-        match self.input.next().await? {
+    fn next(&self) -> Result<Option<ColumnarBatch>> {
+        let input = self.input.borrow();
+        match input.next()? {
             Some(input) => {
                 let bools = self.filter_expr.evaluate(&input)?;
                 let batch = apply_filter(&input, &bools, self.input.schema())?;

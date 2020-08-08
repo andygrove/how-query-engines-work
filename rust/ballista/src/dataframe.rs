@@ -273,11 +273,11 @@ impl Context {
         Ok(())
     }
 
-    pub async fn execute_action(
+    pub async fn execute_action<'a>(
         &self,
         host: &str,
         port: usize,
-        action: Action,
+        action: Action<'a>,
     ) -> Result<Vec<RecordBatch>> {
         client::execute_action(host, port, &action).await
     }

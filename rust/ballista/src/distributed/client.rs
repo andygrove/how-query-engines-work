@@ -42,7 +42,7 @@ impl BallistaClient {
         Ok(Self { flight_client })
     }
 
-    pub async fn execute_action(&mut self, action: &Action) -> Result<Vec<RecordBatch>> {
+    pub async fn execute_action(&mut self, action: &Action<'_>) -> Result<Vec<RecordBatch>> {
         let serialized_action: protobuf::Action = action.try_into()?;
         let mut buf: Vec<u8> = Vec::with_capacity(serialized_action.encoded_len());
         serialized_action
@@ -95,7 +95,7 @@ impl BallistaClient {
 }
 
 //TODO eventually remove this because it creates a new connection every time
-pub async fn execute_action(host: &str, port: usize, action: &Action) -> Result<Vec<RecordBatch>> {
+pub async fn execute_action(host: &str, port: usize, action: &Action<'_>) -> Result<Vec<RecordBatch>> {
     println!("Creating expensive one-off flight connection to execute an action");
     let mut client = BallistaClient::try_new(host, port).await?;
     client.execute_action(action).await

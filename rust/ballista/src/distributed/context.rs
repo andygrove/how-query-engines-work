@@ -59,7 +59,7 @@ impl ExecutionContext for BallistaContext {
     async fn execute_task(
         &self,
         executor_meta: ExecutorMeta,
-        task: ExecutionTask,
+        task: ExecutionTask<'_>,
     ) -> Result<ShuffleId> {
         // TODO what is the point of returning this info since it is based on input arg?
         let shuffle_id = ShuffleId::new(task.job_uuid, task.stage_id, task.partition_id);

@@ -207,10 +207,10 @@ impl TryInto<Expr> for &protobuf::LogicalExprNode {
     }
 }
 
-impl TryInto<Action> for &protobuf::Action {
+impl<'a> TryInto<Action<'a>> for &protobuf::Action {
     type Error = BallistaError;
 
-    fn try_into(self) -> Result<Action, Self::Error> {
+    fn try_into(self) -> Result<Action<'a>, Self::Error> {
         if self.query.is_some() {
             let plan: LogicalPlan = convert_required!(self.query)?;
             let mut settings = HashMap::new();
@@ -272,10 +272,10 @@ fn from_proto_arrow_type(dt: i32) -> Result<DataType, BallistaError> {
     }
 }
 
-impl TryInto<ExecutionTask> for &protobuf::Task {
+impl<'a> TryInto<ExecutionTask<'a>> for &protobuf::Task {
     type Error = BallistaError;
 
-    fn try_into(self) -> Result<ExecutionTask, Self::Error> {
+    fn try_into(self) -> Result<ExecutionTask<'a>, Self::Error> {
         let mut shuffle_locations: HashMap<ShuffleId, ExecutorMeta> = HashMap::new();
         for loc in &self.shuffle_loc {
             let shuffle_id = ShuffleId::new(
@@ -339,10 +339,10 @@ impl TryInto<Schema> for &protobuf::Schema {
     }
 }
 
-impl TryInto<PhysicalPlan> for &protobuf::PhysicalPlanNode {
+impl<'a> TryInto<PhysicalPlan<'a>> for &protobuf::PhysicalPlanNode {
     type Error = BallistaError;
 
-    fn try_into(self) -> Result<PhysicalPlan, Self::Error> {
+    fn try_into(self) -> Result<PhysicalPlan<'a>, Self::Error> {
         if let Some(selection) = &self.selection {
             let input: PhysicalPlan = convert_box_required!(self.input)?;
             match selection.expr {

@@ -22,6 +22,9 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
+use std::rc::Rc;
+use std::cell::RefCell;
+
 
 use crate::arrow::array::StringBuilder;
 use crate::arrow::array::{self, ArrayRef};
@@ -40,15 +43,15 @@ use async_trait::async_trait;
 /// HashAggregateExec applies a hash aggregate operation against its input.
 #[allow(dead_code)]
 #[derive(Debug)]
-pub struct HashAggregateExec {
+pub struct HashAggregateExec<'a> {
+    pub(crate) child: Arc<PhysicalPlan<'a>>,
     pub(crate) mode: AggregateMode,
     pub(crate) group_expr: Vec<Expr>,
     pub(crate) aggr_expr: Vec<Expr>,
-    pub(crate) child: Arc<PhysicalPlan>,
     schema: Arc<Schema>,
 }
 
-impl HashAggregateExec {
+impl HashAggregateExec<'_> {
     pub fn try_new(
         mode: AggregateMode,
         group_expr: Vec<Expr>,
@@ -96,7 +99,7 @@ impl HashAggregateExec {
 }
 
 #[async_trait]
-impl ExecutionPlan for HashAggregateExec {
+impl<'a> ExecutionPlan<'a> for HashAggregateExec<'a> {
     fn schema(&self) -> Arc<Schema> {
         self.schema.clone()
     }
@@ -123,7 +126,7 @@ impl ExecutionPlan for HashAggregateExec {
         &self,
         ctx: Arc<dyn ExecutionContext>,
         partition_index: usize,
-    ) -> Result<ColumnarBatchStream> {
+    ) -> Result<ColumnarBatchStream<'a>> {
         let child_exec = self.child.as_execution_plan();
         let input_schema = child_exec.schema();
         let input = child_exec.execute(ctx.clone(), partition_index).await?;
@@ -332,9 +335,9 @@ fn accumulate(
 }
 
 #[allow(dead_code)]
-struct HashAggregateIter {
+struct HashAggregateIter<'a> {
+    input: ColumnarBatchStream<'a>,
     mode: AggregateMode,
-    input: ColumnarBatchStream,
     group_expr: Vec<Arc<dyn Expression>>,
     aggr_expr: Vec<Arc<dyn AggregateExpr>>,
     schema: Arc<Schema>,
@@ -342,7 +345,7 @@ struct HashAggregateIter {
     debug: bool,
 }
 
-impl HashAggregateIter {
+impl HashAggregateIter<'_> {
     fn new(
         mode: &AggregateMode,
         input: ColumnarBatchStream,
@@ -494,7 +497,7 @@ fn create_batch_from_accum_map(
 }
 
 #[async_trait]
-impl ColumnarBatchIter for HashAggregateIter {
+impl ColumnarBatchIter for HashAggregateIter<'_> {
     fn schema(&self) -> Arc<Schema> {
         self.schema.clone()
     }

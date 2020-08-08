@@ -24,7 +24,7 @@ use crate::execution::physical_plan::{Action, ExecutionPlan, ShuffleId};
 use crate::execution::physical_plan::{AggregateMode, PhysicalPlan};
 use crate::protobuf;
 
-impl TryInto<protobuf::Action> for &Action {
+impl TryInto<protobuf::Action> for &Action<'_> {
     type Error = BallistaError;
 
     fn try_into(self) -> Result<protobuf::Action, Self::Error> {
@@ -353,7 +353,7 @@ impl TryInto<protobuf::LogicalExprNode> for &Expr {
     }
 }
 
-impl TryInto<protobuf::PhysicalPlanNode> for &PhysicalPlan {
+impl TryInto<protobuf::PhysicalPlanNode> for &PhysicalPlan<'_> {
     type Error = BallistaError;
 
     fn try_into(self) -> Result<protobuf::PhysicalPlanNode, Self::Error> {
@@ -484,7 +484,7 @@ impl TryInto<protobuf::ShuffleId> for &ShuffleId {
     }
 }
 
-impl TryInto<protobuf::Task> for &ExecutionTask {
+impl TryInto<protobuf::Task> for &ExecutionTask<'_> {
     type Error = BallistaError;
 
     fn try_into(self) -> Result<protobuf::Task, Self::Error> {

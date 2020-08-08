@@ -20,6 +20,8 @@
 
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 use crate::arrow::datatypes::Schema;
 use crate::error::Result;
@@ -42,7 +44,7 @@ impl InMemoryTableScanExec {
 }
 
 #[async_trait]
-impl ExecutionPlan for InMemoryTableScanExec {
+impl ExecutionPlan<'_> for InMemoryTableScanExec {
     fn schema(&self) -> Arc<Schema> {
         self.data[0].schema()
     }
@@ -51,8 +53,8 @@ impl ExecutionPlan for InMemoryTableScanExec {
         &self,
         _ctx: Arc<dyn ExecutionContext>,
         _partition_index: usize,
-    ) -> Result<ColumnarBatchStream> {
-        Ok(Arc::new(InMemoryTableScanIter::new(self.data.clone())))
+    ) -> Result<ColumnarBatchStream<'_>> {
+        Ok(Rc::new(RefCell::new(InMemoryTableScanIter::new(self.data.clone()))))
     }
 }
 
