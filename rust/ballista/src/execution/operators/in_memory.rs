@@ -70,13 +70,12 @@ impl InMemoryTableScanIter {
     }
 }
 
-#[async_trait]
 impl ColumnarBatchIter for InMemoryTableScanIter {
     fn schema(&self) -> Arc<Schema> {
         self.data[0].schema()
     }
 
-    async fn next(&self) -> Result<Option<ColumnarBatch>> {
+    fn next(&self) -> Result<Option<ColumnarBatch>> {
         let index = self.index.load(Ordering::SeqCst);
         if index < self.data.len() {
             self.index.store(index + 1, Ordering::SeqCst);

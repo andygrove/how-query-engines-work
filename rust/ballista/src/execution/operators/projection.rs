@@ -101,14 +101,13 @@ struct ProjectionIter {
     schema: Arc<Schema>,
 }
 
-#[async_trait]
 impl ColumnarBatchIter for ProjectionIter {
     fn schema(&self) -> Arc<Schema> {
         self.schema.clone()
     }
 
-    async fn next(&self) -> Result<Option<ColumnarBatch>> {
-        match self.input.next().await? {
+    fn next(&self) -> Result<Option<ColumnarBatch>> {
+        match self.input.next()? {
             Some(batch) => {
                 let projected_values: Vec<ColumnarValue> = self
                     .projection

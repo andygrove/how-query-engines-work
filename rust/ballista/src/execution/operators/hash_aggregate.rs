@@ -493,13 +493,12 @@ fn create_batch_from_accum_map(
     Ok(ColumnarBatch::from_values_infer_schema(&values))
 }
 
-#[async_trait]
 impl ColumnarBatchIter for HashAggregateIter {
     fn schema(&self) -> Arc<Schema> {
         self.schema.clone()
     }
 
-    async fn next(&self) -> Result<Option<ColumnarBatch>> {
+    fn next(&self) -> Result<Option<ColumnarBatch>> {
         if self.eof.load(Ordering::Relaxed) {
             return Ok(None);
         }
@@ -525,7 +524,7 @@ impl ColumnarBatchIter for HashAggregateIter {
         // to emit batches periodically and reset the accumulator map to reduce memory pressure
         loop {
             let read_batch_start = Instant::now();
-            let maybe_batch = self.input.next().await?;
+            let maybe_batch = self.input.next()?;
             read_batch_time += read_batch_start.elapsed().as_millis();
 
             match maybe_batch {

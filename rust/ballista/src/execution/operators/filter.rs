@@ -97,14 +97,13 @@ struct FilterIter {
     filter_expr: Arc<dyn Expression>,
 }
 
-#[async_trait]
 impl ColumnarBatchIter for FilterIter {
     fn schema(&self) -> Arc<Schema> {
         self.input.schema()
     }
 
-    async fn next(&self) -> Result<Option<ColumnarBatch>> {
-        match self.input.next().await? {
+    fn next(&self) -> Result<Option<ColumnarBatch>> {
+        match self.input.next()? {
             Some(input) => {
                 let bools = self.filter_expr.evaluate(&input)?;
                 let batch = apply_filter(&input, &bools, self.input.schema())?;

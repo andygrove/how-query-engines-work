@@ -14,24 +14,24 @@
 
 //! Parquet scan operator.
 
+use std::cell::RefCell;
 use std::fs::File;
 use std::rc::Rc;
 use std::sync::Arc;
-use std::time::Instant;
 
-use crate::error::{BallistaError, Result};
+use crate::error::Result;
 use crate::execution::physical_plan::{
     ColumnarBatch, ColumnarBatchIter, ColumnarBatchStream, ExecutionContext, ExecutionPlan,
-    MaybeColumnarBatch, Partitioning,
+    Partitioning,
 };
 
 use crate::arrow::datatypes::Schema;
 use crate::arrow::record_batch::RecordBatchReader;
 use crate::parquet::arrow::arrow_reader::ArrowReader;
+use crate::parquet::arrow::arrow_reader::ParquetRecordBatchReader;
 use crate::parquet::arrow::ParquetFileArrowReader;
 use crate::parquet::file::reader::SerializedFileReader;
 
-use async_channel::{bounded, Receiver, Sender};
 use async_trait::async_trait;
 
 /// ParquetScanExec reads Parquet files and applies an optional projection so that only necessary
@@ -43,10 +43,10 @@ pub struct ParquetScanExec {
     pub(crate) path: String,
     pub(crate) filenames: Vec<String>,
     pub(crate) projection: Option<Vec<usize>>,
+    pub(crate) projected_fields: Vec<usize>,
     pub(crate) parquet_schema: Arc<Schema>,
     pub(crate) output_schema: Arc<Schema>,
     pub(crate) batch_size: usize,
-    pub(crate) queue_size: usize,
 }
 
 impl ParquetScanExec {
@@ -55,8 +55,9 @@ impl ParquetScanExec {
         filenames: Vec<String>,
         projection: Option<Vec<usize>>,
         batch_size: usize,
-        queue_size: usize,
     ) -> Result<Self> {
+        println!("ParquetScanExec created with projection {:?}", projection);
+
         let filename = &filenames[0];
         let file = File::open(filename)?;
         let file_reader = Rc::new(SerializedFileReader::new(file).unwrap()); //TODO error handling
@@ -79,10 +80,10 @@ impl ParquetScanExec {
             path: path.to_owned(),
             filenames,
             projection,
+            projected_fields,
             parquet_schema: Arc::new(schema),
             output_schema: Arc::new(projected_schema),
             batch_size,
-            queue_size,
         })
     }
 }
@@ -106,140 +107,51 @@ impl ExecutionPlan for ParquetScanExec {
     ) -> Result<ColumnarBatchStream> {
         Ok(Arc::new(ParquetBatchIter::try_new(
             &self.filenames[partition_index],
-            self.projection.clone(),
+            self.projected_fields.clone(),
+            self.output_schema.clone(),
             self.batch_size,
-            self.queue_size,
         )?))
     }
 }
 
 pub struct ParquetBatchIter {
     schema: Arc<Schema>,
-    pub response_rx: Receiver<MaybeColumnarBatch>,
+    batch_reader: Rc<RefCell<ParquetRecordBatchReader>>,
 }
 
-#[allow(dead_code)]
 impl ParquetBatchIter {
     pub fn try_new(
         filename: &str,
-        projection: Option<Vec<usize>>,
+        projection: Vec<usize>,
+        projected_schema: Arc<Schema>,
         batch_size: usize,
-        queue_size: usize,
     ) -> Result<Self> {
+        println!("Reading {} with projection {:?}", filename, projection);
+
         let file = File::open(filename)?;
         let file_reader = Rc::new(SerializedFileReader::new(file).unwrap()); //TODO error handling
         let mut arrow_reader = ParquetFileArrowReader::new(file_reader);
-        let schema = arrow_reader.get_schema().unwrap(); //TODO error handling
-
-        let projection = match projection {
-            Some(p) => p,
-            None => (0..schema.fields().len()).collect(),
-        };
-
-        let projected_schema = Schema::new(
-            projection
-                .iter()
-                .map(|i| schema.field(*i).clone())
-                .collect(),
-        );
-
-        let (response_tx, response_rx): (Sender<MaybeColumnarBatch>, Receiver<MaybeColumnarBatch>) =
-            bounded(queue_size);
-
-        let filename = filename.to_string();
-        std::thread::spawn(move || {
-            smol::run(async move {
-                read_parquet_batches(&filename, response_tx, projection, batch_size).await;
-            })
-        });
+        let batch_reader = arrow_reader
+            .get_record_reader_by_columns(projection, batch_size)
+            .unwrap();
 
         Ok(Self {
-            schema: Arc::new(projected_schema),
-            response_rx,
+            schema: projected_schema,
+            batch_reader: Rc::new(RefCell::new(batch_reader)),
         })
     }
 }
 
-async fn read_parquet_batches(
-    filename: &str,
-    response_tx: Sender<MaybeColumnarBatch>,
-    projection: Vec<usize>,
-    batch_size: usize,
-) {
-    let start = Instant::now();
-    let mut batch_read_time = 0;
-    let mut total_bytes_read = 0;
-    let mut output_batches = 0;
-    let mut output_rows = 0;
-
-    //TODO error handling, remove unwraps
-    let file = File::open(&filename).unwrap();
-    match SerializedFileReader::new(file) {
-        Ok(file_reader) => {
-            let file_reader = Rc::new(file_reader);
-            let mut arrow_reader = ParquetFileArrowReader::new(file_reader);
-            match arrow_reader.get_record_reader_by_columns(projection, batch_size) {
-                Ok(mut batch_reader) => loop {
-                    // read the next batch
-                    let start_batch = Instant::now();
-                    let maybe_batch = batch_reader.next_batch();
-                    batch_read_time += start_batch.elapsed().as_millis();
-
-                    match maybe_batch {
-                        Ok(Some(batch)) => {
-                            output_batches += 1;
-                            output_rows += batch.num_rows();
-                            let columnar_batch = ColumnarBatch::from_arrow(&batch);
-                            total_bytes_read += columnar_batch.memory_size();
-                            response_tx.send(Ok(Some(columnar_batch))).await.unwrap();
-                        }
-                        Ok(None) => {
-                            response_tx.send(Ok(None)).await.unwrap();
-                            break;
-                        }
-                        Err(e) => {
-                            response_tx
-                                .send(Err(BallistaError::General(format!("{:?}", e))))
-                                .await
-                                .unwrap();
-                            break;
-                        }
-                    }
-                },
-
-                Err(e) => {
-                    response_tx
-                        .send(Err(BallistaError::General(format!("{:?}", e))))
-                        .await
-                        .unwrap();
-                }
-            }
-        }
-
-        Err(e) => {
-            response_tx
-                .send(Err(BallistaError::General(format!("{:?}", e))))
-                .await
-                .unwrap();
-        }
-    }
-
-    println!(
-        "ParquetScan scanned {} batches and {} rows containing {} bytes in {} ms. Total duration {} ms.",
-        output_batches,
-        output_rows,
-        total_bytes_read,
-        batch_read_time,
-        start.elapsed().as_millis()
-    );
-}
-#[async_trait]
 impl ColumnarBatchIter for ParquetBatchIter {
     fn schema(&self) -> Arc<Schema> {
         self.schema.clone()
     }
 
-    async fn next(&self) -> Result<Option<ColumnarBatch>> {
-        self.response_rx.recv().await.unwrap()
+    fn next(&self) -> Result<Option<ColumnarBatch>> {
+        let mut ref_mut = self.batch_reader.borrow_mut();
+        match ref_mut.next_batch().unwrap() {
+            Some(batch) => Ok(Some(ColumnarBatch::from_arrow(&batch))),
+            None => Ok(None),
+        }
     }
 }
