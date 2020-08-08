@@ -52,11 +52,14 @@ data class SqlAlias(val expr: SqlExpr, val alias: SqlIdentifier) : SqlExpr
 
 data class SqlCast(val expr: SqlExpr, val dataType: SqlIdentifier) : SqlExpr
 
+data class SqlSort(val expr: SqlExpr, val asc: Boolean) : SqlExpr
+
 interface SqlRelation : SqlExpr
 
 data class SqlSelect(
     val projection: List<SqlExpr>,
     val selection: SqlExpr?,
     val groupBy: List<SqlExpr>,
+    val orderBy: List<SqlExpr>,
     val tableName: String
 ) : SqlRelation
