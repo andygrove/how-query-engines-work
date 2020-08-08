@@ -128,17 +128,17 @@ impl Scheduler for BallistaScheduler {
 /// A Job typically represents a single query and the query is executed in stages. Stages are
 /// separated by map operations (shuffles) to re-partition data before the next stage starts.
 #[derive(Debug)]
-pub struct Job<'a> {
+pub struct Job {
     /// Job UUID
     pub id: Uuid,
     /// A list of stages within this job. There can be dependencies between stages to form
     /// a directed acyclic graph (DAG).
-    pub stages: Vec<Rc<RefCell<Stage<'a>>>>,
+    pub stages: Vec<Rc<RefCell<Stage>>>,
     /// The root stage id that produces the final results
     pub root_stage_id: usize,
 }
 
-impl Job<'_> {
+impl Job {
     pub fn explain(&self) {
         println!("Job {} has {} stages:\n", self.id, self.stages.len());
         self.stages.iter().for_each(|stage| {
@@ -165,16 +165,16 @@ impl Job<'_> {
 
 /// A query stage consists of tasks. Typically, tasks map to partitions.
 #[derive(Debug)]
-pub struct Stage<'a> {
+pub struct Stage {
     /// Stage id which is unique within a job.
     pub id: usize,
     /// A list of stages that must complete before this stage can execute.
     pub prior_stages: Vec<usize>,
     /// The physical plan to execute for this stage
-    pub plan: Option<PhysicalPlan<'a>>,
+    pub plan: Option<Arc<PhysicalPlan>>,
 }
 
-impl<'a> Stage<'a> {
+impl Stage {
     /// Create a new empty stage with the specified id.
     fn new(id: usize) -> Self {
         Self {
@@ -187,15 +187,15 @@ impl<'a> Stage<'a> {
 
 /// Task that can be sent to an executor for execution
 #[derive(Debug, Clone)]
-pub struct ExecutionTask<'a> {
+pub struct ExecutionTask {
     pub(crate) job_uuid: Uuid,
     pub(crate) stage_id: usize,
     pub(crate) partition_id: usize,
-    pub(crate) plan: PhysicalPlan<'a>,
+    pub(crate) plan: PhysicalPlan,
     pub(crate) shuffle_locations: HashMap<ShuffleId, ExecutorMeta>,
 }
 
-impl ExecutionTask<'_> {
+impl ExecutionTask {
     pub fn new(
         job_uuid: Uuid,
         stage_id: usize,
@@ -224,12 +224,12 @@ pub fn create_job(plan: Arc<PhysicalPlan>) -> Result<Job> {
     Ok(scheduler.job)
 }
 
-pub struct JobScheduler<'a> {
-    job: Job<'a>,
+pub struct JobScheduler {
+    job: Job,
     next_stage_id: usize,
 }
 
-impl JobScheduler<'_> {
+impl JobScheduler {
     fn new() -> Self {
         let job = Job {
             id: Uuid::new_v4(),
@@ -340,7 +340,7 @@ struct ExecutorShuffleIds {
 }
 
 /// Execute a job directly against executors as starting point
-pub async fn execute_job<'a>(job: &'a Job<'_>, ctx: Arc<dyn ExecutionContext>) -> Result<Vec<ColumnarBatch>> {
+pub async fn execute_job(job: &Job, ctx: Arc<dyn ExecutionContext>) -> Result<Vec<ColumnarBatch>> {
     let executors = ctx.get_executor_ids().await?;
 
     println!("Executors: {:?}", executors);
@@ -593,10 +593,10 @@ pub async fn execute_job<'a>(job: &'a Job<'_>, ctx: Arc<dyn ExecutionContext>) -
 }
 
 /// Convert a logical plan into a physical plan
-pub fn create_physical_plan<'a>(
+pub fn create_physical_plan(
     plan: &LogicalPlan,
     settings: &HashMap<String, String>,
-) -> Result<Arc<PhysicalPlan<'a>>> {
+) -> Result<Arc<PhysicalPlan>> {
     match plan {
         LogicalPlan::Projection { input, expr, .. } => {
             let exec = ProjectionExec::try_new(expr, create_physical_plan(input, settings)?)?;
@@ -746,7 +746,7 @@ pub fn create_physical_plan<'a>(
 }
 
 /// Optimizer rule to insert shuffles as needed
-pub fn ensure_requirements<'a>(plan: &'a PhysicalPlan) -> Result<Arc<PhysicalPlan<'a>>> {
+pub fn ensure_requirements(plan: &PhysicalPlan) -> Result<Arc<PhysicalPlan>> {
     let execution_plan = plan.as_execution_plan();
 
     // recurse down and replace children

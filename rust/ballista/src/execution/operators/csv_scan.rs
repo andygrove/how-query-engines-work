@@ -19,9 +19,6 @@
 
 use std::fs::File;
 use std::sync::{Arc, Mutex};
-use std::rc::Rc;
-use std::cell::RefCell;
-
 
 use crate::arrow::csv;
 use crate::arrow::datatypes::{Schema, SchemaRef};
@@ -101,7 +98,7 @@ impl CsvScanExec {
 }
 
 #[async_trait]
-impl<'a> ExecutionPlan<'a> for CsvScanExec {
+impl ExecutionPlan for CsvScanExec {
     /// Get the schema for this execution plan
     fn schema(&self) -> SchemaRef {
         self.projected_schema.clone()
@@ -115,8 +112,8 @@ impl<'a> ExecutionPlan<'a> for CsvScanExec {
         &self,
         _ctx: Arc<dyn ExecutionContext>,
         partition_index: usize,
-    ) -> Result<ColumnarBatchStream<'a>> {
-        Ok(Rc::new(RefCell::new(CsvBatchIter::try_new(
+    ) -> Result<ColumnarBatchStream> {
+        Ok(Arc::new(CsvBatchIter::try_new(
             &self.filenames[partition_index],
             self.schema.clone(),
             self.has_header,
@@ -124,7 +121,7 @@ impl<'a> ExecutionPlan<'a> for CsvScanExec {
             &self.projection,
             self.projected_schema.clone(),
             self.batch_size,
-        )?)))
+        )?))
     }
 }
 
@@ -163,12 +160,13 @@ impl CsvBatchIter {
     }
 }
 
+#[async_trait]
 impl ColumnarBatchIter for CsvBatchIter {
     fn schema(&self) -> Arc<Schema> {
         self.schema.clone()
     }
 
-    fn next(&self) -> Result<Option<ColumnarBatch>> {
+    async fn next(&self) -> Result<Option<ColumnarBatch>> {
         let mut reader = self.reader.lock().expect("failed to lock mutex");
         match reader.next() {
             Ok(Some(batch)) => Ok(Some(ColumnarBatch::from_arrow(&batch))),

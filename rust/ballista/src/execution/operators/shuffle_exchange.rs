@@ -13,8 +13,6 @@
 // limitations under the License.
 
 use std::sync::Arc;
-use std::rc::Rc;
-use std::cell::RefCell;
 
 use crate::arrow::datatypes::Schema;
 use crate::error::Result;
@@ -25,12 +23,12 @@ use crate::execution::physical_plan::{
 use async_trait::async_trait;
 
 #[derive(Debug, Clone)]
-pub struct ShuffleExchangeExec<'a> {
-    pub(crate) child: Arc<PhysicalPlan<'a>>,
+pub struct ShuffleExchangeExec {
+    pub(crate) child: Arc<PhysicalPlan>,
     output_partitioning: Partitioning,
 }
 
-impl ShuffleExchangeExec<'_> {
+impl ShuffleExchangeExec {
     pub fn new(child: Arc<PhysicalPlan>, output_partitioning: Partitioning) -> Self {
         Self {
             child,
@@ -40,7 +38,7 @@ impl ShuffleExchangeExec<'_> {
 }
 
 #[async_trait]
-impl<'a> ExecutionPlan<'a> for ShuffleExchangeExec<'a> {
+impl ExecutionPlan for ShuffleExchangeExec {
     fn schema(&self) -> Arc<Schema> {
         self.child.as_execution_plan().schema()
     }
@@ -49,7 +47,7 @@ impl<'a> ExecutionPlan<'a> for ShuffleExchangeExec<'a> {
         &self,
         _ctx: Arc<dyn ExecutionContext>,
         _partition_index: usize,
-    ) -> Result<ColumnarBatchStream<'a>> {
+    ) -> Result<ColumnarBatchStream> {
         unimplemented!()
     }
 }

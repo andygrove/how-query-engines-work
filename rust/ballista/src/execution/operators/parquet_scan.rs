@@ -16,8 +16,6 @@
 
 use std::fs::File;
 use std::rc::Rc;
-use std::cell::RefCell;
-
 use std::sync::Arc;
 use std::time::Instant;
 
@@ -90,7 +88,7 @@ impl ParquetScanExec {
 }
 
 #[async_trait]
-impl ExecutionPlan<'_> for ParquetScanExec {
+impl ExecutionPlan for ParquetScanExec {
     fn schema(&self) -> Arc<Schema> {
         self.output_schema.clone()
     }
@@ -105,13 +103,13 @@ impl ExecutionPlan<'_> for ParquetScanExec {
         &self,
         _ctx: Arc<dyn ExecutionContext>,
         partition_index: usize,
-    ) -> Result<ColumnarBatchStream<'_>> {
-        Ok(Rc::new(RefCell::new(ParquetBatchIter::try_new(
+    ) -> Result<ColumnarBatchStream> {
+        Ok(Arc::new(ParquetBatchIter::try_new(
             &self.filenames[partition_index],
             self.projection.clone(),
             self.batch_size,
             self.queue_size,
-        )?)))
+        )?))
     }
 }
 
