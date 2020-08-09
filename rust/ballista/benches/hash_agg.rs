@@ -16,48 +16,29 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use ballista::arrow::datatypes::{DataType, Field, Schema};
-use ballista::datafusion::logicalplan::{self, Expr, ScalarValue};
+use ballista::datafusion::logicalplan::{self, Expr};
 use ballista::distributed::context::BallistaContext;
 use ballista::distributed::executor::{DiscoveryMode, ExecutorConfig};
-use ballista::execution::expressions::{col, sum};
 use ballista::execution::operators::{HashAggregateExec, InMemoryTableScanExec};
-use ballista::execution::physical_plan::{
-    AggregateMode, ColumnarValue, ExecutionPlan, PhysicalPlan,
-};
+use ballista::execution::physical_plan::{AggregateMode, ExecutionPlan, PhysicalPlan};
 use ballista::utils::datagen::DataGen;
 
 use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let mut gen = DataGen::default();
-
     let schema = Schema::new(vec![
         Field::new("c0", DataType::Int8, true),
         Field::new("c1", DataType::Int32, false),
     ]);
     let batch = gen.create_batch(&schema, 1024).unwrap();
-    let array = batch.column(0);
-
-    let aggr_expr = sum(col(1, "c1"));
-    let mut accum = aggr_expr.create_accumulator(&AggregateMode::Partial);
-
-    c.bench_function("sum accum array", |b| b.iter(|| accum.accumulate(&array)));
-
-    c.bench_function("sum accum scalar some", |b| {
-        b.iter(|| accum.accumulate(&ColumnarValue::Scalar(Some(ScalarValue::Float64(0_f64)), 1)))
-    });
-
-    c.bench_function("sum accum scalar none", |b| {
-        b.iter(|| accum.accumulate(&ColumnarValue::Scalar(None, 1)))
-    });
-
     let config = ExecutorConfig::new(DiscoveryMode::Standalone, "", 0, "", 2);
     let ctx = Arc::new(BallistaContext::new(&config, HashMap::new()));
     let table = Arc::new(PhysicalPlan::InMemoryTableScan(Arc::new(
         InMemoryTableScanExec::new(vec![batch.clone(), batch]),
     )));
 
-    c.bench_function("hash agg partial", |b| {
+    c.bench_function("hash agg sum partial", |b| {
         b.iter(|| {
             let ctx = ctx.clone();
             let table = table.clone();
@@ -69,7 +50,103 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                         vec![Expr::AggregateFunction {
                             name: "sum".to_owned(),
                             args: vec![logicalplan::col("c1")],
-                            return_type: DataType::Float64,
+                            return_type: DataType::Int32,
+                        }],
+                        table,
+                    )
+                    .unwrap(),
+                );
+                let stream = hash_agg_exec.execute(ctx, 0).await.unwrap();
+                while let Some(_) = stream.next().unwrap() {}
+            })
+        })
+    });
+
+    c.bench_function("hash agg avg partial", |b| {
+        b.iter(|| {
+            let ctx = ctx.clone();
+            let table = table.clone();
+            smol::run(async move {
+                let hash_agg_exec = Arc::new(
+                    HashAggregateExec::try_new(
+                        AggregateMode::Partial,
+                        vec![logicalplan::col("c0")],
+                        vec![Expr::AggregateFunction {
+                            name: "avg".to_owned(),
+                            args: vec![logicalplan::col("c1")],
+                            return_type: DataType::Int32,
+                        }],
+                        table,
+                    )
+                    .unwrap(),
+                );
+                let stream = hash_agg_exec.execute(ctx, 0).await.unwrap();
+                while let Some(_) = stream.next().unwrap() {}
+            })
+        })
+    });
+
+    c.bench_function("hash agg count partial", |b| {
+        b.iter(|| {
+            let ctx = ctx.clone();
+            let table = table.clone();
+            smol::run(async move {
+                let hash_agg_exec = Arc::new(
+                    HashAggregateExec::try_new(
+                        AggregateMode::Partial,
+                        vec![logicalplan::col("c0")],
+                        vec![Expr::AggregateFunction {
+                            name: "count".to_owned(),
+                            args: vec![logicalplan::col("c1")],
+                            return_type: DataType::Int32,
+                        }],
+                        table,
+                    )
+                    .unwrap(),
+                );
+                let stream = hash_agg_exec.execute(ctx, 0).await.unwrap();
+                while let Some(_) = stream.next().unwrap() {}
+            })
+        })
+    });
+
+    c.bench_function("hash agg min partial", |b| {
+        b.iter(|| {
+            let ctx = ctx.clone();
+            let table = table.clone();
+            smol::run(async move {
+                let hash_agg_exec = Arc::new(
+                    HashAggregateExec::try_new(
+                        AggregateMode::Partial,
+                        vec![logicalplan::col("c0")],
+                        vec![Expr::AggregateFunction {
+                            name: "min".to_owned(),
+                            args: vec![logicalplan::col("c1")],
+                            return_type: DataType::Int32,
+                        }],
+                        table,
+                    )
+                    .unwrap(),
+                );
+                let stream = hash_agg_exec.execute(ctx, 0).await.unwrap();
+                while let Some(_) = stream.next().unwrap() {}
+            })
+        })
+    });
+
+    c.bench_function("hash agg max partial", |b| {
+        b.iter(|| {
+            let ctx = ctx.clone();
+            let table = table.clone();
+            smol::run(async move {
+                let hash_agg_exec = Arc::new(
+                    HashAggregateExec::try_new(
+                        AggregateMode::Partial,
+                        vec![logicalplan::col("c0")],
+                        vec![Expr::AggregateFunction {
+                            name: "max".to_owned(),
+                            args: vec![logicalplan::col("c1")],
+                            return_type: DataType::Int32,
                         }],
                         table,
                     )

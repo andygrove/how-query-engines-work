@@ -18,7 +18,6 @@
 //! Ballista Hash Aggregate operator. This is based on the implementation from DataFusion in the
 //! Apache Arrow project.
 
-use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::Instant;
@@ -36,6 +35,7 @@ use crate::execution::physical_plan::{
 };
 
 use async_trait::async_trait;
+use fnv::FnvHashMap;
 
 /// HashAggregateExec applies a hash aggregate operation against its input.
 #[allow(dead_code)]
@@ -150,7 +150,7 @@ impl ExecutionPlan for HashAggregateExec {
             group_expr,
             aggr_expr,
             Arc::new(Schema::new(fields)),
-            false,
+            true,
         )))
     }
 }
@@ -221,7 +221,7 @@ macro_rules! update_accumulators {
         let primitive_array = cast_array!($ARRAY, $ARRAY_TY)?;
         if $ARRAY.is_valid($ROW) {
             let value = $SCALAR_TY(primitive_array.value($ROW));
-            $ACCUM[$COL].accumulate(&ColumnarValue::Scalar(Some(value), 1))?;
+            $ACCUM[$COL].accumulate(&ColumnarValue::Scalar(value, 1))?;
         }
     }};
 }
@@ -423,7 +423,7 @@ fn create_key(
 
 /// Create a columnar batch from the hash map
 fn create_batch_from_accum_map(
-    map: &HashMap<Vec<GroupByScalar>, AccumulatorSet>,
+    map: &FnvHashMap<Vec<GroupByScalar>, AccumulatorSet>,
     input_schema: &Schema,
     group_expr: &[Arc<dyn Expression>],
     aggr_expr: &[Arc<dyn AggregateExpr>],
@@ -511,7 +511,7 @@ impl ColumnarBatchIter for HashAggregateIter {
         let mut row_count = 0;
 
         // hash map of grouping keys to accumulators
-        let mut map: HashMap<Vec<GroupByScalar>, AccumulatorSet> = HashMap::new();
+        let mut map = FnvHashMap::with_capacity_and_hasher(32768, Default::default());
 
         // create vector large enough to hold the grouping key that can be re-used per row to
         // avoid the cost of creating a new vector each time
