@@ -74,8 +74,8 @@ async fn main() -> Result<()> {
 
 ## Status
 
-An alpha release of Ballista is now available, and we are working towards the full 0.3.1-SNAPSHOT release in August 2020. Please 
-refer to the [user guide](https://ballistacompute.org/docs/) for instructions on using a released versions of Ballista. 
+Ballista releases are now available on crates.io and Docker Hub. Please refer to the [user guide](https://ballistacompute.org/docs/) for 
+instructions on using a released version of Ballista. 
 
 ## Roadmap
 
