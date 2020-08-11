@@ -24,13 +24,13 @@ use std::time::{Duration, Instant};
 
 use crate::arrow::datatypes::Schema;
 use crate::dataframe::{
-    avg, count, max, min, sum, CSV_READER_BATCH_SIZE, PARQUET_READER_BATCH_SIZE,
+    avg, col, count, max, min, sum, CSV_READER_BATCH_SIZE, PARQUET_READER_BATCH_SIZE,
 };
 use crate::datafusion::execution::context::ExecutionContext as DFContext;
 use crate::datafusion::execution::physical_plan::common;
 use crate::datafusion::execution::physical_plan::csv::CsvReadOptions;
 use crate::datafusion::logicalplan::LogicalPlan;
-use crate::datafusion::logicalplan::{col_index, Expr, LogicalPlanBuilder};
+use crate::datafusion::logicalplan::{Expr, LogicalPlanBuilder};
 use crate::datafusion::optimizer::optimizer::OptimizerRule;
 use crate::distributed::context::BallistaContext;
 use crate::distributed::executor::{ExecutorConfig, ShufflePartition};
@@ -591,6 +591,10 @@ pub async fn execute_job(job: &Job, ctx: Arc<dyn ExecutionContext>) -> Result<Ve
     Err(ballista_error("oops"))
 }
 
+// fn col(index: usize, name: &str) -> Expr {
+//     Expr::Column {}
+// }
+
 /// Convert a logical plan into a physical plan
 pub fn create_physical_plan(
     plan: &LogicalPlan,
@@ -634,6 +638,7 @@ pub fn create_physical_plan(
                     aggr_expr.clone(),
                     input,
                 )?;
+                let input_schema = partial_hash_exec.schema().clone();
                 let partial = Arc::new(PhysicalPlan::HashAggregate(Arc::new(partial_hash_exec)));
 
                 // Create final hash aggregate to run on the coalesced partition of the results
@@ -641,7 +646,7 @@ pub fn create_physical_plan(
 
                 let mut final_group = vec![];
                 for i in 0..group_expr.len() {
-                    final_group.push(col_index(i as usize));
+                    final_group.push(col(input_schema.field(i as usize).name()));
                 }
 
                 //TODO this is ugly and shows that the design needs revisiting here
@@ -652,25 +657,33 @@ pub fn create_physical_plan(
                     match expr {
                         Expr::AggregateFunction { name, .. } => {
                             let expr = match name.as_str() {
-                                "SUM" => sum(col_index(j)),
-                                "MIN" => min(col_index(j)),
-                                "MAX" => max(col_index(j)),
-                                "AVG" => avg(col_index(j)),
-                                "COUNT" => count(col_index(j)),
+                                "SUM" => sum(col(input_schema.field(j as usize).name())),
+                                "MIN" => min(col(input_schema.field(j as usize).name())),
+                                "MAX" => max(col(input_schema.field(j as usize).name())),
+                                "AVG" => avg(col(input_schema.field(j as usize).name())),
+                                "COUNT" => count(col(input_schema.field(j as usize).name())),
                                 _ => panic!(),
                             };
                             final_aggr.push(expr);
                         }
                         Expr::Alias(expr, alias) => match expr.as_ref() {
                             Expr::AggregateFunction { name, .. } => {
-                                let expr = match name.as_str() {
-                                    "SUM" => sum(col_index(j)).alias(alias),
-                                    "MIN" => min(col_index(j)).alias(alias),
-                                    "MAX" => max(col_index(j)).alias(alias),
-                                    "AVG" => avg(col_index(j)).alias(alias),
-                                    "COUNT" => count(col_index(j)).alias(alias),
-                                    _ => panic!(),
-                                };
+                                let expr =
+                                    match name.as_str() {
+                                        "SUM" => sum(col(input_schema.field(j as usize).name()))
+                                            .alias(alias),
+                                        "MIN" => min(col(input_schema.field(j as usize).name()))
+                                            .alias(alias),
+                                        "MAX" => max(col(input_schema.field(j as usize).name()))
+                                            .alias(alias),
+                                        "AVG" => avg(col(input_schema.field(j as usize).name()))
+                                            .alias(alias),
+                                        "COUNT" => {
+                                            count(col(input_schema.field(j as usize).name()))
+                                                .alias(alias)
+                                        }
+                                        _ => panic!(),
+                                    };
                                 final_aggr.push(expr);
                             }
                             _ => panic!(),
@@ -842,7 +855,7 @@ fn rewrite_expr_list(expr: &[Expr], schema: &Schema) -> datafusion::error::Resul
 fn rewrite_expr(expr: &Expr, schema: &Schema) -> datafusion::error::Result<Expr> {
     match expr {
         Expr::Alias(expr, alias) => Ok(rewrite_expr(&expr, schema)?.alias(&alias)),
-        Expr::UnresolvedColumn(name) => Ok(Expr::Column(schema.index_of(&name)?)),
+        Expr::Column(name) => Ok(Expr::Column(name.clone())),
         Expr::BinaryExpr { left, op, right } => Ok(Expr::BinaryExpr {
             left: Box::new(rewrite_expr(&left, schema)?),
             op: op.clone(),

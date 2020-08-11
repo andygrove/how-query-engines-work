@@ -19,10 +19,9 @@
 #![feature(async_closure)]
 
 pub use arrow;
+pub use arrow_flight;
 pub use datafusion;
-pub use flight;
 pub use parquet;
-pub use sqlparser;
 
 // include the generated protobuf source as a submodule
 #[allow(clippy::all)]

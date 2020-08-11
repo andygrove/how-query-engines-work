@@ -22,11 +22,10 @@ use crate::arrow::record_batch::RecordBatch;
 pub use crate::datafusion::datasource::csv::CsvReadOptions;
 use crate::datafusion::datasource::parquet::ParquetTable;
 use crate::datafusion::datasource::TableProvider;
-use crate::datafusion::logicalplan::Operator;
 use crate::datafusion::logicalplan::ScalarValue;
+use crate::datafusion::logicalplan::{exprlist_to_fields, Operator};
 use crate::datafusion::logicalplan::{Expr, FunctionMeta, LogicalPlan, LogicalPlanBuilder};
-use crate::datafusion::optimizer::utils::exprlist_to_fields;
-use crate::datafusion::sql::parser::{DFASTNode, DFParser};
+use crate::datafusion::sql::parser::DFParser;
 use crate::datafusion::sql::planner::{SchemaProvider, SqlToRel};
 use crate::distributed::client;
 use crate::error::{ballista_error, BallistaError, Result};
@@ -232,30 +231,25 @@ impl Context {
     }
 
     pub fn read_csv(&self, path: &str, options: CsvReadOptions) -> Result<DataFrame> {
-        Ok(DataFrame::scan_csv(
-            self.state.clone(),
-            path,
-            options,
-            None,
-        )?)
+        Ok(DataFrame::scan_csv(self.state.clone(), path, options)?)
     }
 
     pub fn read_parquet(&self, path: &str) -> Result<DataFrame> {
-        Ok(DataFrame::scan_parquet(self.state.clone(), path, None)?)
+        Ok(DataFrame::scan_parquet(self.state.clone(), path)?)
     }
 
     pub fn sql(&self, sql: &str) -> Result<DataFrame> {
-        let ast = DFParser::parse_sql(sql)?;
-        match ast {
-            DFASTNode::ANSI(ansi) => {
-                let plan = SqlToRel::new(&*self.state.schema_provider.read().unwrap())
-                    .sql_to_rel(&ansi)?;
-                Ok(DataFrame::from(self.state.clone(), plan))
-            }
-            DFASTNode::CreateExternalTable { .. } => {
-                unimplemented!("TODO");
-            }
+        let statements = DFParser::parse_sql(sql)?;
+
+        if statements.len() != 1 {
+            return Err(BallistaError::NotImplemented(format!(
+                "The dataframe currently only supports a single SQL statement",
+            )));
         }
+
+        let plan = SqlToRel::new(&*self.state.schema_provider.read().unwrap())
+            .statement_to_plan(&statements[0])?;
+        Ok(DataFrame::from(self.state.clone(), plan))
     }
 
     pub fn register_temp_table(&mut self, name: &str, df: DataFrame) -> Result<()> {
@@ -310,33 +304,24 @@ impl DataFrame {
         ctx_state: Arc<ContextState>,
         path: &str,
         options: CsvReadOptions,
-        projection: Option<Vec<usize>>,
     ) -> Result<Self> {
         Ok(Self::from(
             ctx_state,
-            LogicalPlanBuilder::scan_csv(path, options, projection)?.build()?,
+            LogicalPlanBuilder::scan_csv(path, options, None)?.build()?,
         ))
     }
 
     /// Scan a data source
-    pub fn scan_parquet(
-        ctx_state: Arc<ContextState>,
-        path: &str,
-        projection: Option<Vec<usize>>,
-    ) -> Result<Self> {
+    pub fn scan_parquet(ctx_state: Arc<ContextState>, path: &str) -> Result<Self> {
         let p = ParquetTable::try_new(path)?;
         let schema = p.schema().as_ref().to_owned();
-        let projected_schema = projection
-            .clone()
-            .map(|p| Schema::new(p.iter().map(|i| schema.field(*i).clone()).collect()));
-
         Ok(Self::from(
             ctx_state,
             LogicalPlan::ParquetScan {
                 path: path.to_owned(),
                 schema: Box::new(schema.clone()),
-                projection,
-                projected_schema: Box::new(projected_schema.or(Some(schema)).unwrap()),
+                projection: None,
+                projected_schema: Box::new(schema),
             },
         ))
     }
@@ -348,7 +333,10 @@ impl DataFrame {
             let mut expr_vec = vec![];
             (0..expr.len()).for_each(|i| match &expr[i] {
                 Expr::Wildcard => {
-                    (0..input_schema.fields().len()).for_each(|i| expr_vec.push(Expr::Column(i)));
+                    input_schema
+                        .fields()
+                        .iter()
+                        .for_each(|f| expr_vec.push(Expr::Column(f.name().clone())));
                 }
                 _ => expr_vec.push(expr[i].clone()),
             });
@@ -512,7 +500,7 @@ pub fn count(expr: Expr) -> Expr {
 
 /// Create a column expression based on a column name
 pub fn col(name: &str) -> Expr {
-    Expr::UnresolvedColumn(name.to_owned())
+    Expr::Column(name.to_owned())
 }
 
 pub fn alias(expr: &Expr, name: &str) -> Expr {

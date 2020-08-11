@@ -18,12 +18,12 @@ use std::convert::{TryFrom, TryInto};
 use std::sync::Arc;
 
 use crate::arrow::datatypes::Schema;
-use crate::arrow::flight::flight_data_to_batch;
 use crate::arrow::record_batch::RecordBatch;
+use crate::arrow_flight::flight_service_client::FlightServiceClient;
+use crate::arrow_flight::utils::flight_data_to_batch;
+use crate::arrow_flight::Ticket;
 use crate::error::{ballista_error, BallistaError, Result};
 use crate::execution::physical_plan::Action;
-use crate::flight::flight_service_client::FlightServiceClient;
-use crate::flight::Ticket;
 use crate::protobuf;
 
 use prost::Message;

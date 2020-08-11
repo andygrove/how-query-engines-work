@@ -21,7 +21,7 @@ use std::result;
 
 use crate::arrow::error::ArrowError;
 use crate::datafusion::error::ExecutionError;
-use crate::sqlparser::sqlparser;
+use sqlparser::parser;
 
 pub type Result<T> = result::Result<T, BallistaError>;
 
@@ -32,7 +32,7 @@ pub enum BallistaError {
     General(String),
     ArrowError(ArrowError),
     DataFusionError(ExecutionError),
-    SqlError(sqlparser::ParserError),
+    SqlError(parser::ParserError),
     IoError(io::Error),
     ReqwestError(reqwest::Error),
     HttpError(http::Error),
@@ -58,8 +58,8 @@ impl From<ArrowError> for BallistaError {
     }
 }
 
-impl From<sqlparser::ParserError> for BallistaError {
-    fn from(e: sqlparser::ParserError) -> Self {
+impl From<parser::ParserError> for BallistaError {
+    fn from(e: parser::ParserError) -> Self {
         BallistaError::SqlError(e)
     }
 }

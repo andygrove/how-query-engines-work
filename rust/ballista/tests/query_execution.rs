@@ -17,8 +17,7 @@ extern crate ballista;
 use std::sync::Arc;
 
 use ballista::arrow::datatypes::{DataType, Field, Schema};
-use ballista::dataframe::{avg, count, max, min, sum};
-use ballista::datafusion::logicalplan::col_index;
+use ballista::dataframe::{avg, col, count, max, min, sum};
 use ballista::distributed::context::BallistaContext;
 use ballista::distributed::executor::{DiscoveryMode, ExecutorConfig};
 use ballista::execution::operators::FilterExec;
@@ -46,23 +45,23 @@ async fn execute(use_filter: bool) {
     ])));
 
     if use_filter {
-        // WHERE col(0) >= col(0), which must not affect the final result
+        // WHERE col(c0) >= col(c0), which must not affect the final result
         child = PhysicalPlan::Filter(Arc::new(FilterExec::new(
             &child,
-            &col_index(0).gt_eq(&col_index(0)),
+            &col("c0").gt_eq(&col("c0")),
         )));
     }
 
     let hash_agg = PhysicalPlan::HashAggregate(Arc::new(
         HashAggregateExec::try_new(
             AggregateMode::Partial,
-            vec![col_index(0)],
+            vec![col("c0")],
             vec![
-                min(col_index(1)).alias("max_c1"),
-                max(col_index(1)),
-                avg(col_index(1)),
-                sum(col_index(1)),
-                count(col_index(1)),
+                min(col("c1")).alias("max_c1"),
+                max(col("c1")),
+                avg(col("c1")),
+                sum(col("c1")),
+                count(col("c1")),
             ],
             Arc::new(child),
         )

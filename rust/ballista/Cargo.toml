@@ -2,7 +2,7 @@
 name = "ballista"
 description = "Distributed compute platform based on Apache Arrow"
 license = "Apache-2.0"
-version = "0.3.1-SNAPSHOT"
+version = "0.4.0-SNAPSHOT"
 homepage = "https://github.com/ballista-compute/ballista"
 repository = "https://github.com/ballista-compute/ballista"
 authors = ["Andy Grove <andygrove73@gmail.com>"]
@@ -24,7 +24,7 @@ prost = "0.6"
 prost-types = "0.6"
 reqwest = "0.9.18"
 uuid = { version = "0.8", features = ["serde", "v4"] }
-sqlparser = "0.2.6"
+sqlparser = "0.6.1"
 async-channel = "1.4.0"
 crossbeam = "0.7"
 smol = { version = "0.1.18", features = ["tokio02"] }
@@ -34,11 +34,10 @@ structopt = "0.3"
 etcd-client = "0.5"
 fnv = "1.0.7"
 
-# Ballista 0.3.x releases depend on the officla Arrow 1.0.0 release
-arrow = { version = "1.0.0", features = ["simd"] }
-arrow-flight = "1.0.0"
-datafusion = "1.0.0"
-parquet = "1.0.0"
+arrow = { git = "https://github.com/apache/arrow" }
+arrow-flight = { git = "https://github.com/apache/arrow" }
+datafusion = { git = "https://github.com/apache/arrow" }
+parquet = { git = "https://github.com/apache/arrow" }
 
 [[bin]]
 name = "executor"

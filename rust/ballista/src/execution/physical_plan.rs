@@ -551,8 +551,7 @@ pub struct ShuffleLocation {}
 pub fn compile_expression(expr: &Expr, input: &Schema) -> Result<Arc<dyn Expression>> {
     match expr {
         Expr::Alias(expr, name) => Ok(alias(compile_expression(expr, input)?, name)),
-        Expr::Column(n) => Ok(col(*n, input.field(*n).name())),
-        Expr::UnresolvedColumn(name) => Ok(col(input.index_of(name)?, name)),
+        Expr::Column(name) => Ok(col(input.index_of(name)?, name)),
         Expr::Literal(value) => Ok(lit(value.to_owned())),
         Expr::BinaryExpr { left, op, right } => {
             let l = compile_expression(left, input)?;

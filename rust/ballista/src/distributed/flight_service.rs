@@ -19,16 +19,16 @@ use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 
 use crate::arrow::datatypes::{DataType, Field, Schema};
+use crate::arrow_flight::{
+    flight_service_server::FlightService, Action, ActionType, Criteria, Empty, FlightData,
+    FlightDescriptor, FlightInfo, HandshakeRequest, HandshakeResponse, PutResult, SchemaResult,
+    Ticket,
+};
 use crate::distributed::executor::{Executor, ShufflePartition, TaskStatus};
 use crate::distributed::scheduler::{
     create_job, create_physical_plan, ensure_requirements, Scheduler,
 };
 use crate::execution::physical_plan;
-use crate::flight::{
-    flight_service_server::FlightService, Action, ActionType, Criteria, Empty, FlightData,
-    FlightDescriptor, FlightInfo, HandshakeRequest, HandshakeResponse, PutResult, SchemaResult,
-    Ticket,
-};
 use crate::serde::decode_protobuf;
 
 use futures::{Stream, StreamExt};
@@ -63,7 +63,7 @@ impl FlightService for BallistaFlightService {
     type ListFlightsStream = BoxedFlightStream<FlightInfo>;
     type DoGetStream = BoxedFlightStream<FlightData>;
     type DoPutStream = BoxedFlightStream<PutResult>;
-    type DoActionStream = BoxedFlightStream<flight::Result>;
+    type DoActionStream = BoxedFlightStream<arrow_flight::Result>;
     type ListActionsStream = BoxedFlightStream<ActionType>;
     type DoExchangeStream = BoxedFlightStream<FlightData>;
 

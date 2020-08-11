@@ -222,13 +222,7 @@ impl TryInto<protobuf::LogicalExprNode> for &Expr {
 
     fn try_into(self) -> Result<protobuf::LogicalExprNode, Self::Error> {
         match self {
-            Expr::Column(index) => {
-                let mut expr = empty_expr_node();
-                expr.has_column_index = true;
-                expr.column_index = *index as u32;
-                Ok(expr)
-            }
-            Expr::UnresolvedColumn(name) => {
+            Expr::Column(name) => {
                 let mut expr = empty_expr_node();
                 expr.has_column_name = true;
                 expr.column_name = name.to_owned();

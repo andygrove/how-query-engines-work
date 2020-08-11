@@ -16,10 +16,10 @@
 
 use std::sync::Arc;
 
+use ballista::arrow_flight::flight_service_server::FlightServiceServer;
 use ballista::distributed::executor::{BallistaExecutor, DiscoveryMode, Executor, ExecutorConfig};
 use ballista::distributed::flight_service::BallistaFlightService;
 use ballista::distributed::scheduler::{BallistaScheduler, Scheduler};
-use ballista::flight::flight_service_server::FlightServiceServer;
 use ballista::BALLISTA_VERSION;
 
 use structopt::StructOpt;
