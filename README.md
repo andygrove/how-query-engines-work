@@ -23,11 +23,13 @@ a penalty for serialization costs.
 The foundational technologies in Ballista are:
 
 - [Apache Arrow](https://arrow.apache.org/) memory model and compute kernels for efficient processing of data.
-- [Apache Arrow Flight Protocol](https://arrow.apache.org/blog/2019/10/13/introducing-arrow-flight/) for efficient data transfer between processes.
+- [Apache Arrow Flight Protocol](https://arrow.apache.org/blog/2019/10/13/introducing-arrow-flight/) for efficient data 
+transfer between processes.
 - [Google Protocol Buffers](https://developers.google.com/protocol-buffers) for serializing query plans.
 - [Docker](https://www.docker.com/) for packaging up executors along with user-defined code.
 
-Ballista can be deployed in [Kubernetes](https://kubernetes.io/), or as a standalone cluster using [etcd](https://etcd.io/) for discovery.
+Ballista can be deployed in [Kubernetes](https://kubernetes.io/), or as a standalone cluster using 
+[etcd](https://etcd.io/) for discovery.
 
 ## Architecture
 
@@ -51,44 +53,26 @@ distributed compute.
 - The use of Apache Arrow as the memory model and network protocol means that data can be exchanged between executors 
 in any programming language with minimal serialization overhead.
 
-## Example Rust Client
-
-```rust
-#[tokio::main]
-async fn main() -> Result<()> {
-    
-    let ctx = Context::remote("localhost", 50051, HashMap::new());
-
-    let results = ctx
-        .read_parquet("/path/to/data", None)?
-        .aggregate(vec![col("passenger_count")], vec![max(col("fare_amount"))])?
-        .collect()
-        .await?;
-
-    // print the results
-    pretty::print_batches(&results)?;
-
-    Ok(())
-}
-```
-
-## Status
-
-Ballista releases are now available on crates.io and Docker Hub. Please refer to the [user guide](https://ballistacompute.org/docs/) for 
-instructions on using a released version of Ballista. 
-
-## Roadmap
-
-We are now working on support for more complex operators, particularly joins, using the TPCH
-benchmarks to drive requirements. The full roadmap is available [here](https://github.com/ballista-compute/ballista/milestones?direction=asc&sort=title&state=open).
-
-## More Examples
+## Examples
 
 The following examples should help illustrate the current capabilities of Ballista
 
 - [TPC-H Benchmark](https://github.com/ballista-compute/ballista/tree/main/rust/examples/tpch)
 - [Distributed query execution in Rust](https://github.com/ballista-compute/ballista/tree/main/rust/examples/distributed-query)
 - [Rust bindings for Apache Spark](https://github.com/ballista-compute/ballista/tree/main/rust/examples/apache-spark-rust-bindings)
+
+## Status
+
+Ballista releases are now available on [crates.io](https://crates.io/crates/ballista), 
+[Maven Central](https://search.maven.org/search?q=g:org.ballistacompute) and 
+[Docker Hub](https://hub.docker.com/u/ballistacompute). Please refer to the 
+[user guide](https://ballistacompute.org/docs/) for instructions on using a released version of Ballista. 
+
+## Roadmap
+
+We are currently working on performance tuning and adding support for more complex operators, particularly joins, using the 
+TPC-H benchmarks to drive requirements. The full roadmap is available 
+[here](https://github.com/ballista-compute/ballista/milestones?direction=asc&sort=title&state=open).
 
 ## Documentation
 
