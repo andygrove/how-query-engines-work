@@ -62,8 +62,6 @@ class ProtobufDeserializer {
         "divide" -> Divide(ll, rr)
         else -> throw RuntimeException("Failed to parse logical binary expression: $node")
       }
-    } else if (node.hasColumnIndex) {
-      ColumnIndex(node.columnIndex)
     } else if (node.hasColumnName) {
       col(node.columnName)
     } else if (node.hasLiteralString) {

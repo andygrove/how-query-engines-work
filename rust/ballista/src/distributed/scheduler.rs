@@ -638,7 +638,7 @@ pub fn create_physical_plan(
                     aggr_expr.clone(),
                     input,
                 )?;
-                let input_schema = partial_hash_exec.schema().clone();
+                let input_schema = partial_hash_exec.schema();
                 let partial = Arc::new(PhysicalPlan::HashAggregate(Arc::new(partial_hash_exec)));
 
                 // Create final hash aggregate to run on the coalesced partition of the results

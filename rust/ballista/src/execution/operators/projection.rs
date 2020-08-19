@@ -20,10 +20,11 @@ use crate::arrow::datatypes::Schema;
 use crate::datafusion::logicalplan::Expr;
 use crate::error::Result;
 use crate::execution::physical_plan::{
-    compile_expressions, ColumnarBatch, ColumnarBatchIter, ColumnarBatchStream, ColumnarValue,
-    ExecutionContext, ExecutionPlan, Expression, Partitioning, PhysicalPlan,
+    compile_expressions, ColumnarBatch, ColumnarBatchIter, ColumnarBatchStream, ExecutionContext,
+    ExecutionPlan, Expression, Partitioning, PhysicalPlan,
 };
 
+use arrow::datatypes::Field;
 use async_trait::async_trait;
 
 /// Projection operator evaluates expressions against an input.
@@ -40,10 +41,18 @@ pub struct ProjectionExec {
 impl ProjectionExec {
     pub fn try_new(exprs: &[Expr], child: Arc<PhysicalPlan>) -> Result<Self> {
         let input_schema = child.as_execution_plan().schema();
-        let pexprs = compile_expressions(&exprs, &child.as_execution_plan().schema())?;
-        let fields: Result<Vec<_>> = pexprs
+
+        let fields: Result<Vec<_>> = exprs
             .iter()
-            .map(|e| e.to_schema_field(&input_schema))
+            .map(|expr| {
+                let name = expr.name(&input_schema)?;
+                let name = name.as_str();
+                Ok(Field::new(
+                    name,
+                    expr.get_type(&input_schema)?,
+                    input_schema.field_with_name(name)?.is_nullable(),
+                ))
+            })
             .collect();
 
         let schema = Arc::new(Schema::new(fields?));
@@ -98,6 +107,7 @@ impl ExecutionPlan for ProjectionExec {
 struct ProjectionIter {
     input: ColumnarBatchStream,
     projection: Vec<Arc<dyn Expression>>,
+    /// The output schema of this projection
     schema: Arc<Schema>,
 }
 
@@ -109,14 +119,14 @@ impl ColumnarBatchIter for ProjectionIter {
     fn next(&self) -> Result<Option<ColumnarBatch>> {
         match self.input.next()? {
             Some(batch) => {
-                let projected_values: Vec<ColumnarValue> = self
+                let projected_values = self
                     .projection
                     .iter()
                     .map(|e| e.evaluate(&batch))
                     .collect::<Result<Vec<_>>>()?;
-                Ok(Some(ColumnarBatch::from_values_and_schema(
+                Ok(Some(ColumnarBatch::from_values(
                     &projected_values,
-                    self.schema.clone(),
+                    &self.schema,
                 )))
             }
             None => Ok(None),

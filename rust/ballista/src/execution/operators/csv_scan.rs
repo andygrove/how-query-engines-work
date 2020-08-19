@@ -119,7 +119,6 @@ impl ExecutionPlan for CsvScanExec {
             self.has_header,
             self.delimiter,
             &self.projection,
-            self.projected_schema.clone(),
             self.batch_size,
         )?))
     }
@@ -140,13 +139,12 @@ impl CsvBatchIter {
         has_header: bool,
         delimiter: Option<u8>,
         projection: &Option<Vec<usize>>,
-        projected_schema: SchemaRef,
         batch_size: usize,
     ) -> Result<Self> {
         let file = File::open(filename)?;
         let reader = csv::Reader::new(
             file,
-            schema,
+            schema.clone(),
             has_header,
             delimiter,
             batch_size,
@@ -155,7 +153,7 @@ impl CsvBatchIter {
 
         Ok(Self {
             reader: Arc::new(Mutex::new(reader)),
-            schema: projected_schema,
+            schema,
         })
     }
 }

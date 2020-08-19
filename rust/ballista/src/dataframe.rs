@@ -242,9 +242,9 @@ impl Context {
         let statements = DFParser::parse_sql(sql)?;
 
         if statements.len() != 1 {
-            return Err(BallistaError::NotImplemented(format!(
-                "The dataframe currently only supports a single SQL statement",
-            )));
+            return Err(BallistaError::NotImplemented(
+                "The dataframe currently only supports a single SQL statement".to_string(),
+            ));
         }
 
         let plan = SqlToRel::new(&*self.state.schema_provider.read().unwrap())

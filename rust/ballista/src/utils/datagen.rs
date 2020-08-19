@@ -19,8 +19,9 @@ use std::sync::Arc;
 use crate::arrow::array::{self, ArrayRef};
 use crate::arrow::datatypes::{DataType, Schema};
 use crate::error::Result;
-use crate::execution::physical_plan::{ColumnarBatch, ColumnarValue};
+use crate::execution::physical_plan::ColumnarBatch;
 
+use arrow::record_batch::RecordBatch;
 use random_fast_rng::{FastRng, Random};
 
 /// Random data generator
@@ -88,12 +89,10 @@ impl DataGen {
             .map(|f| self.create_array(f.data_type(), f.is_nullable(), len))
             .collect::<Result<Vec<_>>>()?;
 
-        let columns: Vec<ColumnarValue> = columns
-            .iter()
-            .map(|c| ColumnarValue::Columnar(c.clone()))
-            .collect();
-
-        Ok(ColumnarBatch::from_values_infer_schema(&columns))
+        Ok(ColumnarBatch::from_arrow(&RecordBatch::try_new(
+            Arc::new(schema.clone()),
+            columns,
+        )?))
     }
 }
 

@@ -39,11 +39,10 @@ pub fn decode_protobuf(bytes: &[u8]) -> Result<Action, BallistaError> {
 mod tests {
     use crate::arrow::datatypes::{DataType, Field, Schema};
     use crate::datafusion::execution::physical_plan::csv::CsvReadOptions;
-    use crate::datafusion::logicalplan::{col, Expr, LogicalPlanBuilder};
+    use crate::datafusion::logicalplan::{col, lit, Expr, LogicalPlanBuilder};
     use crate::error::Result;
     use crate::execution::physical_plan::Action;
     use crate::protobuf;
-    use datafusion::logicalplan::lit;
     use std::collections::HashMap;
     use std::convert::TryInto;
 

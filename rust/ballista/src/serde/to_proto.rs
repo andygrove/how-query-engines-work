@@ -225,7 +225,7 @@ impl TryInto<protobuf::LogicalExprNode> for &Expr {
             Expr::Column(name) => {
                 let mut expr = empty_expr_node();
                 expr.has_column_name = true;
-                expr.column_name = name.to_owned();
+                expr.column_name = name.clone();
                 Ok(expr)
             }
             Expr::Alias(expr, alias) => {
@@ -522,8 +522,6 @@ fn empty_expr_node() -> protobuf::LogicalExprNode {
         has_literal_u64: false,
         has_literal_f32: false,
         has_literal_f64: false,
-        column_index: 0,
-        has_column_index: false,
         binary_expr: None,
         aggregate_expr: None,
     }
