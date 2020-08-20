@@ -22,14 +22,13 @@ use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 
-use crate::dataframe::{
-    avg, col, count, max, min, sum, CSV_READER_BATCH_SIZE, PARQUET_READER_BATCH_SIZE,
-};
+use crate::dataframe::{CSV_READER_BATCH_SIZE, PARQUET_READER_BATCH_SIZE};
 use crate::datafusion::execution::context::ExecutionContext as DFContext;
 use crate::datafusion::execution::physical_plan::common;
 use crate::datafusion::execution::physical_plan::csv::CsvReadOptions;
 use crate::datafusion::logicalplan::Expr;
 use crate::datafusion::logicalplan::LogicalPlan;
+use crate::datafusion::prelude::*;
 use crate::distributed::context::BallistaContext;
 use crate::distributed::executor::{ExecutorConfig, ShufflePartition};
 use crate::error::{ballista_error, BallistaError, Result};
@@ -599,9 +598,11 @@ pub fn create_physical_plan(
             let exec = ProjectionExec::try_new(expr, create_physical_plan(input, settings)?)?;
             Ok(Arc::new(PhysicalPlan::Projection(Arc::new(exec))))
         }
-        LogicalPlan::Selection { input, expr, .. } => {
+        LogicalPlan::Filter {
+            input, predicate, ..
+        } => {
             let input = create_physical_plan(input, settings)?;
-            let exec = FilterExec::new(&input, expr);
+            let exec = FilterExec::new(&input, predicate);
             Ok(Arc::new(PhysicalPlan::Filter(Arc::new(exec))))
         }
         LogicalPlan::Aggregate {
