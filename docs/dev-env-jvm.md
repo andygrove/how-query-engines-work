@@ -11,7 +11,7 @@ Use the following instructions to install the protobuf compiler on Ubuntu or sim
 ```bash
 wget https://github.com/protocolbuffers/protobuf/releases/download/v3.11.4/protobuf-all-3.11.4.tar.gz
 tar xzf protobuf-all-3.11.4.tar.gz
-cd protobuf-all-3.11.4
+cd protobuf-3.11.4
 ./configure
 make
 sudo make install
