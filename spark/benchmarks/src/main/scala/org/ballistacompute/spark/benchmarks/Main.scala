@@ -18,6 +18,8 @@ import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.ballistacompute.spark.benchmarks.tpch.Tpch
 import org.rogach.scallop.{ScallopConf, Subcommand}
 
+import scala.collection.mutable.ListBuffer
+
 class Conf(args: Array[String]) extends ScallopConf(args) {
   val convertTpch = new Subcommand("convert-tpch") {
     val input = opt[String](required = true)
@@ -27,9 +29,10 @@ class Conf(args: Array[String]) extends ScallopConf(args) {
     val partitions = opt[Int](required = true)
   }
   val tpch = new Subcommand("tpch") {
-    val inputPath = opt[String]()
-    val inputFormat = opt[String]()
-    val query = opt[String]()
+    val inputPath = opt[String](required = true)
+    val inputFormat = opt[String](required = true)
+    val query = opt[String](required = true)
+    val iterations = opt[Int](required = false, default = Some(1))
   }
   addSubcommand(convertTpch)
   addSubcommand(tpch)
@@ -52,28 +55,62 @@ object Main {
 
     conf.subcommand match {
       case Some(conf.tpch) =>
-        val df = readLineitem(conf, spark)
-        df.createTempView("lineitem")
+        // register tables
+        for (table <- Tpch.tables) {
+          val df = readTable(
+            conf,
+            spark,
+            table,
+            conf.tpch.inputPath(),
+            conf.tpch.inputFormat()
+          )
+          df.createTempView(table)
+        }
+
         val sql = Tpch.query(conf.tpch.query())
-        val resultDf = spark.sql(sql)
-        resultDf.show()
+
+        val timing = new ListBuffer[Long]()
+        for (i <- 0 until conf.tpch.iterations()) {
+          println(s"Iteration $i")
+          val start = System.currentTimeMillis()
+          val resultDf = spark.sql(sql)
+          resultDf.show()
+          val duration = System.currentTimeMillis() - start
+          println(s"Iteration $i took $duration ms")
+          timing += duration
+        }
+
+        // summarize the results
+        timing.zipWithIndex.foreach {
+          case (n, i) => println(s"Iteration $i took $n ms")
+        }
 
       case Some(conf.`convertTpch`) =>
-        val df = readLineitem(conf, spark)
+        for (table <- Tpch.tables) {
+          val df = readTable(
+            conf,
+            spark,
+            table,
+            conf.convertTpch.input(),
+            conf.convertTpch.inputFormat()
+          )
 
-        conf.convertTpch.outputFormat() match {
-          case "parquet" =>
-            df.repartition(conf.convertTpch.partitions())
-              .write
-              .mode(SaveMode.Overwrite)
-              .parquet(conf.convertTpch.output())
-          case "csv" =>
-            df.repartition(conf.convertTpch.partitions())
-              .write
-              .mode(SaveMode.Overwrite)
-              .csv(conf.convertTpch.output())
-          case _ =>
-            throw new IllegalArgumentException("unsupported output format")
+          conf.convertTpch.outputFormat() match {
+            case "parquet" =>
+              val path = s"${conf.convertTpch.output()}/${table}"
+              df.repartition(conf.convertTpch.partitions())
+                .write
+                .mode(SaveMode.Overwrite)
+                .parquet(path)
+            case "csv" =>
+              val path = s"${conf.convertTpch.output()}/${table}.csv"
+              df.repartition(conf.convertTpch.partitions())
+                .write
+                .mode(SaveMode.Overwrite)
+                .csv(path)
+            case _ =>
+              throw new IllegalArgumentException("unsupported output format")
+          }
         }
 
       case _ =>
@@ -81,24 +118,33 @@ object Main {
     }
   }
 
-  private def readLineitem(conf: Conf, spark: SparkSession): DataFrame = {
-    conf.convertTpch.inputFormat() match {
+  private def readTable(
+      conf: Conf,
+      spark: SparkSession,
+      tableName: String,
+      inputPath: String,
+      inputFormat: String
+  ): DataFrame = {
+    inputFormat match {
       case "tbl" =>
+        val path = s"${inputPath}/${tableName}.tbl"
         spark.read
           .option("header", "false")
           .option("inferSchema", "false")
           .option("delimiter", "|")
-          .schema(Tpch.LINEITEM_SCHEMA)
-          .csv(conf.convertTpch.input())
+          .schema(Tpch.tableSchema(tableName))
+          .csv(path)
       case "csv" =>
+        val path = s"${inputPath}/${tableName}.csv"
         spark.read
           .option("header", "false")
           .option("inferSchema", "false")
-          .schema(Tpch.LINEITEM_SCHEMA)
-          .csv(conf.convertTpch.input())
+          .schema(Tpch.tableSchema(tableName))
+          .csv(path)
       case "parquet" =>
+        val path = s"${inputPath}/${tableName}"
         spark.read
-          .parquet(conf.convertTpch.input())
+          .parquet(path)
       case _ =>
         throw new IllegalArgumentException("unsupported input format")
     }
