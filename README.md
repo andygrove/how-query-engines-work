@@ -16,9 +16,19 @@
 
 ## Overview
 
-Ballista is a distributed compute platform primarily implemented in Rust, using Apache Arrow as the memory model. It is 
-built on an architecture that allows other programming languages to be supported as first-class citizens without paying
-a penalty for serialization costs.
+Ballista is a proof-of-concept distributed compute platform primarily implemented in Rust, using Apache Arrow as the 
+memory model. It is built on an architecture that allows other programming languages to be supported as first-class 
+citizens without paying a penalty for serialization costs.
+
+## Status
+
+With the release of Apache Arrow 3.0.0 there are many breaking changes in the Rust implementation and as a result it
+has been necessary to comment out much of the code in this repository and gradually get each Rust module working again
+with the 3.0.0 release.
+
+* For the latest stable version of Ballista, see [branch-0.3](https://github.com/ballista-compute/ballista/tree/branch-0.3) *.
+
+## Technologies
 
 The foundational technologies in Ballista are:
 
@@ -61,18 +71,12 @@ The following examples should help illustrate the current capabilities of Ballis
 - [Distributed query execution in Rust](https://github.com/ballista-compute/ballista/tree/main/rust/examples/distributed-query)
 - [Rust bindings for Apache Spark](https://github.com/ballista-compute/ballista/tree/main/rust/examples/apache-spark-rust-bindings)
 
-## Status
+## Releases
 
 Ballista releases are now available on [crates.io](https://crates.io/crates/ballista), 
 [Maven Central](https://search.maven.org/search?q=g:org.ballistacompute) and 
 [Docker Hub](https://hub.docker.com/u/ballistacompute). Please refer to the 
 [user guide](https://ballistacompute.org/docs/) for instructions on using a released version of Ballista. 
-
-## Roadmap
-
-We are currently working on performance tuning and adding support for more complex operators, particularly joins, using the 
-TPC-H benchmarks to drive requirements. The full roadmap is available 
-[here](https://github.com/ballista-compute/ballista/milestones?direction=asc&sort=title&state=open).
 
 ## Documentation
 
