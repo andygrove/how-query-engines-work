@@ -26,7 +26,7 @@ With the release of Apache Arrow 3.0.0 there are many breaking changes in the Ru
 has been necessary to comment out much of the code in this repository and gradually get each Rust module working again
 with the 3.0.0 release.
 
-* For the latest stable version of Ballista, see [branch-0.3](https://github.com/ballista-compute/ballista/tree/branch-0.3) *.
+**For the latest stable version of Ballista, see [branch-0.3](https://github.com/ballista-compute/ballista/tree/branch-0.3)**.
 
 ## Technologies
 
