@@ -1,8 +1,9 @@
 [workspace]
 
 members = [
-    "ballista",
-    "examples/apache-spark-rust-bindings",
-    "examples/distributed-query",
-    "examples/tpch",
+    "ballista-proto",
+#    "ballista",
+#    "examples/apache-spark-rust-bindings",
+#    "examples/distributed-query",
+#    "examples/tpch",
 ]
