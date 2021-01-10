@@ -28,8 +28,8 @@ pub mod protobuf {
     include!(concat!(env!("OUT_DIR"), "/ballista.protobuf.rs"));
 }
 
-pub mod from_proto;
-pub mod to_proto;
+pub mod logical_plan;
+pub mod physical_plan;
 
 // pub(crate) fn decode_protobuf(bytes: &[u8]) -> Result<Action, BallistaError> {
 //     let mut buf = Cursor::new(bytes);
