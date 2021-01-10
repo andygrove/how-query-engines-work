@@ -16,8 +16,8 @@
 
 use std::convert::TryInto;
 
-use crate::proto_error;
-use crate::{protobuf, BallistaProtoError};
+use crate::serde::proto_error;
+use crate::serde::{protobuf, BallistaProtoError};
 
 use arrow::datatypes::{DataType, Field, Schema};
 use datafusion::logical_plan::{Expr, LogicalPlan, LogicalPlanBuilder, Operator};
@@ -329,7 +329,7 @@ impl TryInto<Schema> for &protobuf::Schema {
             .iter()
             .map(|c| {
                 let dt: Result<DataType, _> = from_proto_arrow_type(c.arrow_type);
-                dt.and_then(|dt| Ok(Field::new(&c.name, dt, c.nullable)))
+                dt.map(|dt| Field::new(&c.name, dt, c.nullable))
             })
             .collect::<Result<Vec<_>, _>>()?;
         Ok(Schema::new(fields))
