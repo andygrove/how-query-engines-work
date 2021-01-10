@@ -14,32 +14,25 @@
 
 //! Serde code to convert from protocol buffers to Rust data structures.
 
-use std::collections::HashMap;
 use std::convert::TryInto;
-use std::sync::Arc;
 
-use crate::arrow::datatypes::{DataType, Field, Schema};
-use crate::datafusion::execution::physical_plan::csv::CsvReadOptions;
-use crate::datafusion::logicalplan::{
-    Expr, LogicalPlan, LogicalPlanBuilder, Operator, ScalarValue,
-};
-use crate::distributed::scheduler::ExecutionTask;
-use crate::error::{ballista_error, BallistaError};
-use crate::execution::operators::{
-    CsvScanExec, FilterExec, HashAggregateExec, ParquetScanExec, ProjectionExec, ShuffleReaderExec,
-};
-use crate::execution::physical_plan::{Action, ExecutorMeta, ShuffleId, ShuffleLocation};
-use crate::execution::physical_plan::{AggregateMode, PhysicalPlan};
-use ballista_proto::protobuf;
+use crate::proto_error;
+use crate::{protobuf, BallistaProtoError};
 
-use uuid::Uuid;
+use arrow::datatypes::{DataType, Field, Schema};
+use datafusion::logical_plan::{Expr, LogicalPlan, LogicalPlanBuilder, Operator};
+use datafusion::physical_plan::aggregates::AggregateFunction;
+use datafusion::physical_plan::csv::CsvReadOptions;
+use datafusion::scalar::ScalarValue;
+
+// use uuid::Uuid;
 
 macro_rules! convert_required {
     ($PB:expr) => {{
         if let Some(field) = $PB.as_ref() {
             field.try_into()
         } else {
-            Err(ballista_error("Missing required field in protobuf"))
+            Err(proto_error("Missing required field in protobuf"))
         }
     }};
 }
@@ -49,13 +42,13 @@ macro_rules! convert_box_required {
         if let Some(field) = $PB.as_ref() {
             field.as_ref().try_into()
         } else {
-            Err(ballista_error("Missing required field in protobuf"))
+            Err(proto_error("Missing required field in protobuf"))
         }
     }};
 }
 
 impl TryInto<LogicalPlan> for &protobuf::LogicalPlanNode {
-    type Error = BallistaError;
+    type Error = BallistaProtoError;
 
     fn try_into(self) -> Result<LogicalPlan, Self::Error> {
         if let Some(projection) = &self.projection {
@@ -98,38 +91,31 @@ impl TryInto<LogicalPlan> for &protobuf::LogicalPlanNode {
                 .aggregate(group_expr, aggr_expr)?
                 .build()
                 .map_err(|e| e.into())
-        } else if let Some(scan) = &self.scan {
-            match scan.file_format.as_str() {
-                "csv" => {
-                    let schema: Schema = convert_required!(scan.schema)?;
-                    let options = CsvReadOptions::new()
-                        .schema(&schema)
-                        .has_header(scan.has_header);
+        } else if let Some(scan) = &self.csv_scan {
+            let schema: Schema = convert_required!(scan.schema)?;
+            let options = CsvReadOptions::new()
+                .schema(&schema)
+                .has_header(scan.has_header);
 
-                    let mut projection = None;
-                    if let Some(column_names) = &scan.projection {
-                        let column_indices = column_names
-                            .columns
-                            .iter()
-                            .map(|name| schema.index_of(name))
-                            .collect::<Result<Vec<usize>, _>>()?;
-                        projection = Some(column_indices);
-                    }
-
-                    LogicalPlanBuilder::scan_csv(&scan.path, options, projection)?
-                        .build()
-                        .map_err(|e| e.into())
-                }
-                "parquet" => LogicalPlanBuilder::scan_parquet(&scan.path, None)? //TODO projection
-                    .build()
-                    .map_err(|e| e.into()),
-                other => Err(ballista_error(&format!(
-                    "Unsupported file format '{}' for file scan",
-                    other
-                ))),
+            let mut projection = None;
+            if let Some(column_names) = &scan.projection {
+                let column_indices = column_names
+                    .columns
+                    .iter()
+                    .map(|name| schema.index_of(name))
+                    .collect::<Result<Vec<usize>, _>>()?;
+                projection = Some(column_indices);
             }
+
+            LogicalPlanBuilder::scan_csv(&scan.path, options, projection)?
+                .build()
+                .map_err(|e| e.into())
+        } else if let Some(scan) = &self.parquet_scan {
+            LogicalPlanBuilder::scan_parquet(&scan.path, None, 24)? //TODO projection, concurrency
+                .build()
+                .map_err(|e| e.into())
         } else {
-            Err(ballista_error(&format!(
+            Err(proto_error(&format!(
                 "Unsupported logical plan '{:?}'",
                 self
             )))
@@ -138,7 +124,7 @@ impl TryInto<LogicalPlan> for &protobuf::LogicalPlanNode {
 }
 
 impl TryInto<Expr> for &protobuf::LogicalExprNode {
-    type Error = BallistaError;
+    type Error = BallistaProtoError;
 
     fn try_into(self) -> Result<Expr, Self::Error> {
         if let Some(binary_expr) = &self.binary_expr {
@@ -150,45 +136,59 @@ impl TryInto<Expr> for &protobuf::LogicalExprNode {
         } else if self.has_column_name {
             Ok(Expr::Column(self.column_name.clone()))
         } else if self.has_literal_string {
-            Ok(Expr::Literal(ScalarValue::Utf8(
+            Ok(Expr::Literal(ScalarValue::Utf8(Some(
                 self.literal_string.clone(),
-            )))
+            ))))
         } else if self.has_literal_f32 {
-            Ok(Expr::Literal(ScalarValue::Float32(self.literal_f32)))
+            Ok(Expr::Literal(ScalarValue::Float32(Some(self.literal_f32))))
         } else if self.has_literal_f64 {
-            Ok(Expr::Literal(ScalarValue::Float64(self.literal_f64)))
+            Ok(Expr::Literal(ScalarValue::Float64(Some(self.literal_f64))))
         } else if self.has_literal_i8 {
-            Ok(Expr::Literal(ScalarValue::Int8(self.literal_int as i8)))
+            Ok(Expr::Literal(ScalarValue::Int8(Some(
+                self.literal_int as i8,
+            ))))
         } else if self.has_literal_i16 {
-            Ok(Expr::Literal(ScalarValue::Int16(self.literal_int as i16)))
+            Ok(Expr::Literal(ScalarValue::Int16(Some(
+                self.literal_int as i16,
+            ))))
         } else if self.has_literal_i32 {
-            Ok(Expr::Literal(ScalarValue::Int32(self.literal_int as i32)))
+            Ok(Expr::Literal(ScalarValue::Int32(Some(
+                self.literal_int as i32,
+            ))))
         } else if self.has_literal_i64 {
-            Ok(Expr::Literal(ScalarValue::Int64(self.literal_int as i64)))
+            Ok(Expr::Literal(ScalarValue::Int64(Some(
+                self.literal_int as i64,
+            ))))
         } else if self.has_literal_u8 {
-            Ok(Expr::Literal(ScalarValue::UInt8(self.literal_uint as u8)))
+            Ok(Expr::Literal(ScalarValue::UInt8(Some(
+                self.literal_uint as u8,
+            ))))
         } else if self.has_literal_u16 {
-            Ok(Expr::Literal(ScalarValue::UInt16(self.literal_uint as u16)))
+            Ok(Expr::Literal(ScalarValue::UInt16(Some(
+                self.literal_uint as u16,
+            ))))
         } else if self.has_literal_u32 {
-            Ok(Expr::Literal(ScalarValue::UInt32(self.literal_uint as u32)))
+            Ok(Expr::Literal(ScalarValue::UInt32(Some(
+                self.literal_uint as u32,
+            ))))
         } else if self.has_literal_u64 {
-            Ok(Expr::Literal(ScalarValue::UInt64(self.literal_uint as u64)))
+            Ok(Expr::Literal(ScalarValue::UInt64(Some(
+                self.literal_uint as u64,
+            ))))
         } else if let Some(aggregate_expr) = &self.aggregate_expr {
-            let name = match aggregate_expr.aggr_function {
-                f if f == protobuf::AggregateFunction::Min as i32 => Ok("MIN"),
-                f if f == protobuf::AggregateFunction::Max as i32 => Ok("MAX"),
-                f if f == protobuf::AggregateFunction::Sum as i32 => Ok("SUM"),
-                f if f == protobuf::AggregateFunction::Avg as i32 => Ok("AVG"),
-                f if f == protobuf::AggregateFunction::Count as i32 => Ok("COUNT"),
-                other => Err(ballista_error(&format!(
-                    "Unsupported aggregate function '{:?}'",
-                    other
-                ))),
-            }?;
+            let fun = match aggregate_expr.aggr_function {
+                f if f == protobuf::AggregateFunction::Min as i32 => AggregateFunction::Min,
+                f if f == protobuf::AggregateFunction::Max as i32 => AggregateFunction::Max,
+                f if f == protobuf::AggregateFunction::Sum as i32 => AggregateFunction::Sum,
+                f if f == protobuf::AggregateFunction::Avg as i32 => AggregateFunction::Avg,
+                f if f == protobuf::AggregateFunction::Count as i32 => AggregateFunction::Count,
+                _ => unimplemented!(),
+            };
 
             Ok(Expr::AggregateFunction {
-                name: name.to_owned(),
+                fun,
                 args: vec![parse_required_expr(&aggregate_expr.expr)?],
+                distinct: false, //TODO
             })
         } else if let Some(alias) = &self.alias {
             Ok(Expr::Alias(
@@ -196,7 +196,7 @@ impl TryInto<Expr> for &protobuf::LogicalExprNode {
                 alias.alias.clone(),
             ))
         } else {
-            Err(ballista_error(&format!(
+            Err(proto_error(&format!(
                 "Unsupported logical expression '{:?}'",
                 self
             )))
@@ -204,33 +204,33 @@ impl TryInto<Expr> for &protobuf::LogicalExprNode {
     }
 }
 
-impl TryInto<Action> for &protobuf::Action {
-    type Error = BallistaError;
+// impl TryInto<Action> for &protobuf::Action {
+//     type Error = BallistaProtoError;
+//
+//     fn try_into(self) -> Result<Action, Self::Error> {
+//         if self.query.is_some() {
+//             let plan: LogicalPlan = convert_required!(self.query)?;
+//             let mut settings = HashMap::new();
+//             for setting in &self.settings {
+//                 settings.insert(setting.key.to_owned(), setting.value.to_owned());
+//             }
+//             Ok(Action::InteractiveQuery { plan, settings })
+//         } else if self.task.is_some() {
+//             let task: ExecutionTask = convert_required!(self.task)?;
+//             Ok(Action::Execute(task))
+//         } else if self.fetch_shuffle.is_some() {
+//             let shuffle_id: ShuffleId = convert_required!(self.fetch_shuffle)?;
+//             Ok(Action::FetchShuffle(shuffle_id))
+//         } else {
+//             Err(BallistaProtoError::NotImplemented(format!(
+//                 "from_proto(Action) {:?}",
+//                 self
+//             )))
+//         }
+//     }
+// }
 
-    fn try_into(self) -> Result<Action, Self::Error> {
-        if self.query.is_some() {
-            let plan: LogicalPlan = convert_required!(self.query)?;
-            let mut settings = HashMap::new();
-            for setting in &self.settings {
-                settings.insert(setting.key.to_owned(), setting.value.to_owned());
-            }
-            Ok(Action::InteractiveQuery { plan, settings })
-        } else if self.task.is_some() {
-            let task: ExecutionTask = convert_required!(self.task)?;
-            Ok(Action::Execute(task))
-        } else if self.fetch_shuffle.is_some() {
-            let shuffle_id: ShuffleId = convert_required!(self.fetch_shuffle)?;
-            Ok(Action::FetchShuffle(shuffle_id))
-        } else {
-            Err(BallistaError::NotImplemented(format!(
-                "from_proto(Action) {:?}",
-                self
-            )))
-        }
-    }
-}
-
-fn from_proto_binary_op(op: &str) -> Result<Operator, BallistaError> {
+fn from_proto_binary_op(op: &str) -> Result<Operator, BallistaProtoError> {
     match op {
         "Eq" => Ok(Operator::Eq),
         "NotEq" => Ok(Operator::NotEq),
@@ -242,14 +242,14 @@ fn from_proto_binary_op(op: &str) -> Result<Operator, BallistaError> {
         "Minus" => Ok(Operator::Minus),
         "Multiply" => Ok(Operator::Multiply),
         "Divide" => Ok(Operator::Divide),
-        other => Err(ballista_error(&format!(
+        other => Err(proto_error(&format!(
             "Unsupported binary operator '{:?}'",
             other
         ))),
     }
 }
 
-fn from_proto_arrow_type(dt: i32) -> Result<DataType, BallistaError> {
+fn from_proto_arrow_type(dt: i32) -> Result<DataType, BallistaProtoError> {
     match dt {
         dt if dt == protobuf::ArrowType::Uint8 as i32 => Ok(DataType::UInt8),
         dt if dt == protobuf::ArrowType::Int8 as i32 => Ok(DataType::Int8),
@@ -262,66 +262,66 @@ fn from_proto_arrow_type(dt: i32) -> Result<DataType, BallistaError> {
         dt if dt == protobuf::ArrowType::Float as i32 => Ok(DataType::Float32),
         dt if dt == protobuf::ArrowType::Double as i32 => Ok(DataType::Float64),
         dt if dt == protobuf::ArrowType::Utf8 as i32 => Ok(DataType::Utf8),
-        other => Err(BallistaError::General(format!(
+        other => Err(BallistaProtoError::General(format!(
             "Unsupported data type {:?}",
             other
         ))),
     }
 }
 
-impl TryInto<ExecutionTask> for &protobuf::Task {
-    type Error = BallistaError;
-
-    fn try_into(self) -> Result<ExecutionTask, Self::Error> {
-        let mut shuffle_locations: HashMap<ShuffleId, ExecutorMeta> = HashMap::new();
-        for loc in &self.shuffle_loc {
-            let shuffle_id = ShuffleId::new(
-                Uuid::parse_str(&loc.job_uuid).expect("error parsing uuid in from_proto"),
-                loc.stage_id as usize,
-                loc.partition_id as usize,
-            );
-
-            let exec = ExecutorMeta {
-                id: loc.executor_id.to_owned(),
-                host: loc.executor_host.to_owned(),
-                port: loc.executor_port as usize,
-            };
-
-            shuffle_locations.insert(shuffle_id, exec);
-        }
-
-        Ok(ExecutionTask::new(
-            Uuid::parse_str(&self.job_uuid).expect("error parsing uuid in from_proto"),
-            self.stage_id as usize,
-            self.partition_id as usize,
-            convert_required!(self.plan)?,
-            shuffle_locations,
-        ))
-    }
-}
-
-impl TryInto<ShuffleLocation> for &protobuf::ShuffleLocation {
-    type Error = BallistaError;
-
-    fn try_into(self) -> Result<ShuffleLocation, Self::Error> {
-        Ok(ShuffleLocation {}) //TODO why empty?
-    }
-}
-
-impl TryInto<ShuffleId> for &protobuf::ShuffleId {
-    type Error = BallistaError;
-
-    fn try_into(self) -> Result<ShuffleId, Self::Error> {
-        Ok(ShuffleId::new(
-            Uuid::parse_str(&self.job_uuid).expect("error parsing uuid in from_proto"),
-            self.stage_id as usize,
-            self.partition_id as usize,
-        ))
-    }
-}
+// impl TryInto<ExecutionTask> for &protobuf::Task {
+//     type Error = BallistaProtoError;
+//
+//     fn try_into(self) -> Result<ExecutionTask, Self::Error> {
+//         let mut shuffle_locations: HashMap<ShuffleId, ExecutorMeta> = HashMap::new();
+//         for loc in &self.shuffle_loc {
+//             let shuffle_id = ShuffleId::new(
+//                 Uuid::parse_str(&loc.job_uuid).expect("error parsing uuid in from_proto"),
+//                 loc.stage_id as usize,
+//                 loc.partition_id as usize,
+//             );
+//
+//             let exec = ExecutorMeta {
+//                 id: loc.executor_id.to_owned(),
+//                 host: loc.executor_host.to_owned(),
+//                 port: loc.executor_port as usize,
+//             };
+//
+//             shuffle_locations.insert(shuffle_id, exec);
+//         }
+//
+//         Ok(ExecutionTask::new(
+//             Uuid::parse_str(&self.job_uuid).expect("error parsing uuid in from_proto"),
+//             self.stage_id as usize,
+//             self.partition_id as usize,
+//             convert_required!(self.plan)?,
+//             shuffle_locations,
+//         ))
+//     }
+// }
+//
+// impl TryInto<ShuffleLocation> for &protobuf::ShuffleLocation {
+//     type Error = BallistaProtoError;
+//
+//     fn try_into(self) -> Result<ShuffleLocation, Self::Error> {
+//         Ok(ShuffleLocation {}) //TODO why empty?
+//     }
+// }
+//
+// impl TryInto<ShuffleId> for &protobuf::ShuffleId {
+//     type Error = BallistaProtoError;
+//
+//     fn try_into(self) -> Result<ShuffleId, Self::Error> {
+//         Ok(ShuffleId::new(
+//             Uuid::parse_str(&self.job_uuid).expect("error parsing uuid in from_proto"),
+//             self.stage_id as usize,
+//             self.partition_id as usize,
+//         ))
+//     }
+// }
 
 impl TryInto<Schema> for &protobuf::Schema {
-    type Error = BallistaError;
+    type Error = BallistaProtoError;
 
     fn try_into(self) -> Result<Schema, Self::Error> {
         let fields = self
@@ -336,117 +336,119 @@ impl TryInto<Schema> for &protobuf::Schema {
     }
 }
 
-impl TryInto<PhysicalPlan> for &protobuf::PhysicalPlanNode {
-    type Error = BallistaError;
+// impl TryInto<PhysicalPlan> for &protobuf::PhysicalPlanNode {
+//     type Error = BallistaProtoError;
+//
+//     fn try_into(self) -> Result<PhysicalPlan, Self::Error> {
+//         if let Some(selection) = &self.selection {
+//             let input: PhysicalPlan = convert_box_required!(self.input)?;
+//             match selection.expr {
+//                 Some(ref protobuf_expr) => {
+//                     let expr: Expr = protobuf_expr.try_into()?;
+//                     Ok(PhysicalPlan::Filter(Arc::new(FilterExec::new(
+//                         &input, &expr,
+//                     ))))
+//                 }
+//                 _ => Err(proto_error("from_proto: Selection expr missing")),
+//             }
+//         } else if let Some(projection) = &self.projection {
+//             let input: PhysicalPlan = convert_box_required!(self.input)?;
+//             let exprs = projection
+//                 .expr
+//                 .iter()
+//                 .map(|expr| expr.try_into())
+//                 .collect::<Result<Vec<_>, _>>()?;
+//             Ok(PhysicalPlan::Projection(Arc::new(ProjectionExec::try_new(
+//                 &exprs,
+//                 Arc::new(input),
+//             )?)))
+//         } else if let Some(aggregate) = &self.hash_aggregate {
+//             let input: PhysicalPlan = convert_box_required!(self.input)?;
+//             let mode = match aggregate.mode {
+//                 mode if mode == protobuf::AggregateMode::Partial as i32 => {
+//                     Ok(AggregateMode::Partial)
+//                 }
+//                 mode if mode == protobuf::AggregateMode::Final as i32 => Ok(AggregateMode::Final),
+//                 mode if mode == protobuf::AggregateMode::Complete as i32 => {
+//                     Ok(AggregateMode::Complete)
+//                 }
+//                 other => Err(proto_error(&format!(
+//                     "Unsupported aggregate mode '{}' for hash aggregate",
+//                     other
+//                 ))),
+//             }?;
+//             let group_expr = aggregate
+//                 .group_expr
+//                 .iter()
+//                 .map(|expr| expr.try_into())
+//                 .collect::<Result<Vec<_>, _>>()?;
+//             let aggr_expr = aggregate
+//                 .aggr_expr
+//                 .iter()
+//                 .map(|expr| expr.try_into())
+//                 .collect::<Result<Vec<_>, _>>()?;
+//             Ok(PhysicalPlan::HashAggregate(Arc::new(
+//                 HashAggregateExec::try_new(mode, group_expr, aggr_expr, Arc::new(input))?,
+//             )))
+//         } else if let Some(scan) = &self.scan {
+//             match scan.file_format.as_str() {
+//                 "csv" => {
+//                     let schema: Schema = convert_required!(scan.schema)?;
+//                     let options = CsvReadOptions::new()
+//                         .schema(&schema)
+//                         .has_header(scan.has_header);
+//                     let projection = scan.projection.iter().map(|n| *n as usize).collect();
+//
+//                     Ok(PhysicalPlan::CsvScan(Arc::new(CsvScanExec::try_new(
+//                         &scan.path,
+//                         scan.filename.clone(),
+//                         options,
+//                         Some(projection),
+//                         scan.batch_size as usize,
+//                     )?)))
+//                 }
+//                 "parquet" => {
+//                     let schema: Schema = convert_required!(scan.schema)?;
+//                     Ok(PhysicalPlan::ParquetScan(Arc::new(
+//                         ParquetScanExec::try_new(
+//                             &scan.path,
+//                             scan.filename.clone(),
+//                             Some(scan.projection.iter().map(|n| *n as usize).collect()),
+//                             scan.batch_size as usize,
+//                             Some(schema),
+//                         )?,
+//                     )))
+//                 }
+//                 other => Err(proto_error(&format!(
+//                     "Unsupported file format '{}' for file scan",
+//                     other
+//                 ))),
+//             }
+//         } else if let Some(shuffle_reader) = &self.shuffle_reader {
+//             let mut shuffle_ids = vec![];
+//             for s in &shuffle_reader.shuffle_id {
+//                 shuffle_ids.push(s.try_into()?);
+//             }
+//             Ok(PhysicalPlan::ShuffleReader(Arc::new(
+//                 ShuffleReaderExec::new(
+//                     Arc::new(convert_required!(shuffle_reader.schema)?),
+//                     shuffle_ids,
+//                 ),
+//             )))
+//         } else {
+//             Err(proto_error(&format!(
+//                 "Unsupported physical plan '{:?}'",
+//                 self
+//             )))
+//         }
+//     }
+// }
 
-    fn try_into(self) -> Result<PhysicalPlan, Self::Error> {
-        if let Some(selection) = &self.selection {
-            let input: PhysicalPlan = convert_box_required!(self.input)?;
-            match selection.expr {
-                Some(ref protobuf_expr) => {
-                    let expr: Expr = protobuf_expr.try_into()?;
-                    Ok(PhysicalPlan::Filter(Arc::new(FilterExec::new(
-                        &input, &expr,
-                    ))))
-                }
-                _ => Err(ballista_error("from_proto: Selection expr missing")),
-            }
-        } else if let Some(projection) = &self.projection {
-            let input: PhysicalPlan = convert_box_required!(self.input)?;
-            let exprs = projection
-                .expr
-                .iter()
-                .map(|expr| expr.try_into())
-                .collect::<Result<Vec<_>, _>>()?;
-            Ok(PhysicalPlan::Projection(Arc::new(ProjectionExec::try_new(
-                &exprs,
-                Arc::new(input),
-            )?)))
-        } else if let Some(aggregate) = &self.hash_aggregate {
-            let input: PhysicalPlan = convert_box_required!(self.input)?;
-            let mode = match aggregate.mode {
-                mode if mode == protobuf::AggregateMode::Partial as i32 => {
-                    Ok(AggregateMode::Partial)
-                }
-                mode if mode == protobuf::AggregateMode::Final as i32 => Ok(AggregateMode::Final),
-                mode if mode == protobuf::AggregateMode::Complete as i32 => {
-                    Ok(AggregateMode::Complete)
-                }
-                other => Err(ballista_error(&format!(
-                    "Unsupported aggregate mode '{}' for hash aggregate",
-                    other
-                ))),
-            }?;
-            let group_expr = aggregate
-                .group_expr
-                .iter()
-                .map(|expr| expr.try_into())
-                .collect::<Result<Vec<_>, _>>()?;
-            let aggr_expr = aggregate
-                .aggr_expr
-                .iter()
-                .map(|expr| expr.try_into())
-                .collect::<Result<Vec<_>, _>>()?;
-            Ok(PhysicalPlan::HashAggregate(Arc::new(
-                HashAggregateExec::try_new(mode, group_expr, aggr_expr, Arc::new(input))?,
-            )))
-        } else if let Some(scan) = &self.scan {
-            match scan.file_format.as_str() {
-                "csv" => {
-                    let schema: Schema = convert_required!(scan.schema)?;
-                    let options = CsvReadOptions::new()
-                        .schema(&schema)
-                        .has_header(scan.has_header);
-                    let projection = scan.projection.iter().map(|n| *n as usize).collect();
-
-                    Ok(PhysicalPlan::CsvScan(Arc::new(CsvScanExec::try_new(
-                        &scan.path,
-                        scan.filename.clone(),
-                        options,
-                        Some(projection),
-                        scan.batch_size as usize,
-                    )?)))
-                }
-                "parquet" => {
-                    let schema: Schema = convert_required!(scan.schema)?;
-                    Ok(PhysicalPlan::ParquetScan(Arc::new(
-                        ParquetScanExec::try_new(
-                            &scan.path,
-                            scan.filename.clone(),
-                            Some(scan.projection.iter().map(|n| *n as usize).collect()),
-                            scan.batch_size as usize,
-                            Some(schema),
-                        )?,
-                    )))
-                }
-                other => Err(ballista_error(&format!(
-                    "Unsupported file format '{}' for file scan",
-                    other
-                ))),
-            }
-        } else if let Some(shuffle_reader) = &self.shuffle_reader {
-            let mut shuffle_ids = vec![];
-            for s in &shuffle_reader.shuffle_id {
-                shuffle_ids.push(s.try_into()?);
-            }
-            Ok(PhysicalPlan::ShuffleReader(Arc::new(
-                ShuffleReaderExec::new(
-                    Arc::new(convert_required!(shuffle_reader.schema)?),
-                    shuffle_ids,
-                ),
-            )))
-        } else {
-            Err(ballista_error(&format!(
-                "Unsupported physical plan '{:?}'",
-                self
-            )))
-        }
-    }
-}
-
-fn parse_required_expr(p: &Option<Box<protobuf::LogicalExprNode>>) -> Result<Expr, BallistaError> {
+fn parse_required_expr(
+    p: &Option<Box<protobuf::LogicalExprNode>>,
+) -> Result<Expr, BallistaProtoError> {
     match p {
         Some(expr) => expr.as_ref().try_into(),
-        None => Err(ballista_error("Missing required expression")),
+        None => Err(proto_error("Missing required expression")),
     }
 }
