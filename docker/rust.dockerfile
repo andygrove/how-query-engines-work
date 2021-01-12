@@ -70,6 +70,10 @@ ENV OPENSSL_DIR=/usr/local/musl/ \
 RUN rustup target add x86_64-unknown-linux-musl
 RUN cargo install cargo-build-deps
 
+# prepare toolchain
+RUN rustup update && \
+    rustup component add rustfmt
+
 # Fetch Ballista dependencies
 COPY rust/ballista/Cargo.toml /tmp/ballista/
 WORKDIR /tmp/ballista

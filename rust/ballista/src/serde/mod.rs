@@ -15,9 +15,13 @@
 //! This crate contains code generated from the Ballista Protocol Buffer Definition as well
 //! as convenience code for interacting with the generated code.
 
-// use std::convert::TryInto;
-// use std::io::Cursor;
+use std::convert::TryInto;
+use std::io::Cursor;
+
 use crate::error::BallistaError;
+use crate::serde::scheduler::Action as BallistaAction;
+
+use prost::Message;
 
 pub const BALLISTA_PROTO_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -29,13 +33,14 @@ pub mod protobuf {
 
 pub mod logical_plan;
 pub mod physical_plan;
+pub mod scheduler;
 
-// pub(crate) fn decode_protobuf(bytes: &[u8]) -> Result<Action, BallistaError> {
-//     let mut buf = Cursor::new(bytes);
-//     protobuf::Action::decode(&mut buf)
-//         .map_err(|e| BallistaError::General(format!("{:?}", e)))
-//         .and_then(|node| (&node).try_into())
-// }
+pub(crate) fn decode_protobuf(bytes: &[u8]) -> Result<BallistaAction, BallistaError> {
+    let mut buf = Cursor::new(bytes);
+    protobuf::Action::decode(&mut buf)
+        .map_err(|e| BallistaError::General(format!("{:?}", e)))
+        .and_then(|node| node.try_into())
+}
 
 pub(crate) fn proto_error(message: &str) -> BallistaError {
     BallistaError::General(message.to_owned())
