@@ -15,9 +15,15 @@
 //! Distributed execution context.
 
 use std::collections::HashMap;
+use std::sync::Arc;
 
+use crate::error::Result;
 use crate::executor::ExecutorConfig;
 use crate::serde::scheduler::{ExecutorMeta, ShuffleId};
+
+use datafusion::dataframe::DataFrame;
+use datafusion::physical_plan::csv::CsvReadOptions;
+use datafusion::physical_plan::SendableRecordBatchStream;
 
 pub struct BallistaContext {
     // map from shuffle id to executor uuid
@@ -34,6 +40,36 @@ impl BallistaContext {
             // config: config.clone(),
             // shuffle_locations,
         }
+    }
+
+    /// Create a context for executing queries against a remote Ballista executor instance
+    pub fn remote(_host: &str, _port: usize, _settings: HashMap<&str, &str>) -> Self {
+        todo!()
+    }
+
+    /// Create a DataFrame representing a Parquet table scan
+    pub fn read_parquet(&self, _path: &str) -> Result<Arc<dyn DataFrame>> {
+        todo!()
+    }
+
+    /// Create a DataFrame representing a CSV table scan
+    pub fn read_csv(&self, _path: &str, _options: CsvReadOptions) -> Result<Arc<dyn DataFrame>> {
+        todo!()
+    }
+
+    /// Register a DataFrame as a table that can be referenced from a SQL query
+    pub fn register_table(&self, _name: &str, _table: Arc<dyn DataFrame>) -> Result<()> {
+        todo!()
+    }
+
+    /// Create a DataFrame from a SQL statement
+    pub fn sql(&self, _sql: &str) -> Result<Arc<dyn DataFrame>> {
+        todo!()
+    }
+
+    /// Execute the query and return a stream of result batches
+    pub fn execute(&self) -> Result<SendableRecordBatchStream> {
+        todo!()
     }
 }
 
