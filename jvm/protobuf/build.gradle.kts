@@ -12,6 +12,9 @@ sourceSets {
         proto {
             srcDir("../../proto")
         }
+        java{
+            srcDir("build/generated/proto/main/java")
+        }
     }
 }
 
