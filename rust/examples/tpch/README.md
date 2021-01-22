@@ -1,9 +1,10 @@
-# TPC-H Example
+# Rust TPC-H benchmark client
 
-Rust TPC-H benchmark client.
-
-Example usage:
+This example is forked from the 
+[Apache Arrow Rust Benchmark crate](https://github.com/apache/arrow/tree/master/rust/benchmarks) and instructions for
+generating TPC-H data sets can be found there.
 
 ```bash
-cargo run -- /mnt/tpch/parquet/100-240/lineitem/ --host localhost --port 50051
-``` 
+cargo run benchmark --host localhost --port 50051 --query 12 --path /mnt/tpch/ --format parquet
+```
+
