@@ -18,6 +18,7 @@
 
 use std::convert::TryInto;
 
+use crate::context::DFTableAdapter;
 use crate::serde::{empty_logical_plan_node, protobuf, BallistaError};
 
 use arrow::datatypes::{DataType, DateUnit, Schema};
@@ -36,18 +37,37 @@ impl TryInto<protobuf::LogicalPlanNode> for &LogicalPlan {
             LogicalPlan::TableScan {
                 table_name,
                 source,
-                projected_schema,
                 filters,
+                projection,
                 ..
             } => {
                 let schema = source.schema();
-                let source = source.as_any();
-                let columns = projected_schema
-                    .fields()
-                    .iter()
-                    .map(|f| f.name().to_owned())
-                    .collect();
-                let projection = Some(protobuf::ProjectionColumns { columns });
+
+                // unwrap the DFTableAdapter to get to the real TableProvider
+                let source = if let Some(adapter) = source.as_any().downcast_ref::<DFTableAdapter>()
+                {
+                    match &adapter.logical_plan {
+                        LogicalPlan::TableScan { source, .. } => Ok(source.as_any()),
+                        _ => Err(BallistaError::General(
+                            "Invalid LogicalPlan::TableScan".to_owned(),
+                        )),
+                    }
+                } else {
+                    Ok(source.as_any())
+                }?;
+
+                let projection = match projection {
+                    None => None,
+                    Some(columns) => {
+                        let column_names = columns
+                            .iter()
+                            .map(|i| schema.field(*i).name().to_owned())
+                            .collect();
+                        Some(protobuf::ProjectionColumns {
+                            columns: column_names,
+                        })
+                    }
+                };
                 let schema: protobuf::Schema = schema.as_ref().try_into()?;
 
                 let filters: Vec<protobuf::LogicalExprNode> = filters
