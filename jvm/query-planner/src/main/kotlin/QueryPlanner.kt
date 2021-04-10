@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.planner
+package io.andygrove.kquery.planner
 
 import java.sql.SQLException
-import io.andygrove.queryengine.datatypes.Schema
-import io.andygrove.queryengine.logical.*
-import io.andygrove.queryengine.physical.*
-import io.andygrove.queryengine.physical.expressions.*
+import io.andygrove.kquery.datatypes.Schema
+import io.andygrove.kquery.logical.*
+import io.andygrove.kquery.physical.*
+import io.andygrove.kquery.physical.expressions.*
 
 /** The query planner creates a physical query plan from a logical query plan. */
 class QueryPlanner {

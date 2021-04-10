@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.datasource
+package io.andygrove.kquery.datasource
 
-import io.andygrove.queryengine.datatypes.RecordBatch
-import io.andygrove.queryengine.datatypes.Schema
+import io.andygrove.kquery.datatypes.RecordBatch
+import io.andygrove.kquery.datatypes.Schema
 
 class InMemoryDataSource(val schema: Schema, val data: List<RecordBatch>) : DataSource {
 

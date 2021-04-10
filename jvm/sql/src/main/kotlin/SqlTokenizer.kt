@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.sql
+package io.andygrove.kquery.sql
 
 
 class SqlTokenizer(val sql: String) {

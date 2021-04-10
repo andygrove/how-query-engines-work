@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.physical
+package io.andygrove.kquery.physical
 
-import io.andygrove.queryengine.datatypes.RecordBatch
-import io.andygrove.queryengine.datatypes.Schema
+import io.andygrove.kquery.datatypes.RecordBatch
+import io.andygrove.kquery.datatypes.Schema
 
 /** A physical plan represents an executable piece of code that will produce data. */
 interface PhysicalPlan {

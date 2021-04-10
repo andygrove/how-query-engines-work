@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.datasource
+package io.andygrove.kquery.datasource
 
 import java.io.File
 import org.junit.Test

@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.execution
+package io.andygrove.kquery.execution
 
-import io.andygrove.queryengine.datasource.CsvDataSource
-import io.andygrove.queryengine.datasource.DataSource
-import io.andygrove.queryengine.datatypes.RecordBatch
-import io.andygrove.queryengine.logical.*
-import io.andygrove.queryengine.optimizer.Optimizer
-import io.andygrove.queryengine.planner.QueryPlanner
-import io.andygrove.queryengine.sql.SqlParser
-import io.andygrove.queryengine.sql.SqlPlanner
-import io.andygrove.queryengine.sql.SqlSelect
-import io.andygrove.queryengine.sql.SqlTokenizer
+import io.andygrove.kquery.datasource.CsvDataSource
+import io.andygrove.kquery.datasource.DataSource
+import io.andygrove.kquery.datatypes.RecordBatch
+import io.andygrove.kquery.logical.*
+import io.andygrove.kquery.optimizer.Optimizer
+import io.andygrove.kquery.planner.QueryPlanner
+import io.andygrove.kquery.sql.SqlParser
+import io.andygrove.kquery.sql.SqlPlanner
+import io.andygrove.kquery.sql.SqlSelect
+import io.andygrove.kquery.sql.SqlTokenizer
 
 /** Execution context */
 class ExecutionContext(val settings: Map<String, String>) {

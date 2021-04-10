@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.protobuf
+package io.andygrove.kquery.protobuf
 
-import io.andygrove.queryengine.datasource.CsvDataSource
-import io.andygrove.queryengine.datatypes.ArrowTypes
-import io.andygrove.queryengine.logical.*
-import io.andygrove.queryengine.physical.QueryAction
+import io.andygrove.kquery.datasource.CsvDataSource
+import io.andygrove.kquery.datatypes.ArrowTypes
+import io.andygrove.kquery.logical.*
+import io.andygrove.kquery.physical.QueryAction
 
 class ProtobufDeserializer {
 @Throws(RuntimeException::class)
@@ -101,7 +101,7 @@ class ProtobufDeserializer {
       }
   }
     @Throws(IllegalStateException::class)
-  fun fromProto(schema: Schema): io.andygrove.queryengine.datatypes.Schema {
+  fun fromProto(schema: Schema): io.andygrove.kquery.datatypes.Schema {
 
     val arrowFields =
         schema.columnsList.map {
@@ -129,11 +129,11 @@ class ProtobufDeserializer {
           org.apache.arrow.vector.types.pojo.Field(it.name, fieldType, listOf())
         }
 
-    return io.andygrove.queryengine.datatypes.SchemaConverter
+    return io.andygrove.kquery.datatypes.SchemaConverter
         .fromArrow(org.apache.arrow.vector.types.pojo.Schema(arrowFields))
   }
 
-  fun fromProto(action: Action): io.andygrove.queryengine.physical.Action {
+  fun fromProto(action: Action): io.andygrove.kquery.physical.Action {
     return when {
       action.hasQuery() -> {
         QueryAction(fromProto(action.query))

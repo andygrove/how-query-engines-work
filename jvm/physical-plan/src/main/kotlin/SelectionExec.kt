@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.physical
+package io.andygrove.kquery.physical
 
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.BitVector
 import org.apache.arrow.vector.FieldVector
 import org.apache.arrow.vector.VarCharVector
-import io.andygrove.queryengine.datatypes.ArrowFieldVector
-import io.andygrove.queryengine.datatypes.ArrowVectorBuilder
-import io.andygrove.queryengine.datatypes.ColumnVector
-import io.andygrove.queryengine.datatypes.RecordBatch
-import io.andygrove.queryengine.datatypes.Schema
-import io.andygrove.queryengine.physical.expressions.Expression
+import io.andygrove.kquery.datatypes.ArrowFieldVector
+import io.andygrove.kquery.datatypes.ArrowVectorBuilder
+import io.andygrove.kquery.datatypes.ColumnVector
+import io.andygrove.kquery.datatypes.RecordBatch
+import io.andygrove.kquery.datatypes.Schema
+import io.andygrove.kquery.physical.expressions.Expression
 
 /** Execute a selection. */
 class SelectionExec(val input: PhysicalPlan, val expr: Expression) : PhysicalPlan {

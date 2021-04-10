@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.examples;
+package io.andygrove.kquery.examples;
 
 import kotlin.system.measureTimeMillis
 import org.apache.arrow.vector.types.FloatingPointPrecision
 import org.apache.arrow.vector.types.pojo.ArrowType
-import io.andygrove.queryengine.datatypes.ArrowTypes
-import io.andygrove.queryengine.execution.ExecutionContext
-import io.andygrove.queryengine.logical.*
-import io.andygrove.queryengine.optimizer.Optimizer
+import io.andygrove.kquery.datatypes.ArrowTypes
+import io.andygrove.kquery.execution.ExecutionContext
+import io.andygrove.kquery.logical.*
+import io.andygrove.kquery.optimizer.Optimizer
 
 fun main() {
 

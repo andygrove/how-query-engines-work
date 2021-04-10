@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.sql
+package io.andygrove.kquery.sql
 
 import java.sql.SQLException
 import java.util.logging.Logger
 import kotlin.system.exitProcess
 import org.apache.arrow.vector.types.FloatingPointPrecision
 import org.apache.arrow.vector.types.pojo.ArrowType
-import io.andygrove.queryengine.logical.*
+import io.andygrove.kquery.logical.*
 
 /** SqlPlanner creates a logical plan from a parsed SQL statement. */
 class SqlPlanner {

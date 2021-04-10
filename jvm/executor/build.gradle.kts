@@ -6,7 +6,7 @@ plugins {
 }
 
 application {
-    mainClassName = "io.andygrove.queryengine.executor.Executor"
+    mainClassName = "io.andygrove.kquery.executor.Executor"
 }
 
 dependencies {

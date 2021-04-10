@@ -1,4 +1,4 @@
-package io.andygrove.queryengine.spark.benchmarks.nyctaxi
+package io.andygrove.kquery.spark.benchmarks.nyctaxi
 
 import java.io.{File, FileWriter}
 

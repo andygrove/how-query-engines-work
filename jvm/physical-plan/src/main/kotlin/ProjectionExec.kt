@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.physical
+package io.andygrove.kquery.physical
 
-import io.andygrove.queryengine.datatypes.RecordBatch
-import io.andygrove.queryengine.datatypes.Schema
-import io.andygrove.queryengine.physical.expressions.Expression
+import io.andygrove.kquery.datatypes.RecordBatch
+import io.andygrove.kquery.datatypes.Schema
+import io.andygrove.kquery.physical.expressions.Expression
 
 /** Execute a projection. */
 class ProjectionExec(val input: PhysicalPlan, val schema: Schema, val expr: List<Expression>) :

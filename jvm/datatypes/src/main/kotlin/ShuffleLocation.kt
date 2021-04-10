@@ -1,4 +1,4 @@
-package io.andygrove.queryengine.datatypes
+package io.andygrove.kquery.datatypes
 
 
 /*

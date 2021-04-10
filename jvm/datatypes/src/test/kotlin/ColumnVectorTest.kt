@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.datatypes
+package io.andygrove.kquery.datatypes
 
 import kotlin.test.assertEquals
 import org.apache.arrow.memory.RootAllocator
