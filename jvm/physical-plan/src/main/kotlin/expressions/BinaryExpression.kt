@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.physical.expressions
+package io.andygrove.kquery.physical.expressions
 
 import java.lang.IllegalStateException
-import io.andygrove.queryengine.datatypes.ColumnVector
-import io.andygrove.queryengine.datatypes.RecordBatch
+import io.andygrove.kquery.datatypes.ColumnVector
+import io.andygrove.kquery.datatypes.RecordBatch
 
 /**
  * For binary expressions we need to evaluate the left and right input expressions and then evaluate

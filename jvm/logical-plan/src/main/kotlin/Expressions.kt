@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.logical
+package io.andygrove.kquery.logical
 
 import java.sql.SQLException
 import org.apache.arrow.vector.types.pojo.ArrowType
-import io.andygrove.queryengine.datatypes.ArrowTypes
-import io.andygrove.queryengine.datatypes.Field
+import io.andygrove.kquery.datatypes.ArrowTypes
+import io.andygrove.kquery.datatypes.Field
 
 /** Logical expression representing a reference to a column by name. */
 class Column(val name: String) : LogicalExpr {

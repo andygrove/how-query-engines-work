@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.fuzzer
+package io.andygrove.kquery.fuzzer
 
 import java.lang.IllegalStateException
 import kotlin.random.Random
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.*
 import org.apache.arrow.vector.types.pojo.ArrowType
-import io.andygrove.queryengine.datatypes.ArrowFieldVector
-import io.andygrove.queryengine.datatypes.ArrowTypes
-import io.andygrove.queryengine.datatypes.RecordBatch
-import io.andygrove.queryengine.datatypes.Schema
-import io.andygrove.queryengine.logical.*
+import io.andygrove.kquery.datatypes.ArrowFieldVector
+import io.andygrove.kquery.datatypes.ArrowTypes
+import io.andygrove.kquery.datatypes.RecordBatch
+import io.andygrove.kquery.datatypes.Schema
+import io.andygrove.kquery.logical.*
 
 class Fuzzer {
 

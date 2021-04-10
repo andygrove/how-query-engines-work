@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.logical
+package io.andygrove.kquery.logical
 
-import io.andygrove.queryengine.datatypes.Schema
+import io.andygrove.kquery.datatypes.Schema
 
 /** Logical plan representing a selection (a.k.a. filter) against an input */
 class Selection(val input: LogicalPlan, val expr: LogicalExpr) : LogicalPlan {

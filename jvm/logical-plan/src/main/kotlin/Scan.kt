@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.logical
+package io.andygrove.kquery.logical
 
-import io.andygrove.queryengine.datasource.DataSource
-import io.andygrove.queryengine.datatypes.Schema
+import io.andygrove.kquery.datasource.DataSource
+import io.andygrove.kquery.datatypes.Schema
 
 /** Represents a scan of a data source */
 class Scan(val path: String, val dataSource: DataSource, val projection: List<String>) :

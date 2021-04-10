@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.physical.expressions
+package io.andygrove.kquery.physical.expressions
 
 interface AggregateExpression {
   fun inputExpression(): Expression

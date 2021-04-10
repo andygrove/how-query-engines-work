@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.jdbc;
+package io.andygrove.kquery.jdbc;
 
 import java.math.BigDecimal;
 import java.sql.Date;

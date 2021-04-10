@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.physical.expressions
+package io.andygrove.kquery.physical.expressions
 
 import java.lang.IllegalStateException
 import org.apache.arrow.vector.types.pojo.ArrowType
-import io.andygrove.queryengine.datatypes.*
+import io.andygrove.kquery.datatypes.*
 
 abstract class MathExpression(l: Expression, r: Expression) : BinaryExpression(l, r) {
 

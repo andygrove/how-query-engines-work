@@ -14,7 +14,7 @@
 
 @file:Suppress("unused")
 
-package io.andygrove.queryengine.sql
+package io.andygrove.kquery.sql
 
 interface TokenType
 

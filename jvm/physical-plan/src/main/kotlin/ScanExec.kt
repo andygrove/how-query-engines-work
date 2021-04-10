@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.physical
+package io.andygrove.kquery.physical
 
-import io.andygrove.queryengine.datasource.DataSource
-import io.andygrove.queryengine.datatypes.RecordBatch
-import io.andygrove.queryengine.datatypes.Schema
+import io.andygrove.kquery.datasource.DataSource
+import io.andygrove.kquery.datatypes.RecordBatch
+import io.andygrove.kquery.datatypes.Schema
 
 /** Scan a data source with optional push-down projection. */
 class ScanExec(val ds: DataSource, val projection: List<String>) : PhysicalPlan {

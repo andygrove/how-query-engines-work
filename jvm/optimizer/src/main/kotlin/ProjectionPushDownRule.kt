@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.optimizer
+package io.andygrove.kquery.optimizer
 
 import java.lang.IllegalStateException
-import io.andygrove.queryengine.logical.*
+import io.andygrove.kquery.logical.*
 
 class ProjectionPushDownRule : OptimizerRule {
 

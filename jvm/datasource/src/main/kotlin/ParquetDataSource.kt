@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.queryengine.datasource
+package io.andygrove.kquery.datasource
 
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.VectorSchemaRoot
@@ -21,17 +21,17 @@ import org.apache.hadoop.fs.Path
 import org.apache.parquet.arrow.schema.SchemaConverter
 import org.apache.parquet.hadoop.ParquetFileReader
 import org.apache.parquet.hadoop.util.HadoopInputFile
-import io.andygrove.queryengine.datatypes.ArrowFieldVector
-import io.andygrove.queryengine.datatypes.Field
-import io.andygrove.queryengine.datatypes.RecordBatch
-import io.andygrove.queryengine.datatypes.Schema
+import io.andygrove.kquery.datatypes.ArrowFieldVector
+import io.andygrove.kquery.datatypes.Field
+import io.andygrove.kquery.datatypes.RecordBatch
+import io.andygrove.kquery.datatypes.Schema
 
 class ParquetDataSource(private val filename: String) : DataSource {
 
   override fun schema(): Schema {
     return ParquetScan(filename, listOf()).use {
       val arrowSchema = SchemaConverter().fromParquet(it.schema).arrowSchema
-      io.andygrove.queryengine.datatypes.SchemaConverter.fromArrow(arrowSchema)
+      io.andygrove.kquery.datatypes.SchemaConverter.fromArrow(arrowSchema)
     }
   }
 
@@ -104,7 +104,7 @@ class ParquetIterator(
     root.rowCount = rows
 
     val ballistaSchema =
-        io.andygrove.queryengine.datatypes.SchemaConverter.fromArrow(projectedArrowSchema)
+        io.andygrove.kquery.datatypes.SchemaConverter.fromArrow(projectedArrowSchema)
 
     batch = RecordBatch(ballistaSchema, root.fieldVectors.map { ArrowFieldVector(it) })
 
