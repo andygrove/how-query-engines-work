@@ -1,4 +1,4 @@
-package org.ballistacompute.datatypes
+package io.andygrove.datatypes
 
 /*
   message ShuffleId {

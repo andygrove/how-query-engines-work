@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.physical
+package io.andygrove.physical
 
-import org.ballistacompute.datasource.DataSource
-import org.ballistacompute.datatypes.RecordBatch
-import org.ballistacompute.datatypes.Schema
+import io.andygrove.datasource.DataSource
+import io.andygrove.datatypes.RecordBatch
+import io.andygrove.datatypes.Schema
 
 /** Scan a data source with optional push-down projection. */
 class ScanExec(val ds: DataSource, val projection: List<String>) : PhysicalPlan {

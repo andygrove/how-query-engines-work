@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.datasource
+package io.andygrove.datasource
 
 import com.univocity.parsers.common.record.Record
 import com.univocity.parsers.csv.*
@@ -21,7 +21,7 @@ import java.lang.IllegalStateException
 import java.util.logging.Logger
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.*
-import org.ballistacompute.datatypes.*
+import io.andygrove.datatypes.*
 
 /**
  * Simple CSV data source. If no schema is provided then it assumes that the first line contains

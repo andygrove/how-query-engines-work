@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.execution
+package io.andygrove.execution
 
 import kotlin.test.assertEquals
-import org.ballistacompute.logical.format
-import org.ballistacompute.physical.*
+import io.andygrove.logical.format
+import io.andygrove.physical.*
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance

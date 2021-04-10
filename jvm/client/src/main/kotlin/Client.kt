@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.client
+package io.andygrove.client
 
 import java.util.concurrent.TimeUnit
 import org.apache.arrow.flight.CallOptions
@@ -20,8 +20,8 @@ import org.apache.arrow.flight.FlightClient
 import org.apache.arrow.flight.Location
 import org.apache.arrow.flight.Ticket
 import org.apache.arrow.memory.RootAllocator
-import org.ballistacompute.logical.LogicalPlan
-import org.ballistacompute.protobuf.ProtobufSerializer
+import io.andygrove.logical.LogicalPlan
+import io.andygrove.protobuf.ProtobufSerializer
 
 /** Connection to a Ballista executor. */
 class Client(val host: String, val port: Int) {

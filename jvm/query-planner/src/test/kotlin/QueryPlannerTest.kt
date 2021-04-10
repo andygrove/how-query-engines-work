@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.planner
+package io.andygrove.planner
 
 import kotlin.test.assertEquals
-import org.ballistacompute.datasource.InMemoryDataSource
-import org.ballistacompute.datatypes.ArrowTypes
-import org.ballistacompute.datatypes.Field
-import org.ballistacompute.datatypes.Schema
-import org.ballistacompute.logical.*
-import org.ballistacompute.logical.DataFrameImpl
-import org.ballistacompute.logical.Scan
-import org.ballistacompute.optimizer.*
+import io.andygrove.datasource.InMemoryDataSource
+import io.andygrove.datatypes.ArrowTypes
+import io.andygrove.datatypes.Field
+import io.andygrove.datatypes.Schema
+import io.andygrove.logical.*
+import io.andygrove.logical.DataFrameImpl
+import io.andygrove.logical.Scan
+import io.andygrove.optimizer.*
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 

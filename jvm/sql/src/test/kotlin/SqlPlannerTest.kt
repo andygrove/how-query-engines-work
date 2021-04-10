@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.sql
+package io.andygrove.sql
 
 import java.io.File
 import kotlin.test.assertEquals
-import org.ballistacompute.datasource.CsvDataSource
-import org.ballistacompute.logical.DataFrameImpl
-import org.ballistacompute.logical.LogicalPlan
-import org.ballistacompute.logical.Scan
-import org.ballistacompute.logical.format
+import io.andygrove.datasource.CsvDataSource
+import io.andygrove.logical.DataFrameImpl
+import io.andygrove.logical.LogicalPlan
+import io.andygrove.logical.Scan
+import io.andygrove.logical.format
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance

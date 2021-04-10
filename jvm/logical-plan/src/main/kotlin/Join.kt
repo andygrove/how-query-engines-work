@@ -1,7 +1,7 @@
-package org.ballistacompute.logical
+package io.andygrove.logical
 
-import org.ballistacompute.datatypes.Field
-import org.ballistacompute.datatypes.Schema
+import io.andygrove.datatypes.Field
+import io.andygrove.datatypes.Schema
 
 enum class JoinType{
     Inner, Left, Right

@@ -5,7 +5,7 @@ plugins {
 }
 
 application {
-    mainClassName = "org.ballistacompute.benchmarks.Benchmarks"
+    mainClassName = "io.andygrove.benchmarks.Benchmarks"
 }
 
 dependencies {

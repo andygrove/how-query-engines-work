@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.client
+package io.andygrove.client
 
 class Context(endpoint: Endpoint) {
   val client = Client(endpoint.host, endpoint.port)

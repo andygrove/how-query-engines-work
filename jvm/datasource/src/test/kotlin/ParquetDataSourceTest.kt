@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.datasource
+package io.andygrove.datasource
 
 import java.io.File
 import kotlin.test.assertEquals

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.spark.executor
+package io.andygrove.spark.executor
 
 import java.util
 import java.util.{ArrayList, List}
@@ -47,7 +47,7 @@ import org.apache.arrow.vector.{
   VectorSchemaRoot
 }
 import org.apache.spark.sql.SparkSession
-import org.ballistacompute.protobuf
+import io.andygrove.protobuf
 
 class SparkFlightProducer(spark: SparkSession) extends FlightProducer {
 

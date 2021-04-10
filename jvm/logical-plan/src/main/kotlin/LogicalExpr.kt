@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.logical
+package io.andygrove.logical
 
-import org.ballistacompute.datatypes.Field
+import io.andygrove.datatypes.Field
 
 /**
  * Logical Expression for use in logical query plans. The logical expression provides information

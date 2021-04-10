@@ -6,7 +6,7 @@ plugins {
 }
 
 application {
-    mainClassName = "org.ballistacompute.spark.executor.SparkExecutor"
+    mainClassName = "io.andygrove.spark.executor.SparkExecutor"
 }
 
 dependencies {

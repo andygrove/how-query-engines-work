@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.datatypes
+package io.andygrove.datatypes
 
 import org.apache.arrow.vector.types.pojo.ArrowType
 

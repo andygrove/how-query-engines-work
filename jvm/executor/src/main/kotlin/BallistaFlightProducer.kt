@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.executor
+package io.andygrove.executor
 
 import java.lang.IllegalStateException
 import org.apache.arrow.flight.*
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.*
-import org.ballistacompute.execution.ExecutionContext
-import org.ballistacompute.logical.format
+import io.andygrove.execution.ExecutionContext
+import io.andygrove.logical.format
 
 class BallistaFlightProducer : FlightProducer {
 
@@ -36,9 +36,9 @@ class BallistaFlightProducer : FlightProducer {
     try {
 
       val action =
-          org.ballistacompute.protobuf.Action
+          io.andygrove.protobuf.Action
               .parseFrom(ticket?.bytes ?: throw IllegalArgumentException())
-      val logicalPlan = org.ballistacompute.protobuf.ProtobufDeserializer().fromProto(action.query)
+      val logicalPlan = io.andygrove.protobuf.ProtobufDeserializer().fromProto(action.query)
       println(logicalPlan.pretty())
 
       val schema = logicalPlan.schema()

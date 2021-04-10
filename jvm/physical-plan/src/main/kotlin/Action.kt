@@ -1,7 +1,7 @@
-package org.ballistacompute.physical
+package io.andygrove.physical
 
-import org.ballistacompute.datatypes.ShuffleId
-import org.ballistacompute.logical.LogicalPlan
+import io.andygrove.datatypes.ShuffleId
+import io.andygrove.logical.LogicalPlan
 
 interface Action
 

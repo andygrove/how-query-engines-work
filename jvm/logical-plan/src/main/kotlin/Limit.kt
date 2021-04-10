@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.logical
+package io.andygrove.logical
 
-import org.ballistacompute.datatypes.Schema
+import io.andygrove.datatypes.Schema
 
 /** Logical plan representing a limit */
 class Limit(val input: LogicalPlan, val limit: Int) : LogicalPlan {

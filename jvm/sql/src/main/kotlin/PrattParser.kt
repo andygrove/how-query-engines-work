@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.sql
+package io.andygrove.sql
 
 /** Pratt Top Down Operator Precedence Parser. See https://tdop.github.io/ for paper. */
 interface PrattParser {

@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.physical.expressions
+package io.andygrove.physical.expressions
 
-import org.ballistacompute.datatypes.ColumnVector
-import org.ballistacompute.datatypes.RecordBatch
+import io.andygrove.datatypes.ColumnVector
+import io.andygrove.datatypes.RecordBatch
 
 /** Reference column in a batch by index */
 class ColumnExpression(val i: Int) : Expression {

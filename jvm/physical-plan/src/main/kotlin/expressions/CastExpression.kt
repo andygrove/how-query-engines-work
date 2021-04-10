@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.physical.expressions
+package io.andygrove.physical.expressions
 
 import java.lang.IllegalStateException
 import org.apache.arrow.vector.types.pojo.ArrowType
-import org.ballistacompute.datatypes.*
+import io.andygrove.datatypes.*
 
 class CastExpression(val expr: Expression, val dataType: ArrowType) : Expression {
 

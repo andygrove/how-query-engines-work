@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.physical
+package io.andygrove.physical
 
 import kotlin.test.assertEquals
-import org.ballistacompute.datasource.InMemoryDataSource
-import org.ballistacompute.datatypes.ArrowTypes
-import org.ballistacompute.datatypes.Field
-import org.ballistacompute.datatypes.Schema
-import org.ballistacompute.fuzzer.Fuzzer
-import org.ballistacompute.logical.*
-import org.ballistacompute.physical.expressions.*
+import io.andygrove.datasource.InMemoryDataSource
+import io.andygrove.datatypes.ArrowTypes
+import io.andygrove.datatypes.Field
+import io.andygrove.datatypes.Schema
+import io.andygrove.fuzzer.Fuzzer
+import io.andygrove.logical.*
+import io.andygrove.physical.expressions.*
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 

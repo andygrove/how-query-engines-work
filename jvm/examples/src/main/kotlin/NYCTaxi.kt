@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.examples;
+package io.andygrove.examples;
 
 import kotlin.system.measureTimeMillis
 import org.apache.arrow.vector.types.FloatingPointPrecision
 import org.apache.arrow.vector.types.pojo.ArrowType
-import org.ballistacompute.datatypes.ArrowTypes
-import org.ballistacompute.execution.ExecutionContext
-import org.ballistacompute.logical.*
-import org.ballistacompute.optimizer.Optimizer
+import io.andygrove.datatypes.ArrowTypes
+import io.andygrove.execution.ExecutionContext
+import io.andygrove.logical.*
+import io.andygrove.optimizer.Optimizer
 
 fun main() {
 

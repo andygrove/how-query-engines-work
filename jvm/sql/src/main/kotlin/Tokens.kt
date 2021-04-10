@@ -14,7 +14,7 @@
 
 @file:Suppress("unused")
 
-package org.ballistacompute.sql
+package io.andygrove.sql
 
 interface TokenType
 

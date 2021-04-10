@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.logical
+package io.andygrove.logical
 
-import org.ballistacompute.datasource.DataSource
-import org.ballistacompute.datatypes.Schema
+import io.andygrove.datasource.DataSource
+import io.andygrove.datatypes.Schema
 
 /** Represents a scan of a data source */
 class Scan(val path: String, val dataSource: DataSource, val projection: List<String>) :

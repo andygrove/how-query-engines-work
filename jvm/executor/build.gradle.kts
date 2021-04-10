@@ -6,7 +6,7 @@ plugins {
 }
 
 application {
-    mainClassName = "org.ballistacompute.executor.Executor"
+    mainClassName = "io.andygrove.executor.Executor"
 }
 
 dependencies {

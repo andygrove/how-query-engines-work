@@ -15,7 +15,7 @@ plugins {
     id("com.diffplug.gradle.spotless") version "4.4.0"
 }
 
-group = "org.ballistacompute"
+group = "io.andygrove"
 version = "0.4.0-SNAPSHOT"
 
 allprojects {
@@ -113,7 +113,7 @@ subprojects {
 
         publications {
             create<MavenPublication>("mavenKotlin") {
-                groupId = "org.ballistacompute"
+                groupId = "io.andygrove"
                 version = rootProject.version as String?
 
                 pom {

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.datasource
+package io.andygrove.datasource
 
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.VectorSchemaRoot
@@ -21,17 +21,17 @@ import org.apache.hadoop.fs.Path
 import org.apache.parquet.arrow.schema.SchemaConverter
 import org.apache.parquet.hadoop.ParquetFileReader
 import org.apache.parquet.hadoop.util.HadoopInputFile
-import org.ballistacompute.datatypes.ArrowFieldVector
-import org.ballistacompute.datatypes.Field
-import org.ballistacompute.datatypes.RecordBatch
-import org.ballistacompute.datatypes.Schema
+import io.andygrove.datatypes.ArrowFieldVector
+import io.andygrove.datatypes.Field
+import io.andygrove.datatypes.RecordBatch
+import io.andygrove.datatypes.Schema
 
 class ParquetDataSource(private val filename: String) : DataSource {
 
   override fun schema(): Schema {
     return ParquetScan(filename, listOf()).use {
       val arrowSchema = SchemaConverter().fromParquet(it.schema).arrowSchema
-      org.ballistacompute.datatypes.SchemaConverter.fromArrow(arrowSchema)
+      io.andygrove.datatypes.SchemaConverter.fromArrow(arrowSchema)
     }
   }
 
@@ -104,7 +104,7 @@ class ParquetIterator(
     root.rowCount = rows
 
     val ballistaSchema =
-        org.ballistacompute.datatypes.SchemaConverter.fromArrow(projectedArrowSchema)
+        io.andygrove.datatypes.SchemaConverter.fromArrow(projectedArrowSchema)
 
     batch = RecordBatch(ballistaSchema, root.fieldVectors.map { ArrowFieldVector(it) })
 

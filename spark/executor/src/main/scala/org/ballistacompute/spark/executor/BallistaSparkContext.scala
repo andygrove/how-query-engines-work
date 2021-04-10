@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.spark.executor
+package io.andygrove.spark.executor
 
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.util.{ArrowUtils, ArrowUtilsAccessor}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
-import org.ballistacompute.{logical => ballista}
+import io.andygrove.{logical => ballista}
 
 import scala.collection.JavaConverters._
 
@@ -107,7 +107,7 @@ class BallistaSparkContext(spark: SparkSession) {
       case c: ballista.Column =>
         input.col(c.getName)
 
-      case b: org.ballistacompute.logical.BinaryExpr =>
+      case b: io.andygrove.logical.BinaryExpr =>
         val l = createExpression(b.getL, input)
         val r = createExpression(b.getR, input)
         b match {

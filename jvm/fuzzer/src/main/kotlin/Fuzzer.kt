@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.fuzzer
+package io.andygrove.fuzzer
 
 import java.lang.IllegalStateException
 import kotlin.random.Random
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.*
 import org.apache.arrow.vector.types.pojo.ArrowType
-import org.ballistacompute.datatypes.ArrowFieldVector
-import org.ballistacompute.datatypes.ArrowTypes
-import org.ballistacompute.datatypes.RecordBatch
-import org.ballistacompute.datatypes.Schema
-import org.ballistacompute.logical.*
+import io.andygrove.datatypes.ArrowFieldVector
+import io.andygrove.datatypes.ArrowTypes
+import io.andygrove.datatypes.RecordBatch
+import io.andygrove.datatypes.Schema
+import io.andygrove.logical.*
 
 class Fuzzer {
 
