@@ -1,4 +1,4 @@
-package io.andygrove.physical
+package io.andygrove.queryengine.physical
 
 /*
   message Task {

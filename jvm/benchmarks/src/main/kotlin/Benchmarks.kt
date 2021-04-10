@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.benchmarks
+package io.andygrove.queryengine.benchmarks
 
 import java.io.File
 import java.io.FileWriter
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
-import io.andygrove.datasource.InMemoryDataSource
-import io.andygrove.datatypes.RecordBatch
-import io.andygrove.execution.ExecutionContext
+import io.andygrove.queryengine.datasource.InMemoryDataSource
+import io.andygrove.queryengine.datatypes.RecordBatch
+import io.andygrove.queryengine.execution.ExecutionContext
 
 /** Designed to be run from Docker. See top-level benchmarks folder for more info. */
 class Benchmarks {

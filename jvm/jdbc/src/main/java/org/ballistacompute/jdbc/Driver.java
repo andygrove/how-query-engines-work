@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.jdbc;
+package io.andygrove.queryengine.jdbc;
 
 import java.sql.Connection;
 import java.sql.DriverPropertyInfo;

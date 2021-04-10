@@ -1,4 +1,4 @@
-package io.andygrove.spark.benchmarks.nyctaxi
+package io.andygrove.queryengine.spark.benchmarks.nyctaxi
 
 import org.apache.spark.sql.{SaveMode, SparkSession}
 

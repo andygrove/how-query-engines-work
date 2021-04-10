@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.planner
+package io.andygrove.queryengine.planner
 
 import kotlin.test.assertEquals
-import io.andygrove.datasource.InMemoryDataSource
-import io.andygrove.datatypes.ArrowTypes
-import io.andygrove.datatypes.Field
-import io.andygrove.datatypes.Schema
-import io.andygrove.logical.*
-import io.andygrove.logical.DataFrameImpl
-import io.andygrove.logical.Scan
-import io.andygrove.optimizer.*
+import io.andygrove.queryengine.datasource.InMemoryDataSource
+import io.andygrove.queryengine.datatypes.ArrowTypes
+import io.andygrove.queryengine.datatypes.Field
+import io.andygrove.queryengine.datatypes.Schema
+import io.andygrove.queryengine.logical.*
+import io.andygrove.queryengine.logical.DataFrameImpl
+import io.andygrove.queryengine.logical.Scan
+import io.andygrove.queryengine.optimizer.*
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 

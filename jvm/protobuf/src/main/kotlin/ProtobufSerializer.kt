@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.protobuf
+package io.andygrove.queryengine.protobuf
 
-import io.andygrove.datasource.CsvDataSource
-import io.andygrove.datasource.ParquetDataSource
-import io.andygrove.logical.*
-import io.andygrove.logical.JoinType
+import io.andygrove.queryengine.datasource.CsvDataSource
+import io.andygrove.queryengine.datasource.ParquetDataSource
+import io.andygrove.queryengine.logical.*
+import io.andygrove.queryengine.logical.JoinType
 
 
 /** Utility to convert between logical plan and protobuf representation. */
@@ -88,9 +88,9 @@ class ProtobufSerializer {
       }
         is Join ->{
             val joinType = when(plan.join_type){
-                JoinType.Inner ->io.andygrove.protobuf.JoinType.INNER
-                JoinType.Left -> io.andygrove.protobuf.JoinType.LEFT
-                JoinType.Right -> io.andygrove.protobuf.JoinType.RIGHT
+                JoinType.Inner ->io.andygrove.queryengine.protobuf.JoinType.INNER
+                JoinType.Left -> io.andygrove.queryengine.protobuf.JoinType.LEFT
+                JoinType.Right -> io.andygrove.queryengine.protobuf.JoinType.RIGHT
             }
 
             LogicalPlanNode.newBuilder()

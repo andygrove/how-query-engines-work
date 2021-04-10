@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.examples
+package io.andygrove.queryengine.examples
 
 import kotlin.system.measureTimeMillis
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
-import io.andygrove.datasource.InMemoryDataSource
-import io.andygrove.datatypes.RecordBatch
-import io.andygrove.execution.ExecutionContext
+import io.andygrove.queryengine.datasource.InMemoryDataSource
+import io.andygrove.queryengine.datatypes.RecordBatch
+import io.andygrove.queryengine.execution.ExecutionContext
 
 fun main() {
 

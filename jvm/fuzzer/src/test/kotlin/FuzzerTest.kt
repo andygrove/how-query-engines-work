@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.fuzzer
+package io.andygrove.queryengine.fuzzer
 
 import java.io.File
-import io.andygrove.datasource.CsvDataSource
-import io.andygrove.logical.*
+import io.andygrove.queryengine.datasource.CsvDataSource
+import io.andygrove.queryengine.logical.*
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 

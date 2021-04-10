@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.physical.expressions
+package io.andygrove.queryengine.physical.expressions
 
-import io.andygrove.datatypes.ArrowTypes
-import io.andygrove.datatypes.ColumnVector
-import io.andygrove.datatypes.LiteralValueVector
-import io.andygrove.datatypes.RecordBatch
+import io.andygrove.queryengine.datatypes.ArrowTypes
+import io.andygrove.queryengine.datatypes.ColumnVector
+import io.andygrove.queryengine.datatypes.LiteralValueVector
+import io.andygrove.queryengine.datatypes.RecordBatch
 
 /** Physical representation of an expression. */
 interface Expression {

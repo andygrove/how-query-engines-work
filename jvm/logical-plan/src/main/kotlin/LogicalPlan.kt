@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.logical
+package io.andygrove.queryengine.logical
 
-import io.andygrove.datatypes.Schema
+import io.andygrove.queryengine.datatypes.Schema
 
 /**
  * A logical plan represents a data transformation or action that returns a relation (a set of

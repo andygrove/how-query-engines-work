@@ -1,7 +1,7 @@
-package io.andygrove.logical
+package io.andygrove.queryengine.logical
 
-import io.andygrove.datatypes.Field
-import io.andygrove.datatypes.Schema
+import io.andygrove.queryengine.datatypes.Field
+import io.andygrove.queryengine.datatypes.Schema
 
 enum class JoinType{
     Inner, Left, Right

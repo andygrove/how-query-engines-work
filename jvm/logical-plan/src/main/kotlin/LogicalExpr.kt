@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.logical
+package io.andygrove.queryengine.logical
 
-import io.andygrove.datatypes.Field
+import io.andygrove.queryengine.datatypes.Field
 
 /**
  * Logical Expression for use in logical query plans. The logical expression provides information

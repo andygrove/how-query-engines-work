@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.execution
+package io.andygrove.queryengine.execution
 
 import kotlin.test.assertEquals
-import io.andygrove.logical.format
-import io.andygrove.physical.*
+import io.andygrove.queryengine.logical.format
+import io.andygrove.queryengine.physical.*
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance

@@ -5,7 +5,7 @@ plugins {
 }
 
 application {
-    mainClassName = "io.andygrove.benchmarks.Benchmarks"
+    mainClassName = "io.andygrove.queryengine.benchmarks.Benchmarks"
 }
 
 dependencies {

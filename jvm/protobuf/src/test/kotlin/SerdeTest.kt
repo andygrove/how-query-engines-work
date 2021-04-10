@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.protobuf.test
+package io.andygrove.queryengine.protobuf.test
 
 import kotlin.test.assertEquals
-import io.andygrove.datasource.CsvDataSource
-import io.andygrove.logical.*
-import io.andygrove.protobuf.ProtobufDeserializer
-import io.andygrove.protobuf.ProtobufSerializer
+import io.andygrove.queryengine.datasource.CsvDataSource
+import io.andygrove.queryengine.logical.*
+import io.andygrove.queryengine.protobuf.ProtobufDeserializer
+import io.andygrove.queryengine.protobuf.ProtobufSerializer
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 

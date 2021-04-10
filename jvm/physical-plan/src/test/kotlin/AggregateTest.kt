@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.physical
+package io.andygrove.queryengine.physical
 
 import kotlin.test.assertEquals
-import io.andygrove.datasource.InMemoryDataSource
-import io.andygrove.datatypes.ArrowTypes
-import io.andygrove.datatypes.Field
-import io.andygrove.datatypes.Schema
-import io.andygrove.fuzzer.Fuzzer
-import io.andygrove.logical.*
-import io.andygrove.physical.expressions.*
+import io.andygrove.queryengine.datasource.InMemoryDataSource
+import io.andygrove.queryengine.datatypes.ArrowTypes
+import io.andygrove.queryengine.datatypes.Field
+import io.andygrove.queryengine.datatypes.Schema
+import io.andygrove.queryengine.fuzzer.Fuzzer
+import io.andygrove.queryengine.logical.*
+import io.andygrove.queryengine.physical.expressions.*
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 

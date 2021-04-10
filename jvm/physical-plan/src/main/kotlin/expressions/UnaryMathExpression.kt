@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.physical.expressions
+package io.andygrove.queryengine.physical.expressions
 
 import kotlin.math.ln
 import kotlin.math.sqrt
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.Float8Vector
-import io.andygrove.datatypes.ArrowFieldVector
-import io.andygrove.datatypes.ColumnVector
-import io.andygrove.datatypes.RecordBatch
+import io.andygrove.queryengine.datatypes.ArrowFieldVector
+import io.andygrove.queryengine.datatypes.ColumnVector
+import io.andygrove.queryengine.datatypes.RecordBatch
 
 /** Base class for unary math expressions */
 abstract class UnaryMathExpression(private val expr: Expression) : Expression {

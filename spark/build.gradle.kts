@@ -6,7 +6,7 @@ plugins {
     id("com.diffplug.gradle.spotless") version "4.4.0"
 }
 
-group = "io.andygrove.spark"
+group = "io.andygrove.queryengine.spark"
 version = "0.4.0-SNAPSHOT"
 description = "Ballista Spark Support"
 
@@ -41,11 +41,11 @@ subprojects {
 
         // note that this project depends on the kotlin artifacts being published to a local maven repository
         // see ../jvm/README.md for instructions on publishing those artifacts
-        implementation("io.andygrove:datatypes:0.4.0-SNAPSHOT")
-        implementation("io.andygrove:datasource:0.4.0-SNAPSHOT")
-        implementation("io.andygrove:logical-plan:0.4.0-SNAPSHOT")
-        implementation("io.andygrove:protobuf:0.4.0-SNAPSHOT")
-        implementation("io.andygrove:executor:0.4.0-SNAPSHOT")
+        implementation("io.andygrove.queryengine:datatypes:0.4.0-SNAPSHOT")
+        implementation("io.andygrove.queryengine:datasource:0.4.0-SNAPSHOT")
+        implementation("io.andygrove.queryengine:logical-plan:0.4.0-SNAPSHOT")
+        implementation("io.andygrove.queryengine:protobuf:0.4.0-SNAPSHOT")
+        implementation("io.andygrove.queryengine:executor:0.4.0-SNAPSHOT")
 
         implementation("org.apache.arrow:flight-core:0.17.0")
         implementation("org.apache.arrow:flight-grpc:0.17.0")

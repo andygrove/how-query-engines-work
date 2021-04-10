@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.datasource
+package io.andygrove.queryengine.datasource
 
-import io.andygrove.datatypes.RecordBatch
-import io.andygrove.datatypes.Schema
+import io.andygrove.queryengine.datatypes.RecordBatch
+import io.andygrove.queryengine.datatypes.Schema
 
 interface DataSource {
 

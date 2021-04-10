@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.executor
+package io.andygrove.queryengine.executor
 
 import java.lang.IllegalStateException
 import org.apache.arrow.flight.*
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.*
-import io.andygrove.execution.ExecutionContext
-import io.andygrove.logical.format
+import io.andygrove.queryengine.execution.ExecutionContext
+import io.andygrove.queryengine.logical.format
 
 class BallistaFlightProducer : FlightProducer {
 
@@ -36,9 +36,9 @@ class BallistaFlightProducer : FlightProducer {
     try {
 
       val action =
-          io.andygrove.protobuf.Action
+          io.andygrove.queryengine.protobuf.Action
               .parseFrom(ticket?.bytes ?: throw IllegalArgumentException())
-      val logicalPlan = io.andygrove.protobuf.ProtobufDeserializer().fromProto(action.query)
+      val logicalPlan = io.andygrove.queryengine.protobuf.ProtobufDeserializer().fromProto(action.query)
       println(logicalPlan.pretty())
 
       val schema = logicalPlan.schema()

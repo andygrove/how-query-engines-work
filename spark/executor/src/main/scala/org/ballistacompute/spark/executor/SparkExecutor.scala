@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.spark.executor
+package io.andygrove.queryengine.spark.executor
 
 import org.apache.arrow.flight.{FlightServer, Location}
 import org.apache.arrow.memory.RootAllocator

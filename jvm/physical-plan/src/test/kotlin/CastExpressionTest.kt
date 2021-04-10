@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.physical
+package io.andygrove.queryengine.physical
 
 import kotlin.test.assertEquals
-import io.andygrove.datatypes.*
-import io.andygrove.fuzzer.Fuzzer
-import io.andygrove.physical.expressions.*
+import io.andygrove.queryengine.datatypes.*
+import io.andygrove.queryengine.fuzzer.Fuzzer
+import io.andygrove.queryengine.physical.expressions.*
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 

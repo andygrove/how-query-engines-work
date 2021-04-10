@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.spark.executor
+package io.andygrove.queryengine.spark.executor
 
 import java.util
 import java.util.{ArrayList, List}
@@ -47,7 +47,7 @@ import org.apache.arrow.vector.{
   VectorSchemaRoot
 }
 import org.apache.spark.sql.SparkSession
-import io.andygrove.protobuf
+import io.andygrove.queryengine.protobuf
 
 class SparkFlightProducer(spark: SparkSession) extends FlightProducer {
 

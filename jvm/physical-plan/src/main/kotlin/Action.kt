@@ -1,7 +1,7 @@
-package io.andygrove.physical
+package io.andygrove.queryengine.physical
 
-import io.andygrove.datatypes.ShuffleId
-import io.andygrove.logical.LogicalPlan
+import io.andygrove.queryengine.datatypes.ShuffleId
+import io.andygrove.queryengine.logical.LogicalPlan
 
 interface Action
 

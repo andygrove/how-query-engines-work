@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.physical.expressions
+package io.andygrove.queryengine.physical.expressions
 
 import java.lang.IllegalStateException
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.BitVector
 import org.apache.arrow.vector.types.pojo.ArrowType
-import io.andygrove.datatypes.ArrowFieldVector
-import io.andygrove.datatypes.ArrowTypes
-import io.andygrove.datatypes.ColumnVector
-import io.andygrove.datatypes.RecordBatch
+import io.andygrove.queryengine.datatypes.ArrowFieldVector
+import io.andygrove.queryengine.datatypes.ArrowTypes
+import io.andygrove.queryengine.datatypes.ColumnVector
+import io.andygrove.queryengine.datatypes.RecordBatch
 
 abstract class BooleanExpression(val l: Expression, val r: Expression) : Expression {
 

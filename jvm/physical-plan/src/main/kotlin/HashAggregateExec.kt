@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.physical
+package io.andygrove.queryengine.physical
 
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.VectorSchemaRoot
-import io.andygrove.datatypes.ArrowFieldVector
-import io.andygrove.datatypes.ArrowVectorBuilder
-import io.andygrove.datatypes.RecordBatch
-import io.andygrove.datatypes.Schema
-import io.andygrove.physical.expressions.Accumulator
-import io.andygrove.physical.expressions.AggregateExpression
-import io.andygrove.physical.expressions.Expression
+import io.andygrove.queryengine.datatypes.ArrowFieldVector
+import io.andygrove.queryengine.datatypes.ArrowVectorBuilder
+import io.andygrove.queryengine.datatypes.RecordBatch
+import io.andygrove.queryengine.datatypes.Schema
+import io.andygrove.queryengine.physical.expressions.Accumulator
+import io.andygrove.queryengine.physical.expressions.AggregateExpression
+import io.andygrove.queryengine.physical.expressions.Expression
 
 class HashAggregateExec(
     val input: PhysicalPlan,

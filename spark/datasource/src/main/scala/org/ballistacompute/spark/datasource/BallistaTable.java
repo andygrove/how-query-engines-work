@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.spark.datasource;
+package io.andygrove.queryengine.spark.datasource;
 
 import com.google.common.collect.ImmutableSet;
 import org.apache.spark.sql.connector.catalog.SupportsRead;

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.sql
+package io.andygrove.queryengine.sql
 
 /** SQL Expression */
 interface SqlExpr

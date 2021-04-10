@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.datatypes
+package io.andygrove.queryengine.datatypes
 
 import org.apache.arrow.vector.types.pojo.ArrowType
 

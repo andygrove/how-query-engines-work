@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.logical
+package io.andygrove.queryengine.logical
 
-import io.andygrove.datatypes.Schema
+import io.andygrove.queryengine.datatypes.Schema
 
 /** Logical plan representing a projection (evaluating a list of expressions) against an input */
 class Projection(val input: LogicalPlan, val expr: List<LogicalExpr>) : LogicalPlan {

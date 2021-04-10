@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.sql
+package io.andygrove.queryengine.sql
 
 import java.io.File
 import kotlin.test.assertEquals
-import io.andygrove.datasource.CsvDataSource
-import io.andygrove.logical.DataFrameImpl
-import io.andygrove.logical.LogicalPlan
-import io.andygrove.logical.Scan
-import io.andygrove.logical.format
+import io.andygrove.queryengine.datasource.CsvDataSource
+import io.andygrove.queryengine.logical.DataFrameImpl
+import io.andygrove.queryengine.logical.LogicalPlan
+import io.andygrove.queryengine.logical.Scan
+import io.andygrove.queryengine.logical.format
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance

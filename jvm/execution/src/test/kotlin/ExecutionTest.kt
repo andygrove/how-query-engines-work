@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.execution
+package io.andygrove.queryengine.execution
 
 import java.io.File
 import kotlin.test.assertEquals
 import org.apache.arrow.vector.types.pojo.ArrowType
-import io.andygrove.datasource.InMemoryDataSource
-import io.andygrove.datatypes.ArrowTypes
-import io.andygrove.datatypes.Field
-import io.andygrove.datatypes.Schema
-import io.andygrove.fuzzer.Fuzzer
-import io.andygrove.logical.*
+import io.andygrove.queryengine.datasource.InMemoryDataSource
+import io.andygrove.queryengine.datatypes.ArrowTypes
+import io.andygrove.queryengine.datatypes.Field
+import io.andygrove.queryengine.datatypes.Schema
+import io.andygrove.queryengine.fuzzer.Fuzzer
+import io.andygrove.queryengine.logical.*
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 

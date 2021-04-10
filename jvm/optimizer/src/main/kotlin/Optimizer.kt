@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.optimizer
+package io.andygrove.queryengine.optimizer
 
 import java.lang.IllegalStateException
-import io.andygrove.logical.*
+import io.andygrove.queryengine.logical.*
 
 class Optimizer() {
 

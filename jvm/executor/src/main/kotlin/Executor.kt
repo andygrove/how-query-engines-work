@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.executor
+package io.andygrove.queryengine.executor
 
 import org.apache.arrow.flight.FlightServer
 import org.apache.arrow.flight.Location
