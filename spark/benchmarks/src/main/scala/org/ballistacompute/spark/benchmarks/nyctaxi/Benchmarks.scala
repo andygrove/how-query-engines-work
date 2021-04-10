@@ -1,4 +1,4 @@
-package org.ballistacompute.spark.benchmarks.nyctaxi
+package io.andygrove.queryengine.spark.benchmarks.nyctaxi
 
 import java.io.{File, FileWriter}
 

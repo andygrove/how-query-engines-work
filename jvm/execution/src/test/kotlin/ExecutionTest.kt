@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.execution
+package io.andygrove.queryengine.execution
 
 import java.io.File
 import kotlin.test.assertEquals
 import org.apache.arrow.vector.types.pojo.ArrowType
-import org.ballistacompute.datasource.InMemoryDataSource
-import org.ballistacompute.datatypes.ArrowTypes
-import org.ballistacompute.datatypes.Field
-import org.ballistacompute.datatypes.Schema
-import org.ballistacompute.fuzzer.Fuzzer
-import org.ballistacompute.logical.*
+import io.andygrove.queryengine.datasource.InMemoryDataSource
+import io.andygrove.queryengine.datatypes.ArrowTypes
+import io.andygrove.queryengine.datatypes.Field
+import io.andygrove.queryengine.datatypes.Schema
+import io.andygrove.queryengine.fuzzer.Fuzzer
+import io.andygrove.queryengine.logical.*
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 

@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.physical
+package io.andygrove.queryengine.physical
 
-import org.ballistacompute.datatypes.RecordBatch
-import org.ballistacompute.datatypes.Schema
-import org.ballistacompute.physical.expressions.Expression
+import io.andygrove.queryengine.datatypes.RecordBatch
+import io.andygrove.queryengine.datatypes.Schema
+import io.andygrove.queryengine.physical.expressions.Expression
 
 /** Execute a projection. */
 class ProjectionExec(val input: PhysicalPlan, val schema: Schema, val expr: List<Expression>) :

@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.planner
+package io.andygrove.queryengine.planner
 
 import java.sql.SQLException
-import org.ballistacompute.datatypes.Schema
-import org.ballistacompute.logical.*
-import org.ballistacompute.physical.*
-import org.ballistacompute.physical.expressions.*
+import io.andygrove.queryengine.datatypes.Schema
+import io.andygrove.queryengine.logical.*
+import io.andygrove.queryengine.physical.*
+import io.andygrove.queryengine.physical.expressions.*
 
 /** The query planner creates a physical query plan from a logical query plan. */
 class QueryPlanner {

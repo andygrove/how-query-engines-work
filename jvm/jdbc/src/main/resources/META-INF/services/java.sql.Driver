@@ -1,1 +1,1 @@
-org.ballistacompute.jdbc.Driver
+io.andygrove.queryengine.jdbc.Driver

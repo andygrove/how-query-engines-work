@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.physical
+package io.andygrove.queryengine.physical
 
 import kotlin.test.assertEquals
-import org.ballistacompute.datatypes.*
-import org.ballistacompute.fuzzer.Fuzzer
-import org.ballistacompute.physical.expressions.*
+import io.andygrove.queryengine.datatypes.*
+import io.andygrove.queryengine.fuzzer.Fuzzer
+import io.andygrove.queryengine.physical.expressions.*
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 

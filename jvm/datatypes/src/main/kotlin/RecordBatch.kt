@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.datatypes
+package io.andygrove.queryengine.datatypes
 
 /** Batch of data organized in columns. */
 class RecordBatch(val schema: Schema, val fields: List<ColumnVector>) {

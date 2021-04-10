@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.fuzzer
+package io.andygrove.queryengine.fuzzer
 
 import java.io.File
-import org.ballistacompute.datasource.CsvDataSource
-import org.ballistacompute.logical.*
+import io.andygrove.queryengine.datasource.CsvDataSource
+import io.andygrove.queryengine.logical.*
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 

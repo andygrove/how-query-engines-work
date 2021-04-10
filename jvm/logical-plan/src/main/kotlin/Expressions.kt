@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.logical
+package io.andygrove.queryengine.logical
 
 import java.sql.SQLException
 import org.apache.arrow.vector.types.pojo.ArrowType
-import org.ballistacompute.datatypes.ArrowTypes
-import org.ballistacompute.datatypes.Field
+import io.andygrove.queryengine.datatypes.ArrowTypes
+import io.andygrove.queryengine.datatypes.Field
 
 /** Logical expression representing a reference to a column by name. */
 class Column(val name: String) : LogicalExpr {

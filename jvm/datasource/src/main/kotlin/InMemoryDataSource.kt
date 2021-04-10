@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.datasource
+package io.andygrove.queryengine.datasource
 
-import org.ballistacompute.datatypes.RecordBatch
-import org.ballistacompute.datatypes.Schema
+import io.andygrove.queryengine.datatypes.RecordBatch
+import io.andygrove.queryengine.datatypes.Schema
 
 class InMemoryDataSource(val schema: Schema, val data: List<RecordBatch>) : DataSource {
 

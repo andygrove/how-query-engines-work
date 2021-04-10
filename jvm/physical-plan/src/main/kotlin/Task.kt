@@ -1,4 +1,4 @@
-package org.ballistacompute.physical
+package io.andygrove.queryengine.physical
 
 /*
   message Task {

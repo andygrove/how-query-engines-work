@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.protobuf
+package io.andygrove.queryengine.protobuf
 
-import org.ballistacompute.datasource.CsvDataSource
-import org.ballistacompute.datasource.ParquetDataSource
-import org.ballistacompute.logical.*
-import org.ballistacompute.logical.JoinType
+import io.andygrove.queryengine.datasource.CsvDataSource
+import io.andygrove.queryengine.datasource.ParquetDataSource
+import io.andygrove.queryengine.logical.*
+import io.andygrove.queryengine.logical.JoinType
 
 
 /** Utility to convert between logical plan and protobuf representation. */
@@ -88,9 +88,9 @@ class ProtobufSerializer {
       }
         is Join ->{
             val joinType = when(plan.join_type){
-                JoinType.Inner ->org.ballistacompute.protobuf.JoinType.INNER
-                JoinType.Left -> org.ballistacompute.protobuf.JoinType.LEFT
-                JoinType.Right -> org.ballistacompute.protobuf.JoinType.RIGHT
+                JoinType.Inner ->io.andygrove.queryengine.protobuf.JoinType.INNER
+                JoinType.Left -> io.andygrove.queryengine.protobuf.JoinType.LEFT
+                JoinType.Right -> io.andygrove.queryengine.protobuf.JoinType.RIGHT
             }
 
             LogicalPlanNode.newBuilder()

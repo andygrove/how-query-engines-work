@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.physical.expressions
+package io.andygrove.queryengine.physical.expressions
 
-import org.ballistacompute.datatypes.ArrowTypes
-import org.ballistacompute.datatypes.ColumnVector
-import org.ballistacompute.datatypes.LiteralValueVector
-import org.ballistacompute.datatypes.RecordBatch
+import io.andygrove.queryengine.datatypes.ArrowTypes
+import io.andygrove.queryengine.datatypes.ColumnVector
+import io.andygrove.queryengine.datatypes.LiteralValueVector
+import io.andygrove.queryengine.datatypes.RecordBatch
 
 /** Physical representation of an expression. */
 interface Expression {

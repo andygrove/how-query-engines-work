@@ -6,7 +6,7 @@ plugins {
 }
 
 application {
-    mainClassName = "org.ballistacompute.spark.benchmarks.Main"
+    mainClassName = "io.andygrove.queryengine.spark.benchmarks.Main"
 }
 dependencies {
 //    implementation("org.apache.arrow:arrow-memory:0.17.0")

@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.optimizer
+package io.andygrove.queryengine.optimizer
 
 import kotlin.test.assertEquals
-import org.ballistacompute.datasource.CsvDataSource
-import org.ballistacompute.logical.*
+import io.andygrove.queryengine.datasource.CsvDataSource
+import io.andygrove.queryengine.logical.*
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 

@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.optimizer
+package io.andygrove.queryengine.optimizer
 
 import java.lang.IllegalStateException
-import org.ballistacompute.logical.*
+import io.andygrove.queryengine.logical.*
 
 class ProjectionPushDownRule : OptimizerRule {
 

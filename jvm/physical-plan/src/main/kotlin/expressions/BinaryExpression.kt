@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.physical.expressions
+package io.andygrove.queryengine.physical.expressions
 
 import java.lang.IllegalStateException
-import org.ballistacompute.datatypes.ColumnVector
-import org.ballistacompute.datatypes.RecordBatch
+import io.andygrove.queryengine.datatypes.ColumnVector
+import io.andygrove.queryengine.datatypes.RecordBatch
 
 /**
  * For binary expressions we need to evaluate the left and right input expressions and then evaluate

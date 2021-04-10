@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.spark.benchmarks
+package io.andygrove.queryengine.spark.benchmarks
 
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
-import org.ballistacompute.spark.benchmarks.tpch.Tpch
+import io.andygrove.queryengine.spark.benchmarks.tpch.Tpch
 import org.rogach.scallop.{ScallopConf, Subcommand}
 
 import scala.collection.mutable.ListBuffer

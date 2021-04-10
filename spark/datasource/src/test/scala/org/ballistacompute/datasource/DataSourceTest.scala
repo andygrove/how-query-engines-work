@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.ballista.spark
+package io.andygrove.queryengine.ballista.spark
 
 import org.junit.{Ignore, Test}
 import org.apache.spark.sql.{DataFrame, SparkSession}
@@ -31,7 +31,7 @@ class DataSourceTest {
       .getOrCreate()
 
     val df = spark.read
-      .format("io.andygrove.ballista.spark.datasource")
+      .format("io.andygrove.queryengine.ballista.spark.datasource")
       .option(
         "table",
         "/home/andy/git/andygrove/arrow/cpp/submodules/parquet-testing/data/alltypes_plain.parquet"

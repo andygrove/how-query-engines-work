@@ -1,4 +1,4 @@
-package org.ballistacompute.spark.benchmarks.tpch
+package io.andygrove.queryengine.spark.benchmarks.tpch
 
 import org.apache.spark.sql.types.{DataTypes, StructField, StructType}
 

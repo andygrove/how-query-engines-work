@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package org.ballistacompute.spark.datasource;
+package io.andygrove.queryengine.spark.datasource;
 
 import org.apache.arrow.flight.FlightClient;
 import org.apache.arrow.flight.FlightStream;
