@@ -213,7 +213,7 @@ abstract class MathExpr(name: String, op: String, l: LogicalExpr, r: LogicalExpr
     BinaryExpr(name, op, l, r) {
 
   override fun toField(input: LogicalPlan): Field {
-    return Field("mult", l.toField(input).dataType)
+    return Field(name, l.toField(input).dataType)
   }
 }
 
