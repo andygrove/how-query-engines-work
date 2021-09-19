@@ -28,7 +28,7 @@ fun main() {
 
   val start = System.currentTimeMillis()
   val deferred =
-      (1..2).map { month ->
+      (1..12).map { month ->
         GlobalScope.async {
           val sql =
               "SELECT passenger_count, " +

@@ -16,7 +16,9 @@ jobs:
 
     steps:
       - name: Install Protoc
-        uses: arduino/setup-protoc@master
+        uses: arduino/setup-protoc@v1
+        with:
+          version: '3.11.4'
       - name: Checkout Git branch
         uses: actions/checkout@v2
       - name: Set up JDK 1.8
