@@ -53,8 +53,6 @@ class BallistaFlightProducer : FlightProducer {
 
       val allocator = RootAllocator(Long.MAX_VALUE)
 
-      var batchSize = 1024
-
       val root = VectorSchemaRoot.create(schema.toArrow(), allocator)
       listener.start(root, null)
 
@@ -66,7 +64,7 @@ class BallistaFlightProducer : FlightProducer {
         val rowCount = batch.rowCount()
         println("Received batch with $rowCount rows")
 
-        batchSize = rowCount
+        var batchSize = rowCount
         root.fieldVectors.forEach { it.setInitialCapacity(batchSize) }
         root.allocateNew()
 
