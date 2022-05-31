@@ -63,5 +63,5 @@ cd jvm
 Some of the examples in the book use the following data set.
 
 ```bash
-wget https://nyc-tlc.s3.amazonaws.com/trip+data/yellow_tripdata_2019-12.csv
+wget https://s3.amazonaws.com/nyc-tlc/csv_backup/yellow_tripdata_2019-12.csv
 ```
