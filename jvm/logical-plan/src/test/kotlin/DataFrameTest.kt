@@ -14,8 +14,8 @@
 
 package io.andygrove.kquery.logical
 
-import kotlin.test.assertEquals
 import io.andygrove.kquery.datasource.CsvDataSource
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 
@@ -35,7 +35,7 @@ class DataFrameTest {
             "\tSelection: #state = 'CO'\n" +
             "\t\tScan: employee; projection=None\n"
 
-    assertEquals(expected, format(df.logicalPlan()))
+    assertThat(df.logicalPlan().pretty()).isEqualTo(expected)
   }
 
   @Test
@@ -59,9 +59,7 @@ class DataFrameTest {
             "\t\tSelection: #state = 'CO'\n" +
             "\t\t\tScan: employee; projection=None\n"
 
-    val actual = format(df.logicalPlan())
-
-    assertEquals(expected, actual)
+    assertThat(df.logicalPlan().pretty()).isEqualTo(expected)
   }
 
   @Test
@@ -73,10 +71,10 @@ class DataFrameTest {
             listOf(col("state")),
             listOf(Min(col("salary")), Max(col("salary")), Count(col("salary"))))
 
-    assertEquals(
-        "Aggregate: groupExpr=[#state], aggregateExpr=[MIN(#salary), MAX(#salary), COUNT(#salary)]\n" +
-            "\tScan: employee; projection=None\n",
-        format(df.logicalPlan()))
+    assertThat(df.logicalPlan().pretty()).isEqualTo(
+      "Aggregate: groupExpr=[#state], aggregateExpr=[MIN(#salary), MAX(#salary), COUNT(#salary)]\n" +
+          "\tScan: employee; projection=None\n"
+    )
   }
 
   private fun csv(): DataFrame {

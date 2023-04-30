@@ -2,3 +2,5 @@
 build
 target
 default.etcd
+
+out

@@ -65,6 +65,7 @@ subprojects {
         testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
         testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
         testImplementation("junit:junit:4.12")
+        testImplementation("org.assertj:assertj-core:3.11.1")
 
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.14.0") // JVM dependency
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines:0.19.2")
