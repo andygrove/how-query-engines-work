@@ -18,7 +18,7 @@ import io.andygrove.kquery.datasource.CsvDataSource
 import io.andygrove.kquery.datatypes.ArrowTypes
 import java.io.File
 import kotlin.test.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

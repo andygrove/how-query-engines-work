@@ -45,7 +45,8 @@ class DataFrameImpl(private val plan: LogicalPlan) : DataFrame {
   }
 
   override fun aggregate(
-      groupBy: List<LogicalExpr>, aggregateExpr: List<AggregateExpr>
+      groupBy: List<LogicalExpr>,
+      aggregateExpr: List<AggregateExpr>
   ): DataFrame {
     return DataFrameImpl(Aggregate(plan, groupBy, aggregateExpr))
   }

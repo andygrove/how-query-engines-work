@@ -16,7 +16,7 @@ package io.andygrove.kquery.logical
 
 import io.andygrove.kquery.datasource.CsvDataSource
 import kotlin.test.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -70,8 +70,8 @@ class DataFrameTest {
     val df =
         csv()
             .aggregate(
-            listOf(col("state")),
-            listOf(Min(col("salary")), Max(col("salary")), Count(col("salary"))))
+                listOf(col("state")),
+                listOf(Min(col("salary")), Max(col("salary")), Count(col("salary"))))
 
     assertEquals(
         "Aggregate: groupExpr=[#state], aggregateExpr=[MIN(#salary), MAX(#salary), COUNT(#salary)]\n" +

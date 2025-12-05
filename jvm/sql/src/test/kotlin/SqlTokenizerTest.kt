@@ -15,7 +15,7 @@
 package io.andygrove.kquery.sql
 
 import kotlin.test.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -131,7 +131,7 @@ class SqlTokenizerTest {
             Token("10", Literal.LONG, 78))
     val actual =
         SqlTokenizer(
-            "SELECT state, MAX(salary) FROM employee GROUP BY state HAVING MAX(salary) > 10")
+                "SELECT state, MAX(salary) FROM employee GROUP BY state HAVING MAX(salary) > 10")
             .tokenize()
             .tokens
     assertEquals(expected, actual)

@@ -3,16 +3,16 @@ import java.time.Instant
 plugins {
     java
     `java-library`
-    kotlin("jvm") version "1.3.50" apply false
+    kotlin("jvm") version "1.9.22" apply false
     `maven-publish`
 
     //TODO: this has to be uncommented when pushing a release to sonatype but commented out
     // for github actions to work ... would be nice to find a better solution for this
     //id("org.hibernate.build.maven-repo-auth") version "3.0.0"
 
-    id("org.jetbrains.dokka") version "0.10.1"
+    id("org.jetbrains.dokka") version "1.9.10"
     signing
-    id("com.diffplug.gradle.spotless") version "4.4.0"
+    id("com.diffplug.spotless") version "6.25.0"
 }
 
 group = "io.andygrove.kquery"
@@ -22,7 +22,6 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        jcenter()
     }
 }
 
@@ -32,7 +31,7 @@ subprojects {
         plugin("maven-publish")
         plugin("signing")
         plugin("org.jetbrains.dokka")
-        plugin("com.diffplug.gradle.spotless")
+        plugin("com.diffplug.spotless")
     }
 
     spotless {
@@ -58,21 +57,21 @@ subprojects {
         // Use the Kotlin JDK 8 standard library.
         implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
-        // Use the Kotlin test library.
-        testImplementation("org.jetbrains.kotlin:kotlin-test")
-
-        // Use the Kotlin JUnit integration.
+        // Use the Kotlin JUnit 5 integration.
         testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-        testImplementation("org.junit.jupiter:junit-jupiter:5.5.2")
-        testImplementation("junit:junit:4.12")
+        testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
-        implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.14.0") // JVM dependency
-        implementation("org.jetbrains.kotlinx:kotlinx-coroutines:0.19.2")
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+        implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     }
 
-    tasks.dokka {
-        outputFormat = "html"
-        outputDirectory = "$buildDir/javadoc"
+    tasks.withType<org.jetbrains.dokka.gradle.DokkaTask>().configureEach {
+        outputDirectory.set(layout.buildDirectory.dir("javadoc"))
+    }
+
+    tasks.withType<Test> {
+        useJUnitPlatform()
     }
 
     tasks.jar {
@@ -92,7 +91,7 @@ subprojects {
 
     val javadocJar = tasks.create<Jar>("javadocJar") {
         archiveClassifier.set("javadoc")
-        from("$buildDir/javadoc")
+        from(layout.buildDirectory.dir("javadoc"))
     }
 
     java {

@@ -17,7 +17,6 @@ package io.andygrove.kquery.sql
 import io.andygrove.kquery.logical.*
 import java.sql.SQLException
 import java.util.logging.Logger
-import kotlin.system.exitProcess
 import org.apache.arrow.vector.types.FloatingPointPrecision
 import org.apache.arrow.vector.types.pojo.ArrowType
 

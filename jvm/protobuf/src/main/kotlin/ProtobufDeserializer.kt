@@ -103,11 +103,13 @@ class ProtobufDeserializer {
           TODO("Requires that IsNotNullExpr is implemented in kotlin first")
       LogicalExprNode.ExprTypeCase.NOT_EXPR ->
           TODO("Requires that NotExpr is implemented in kotlin first")
-      LogicalExprNode.ExprTypeCase.EXPRTYPE_NOT_SET, null ->
+      LogicalExprNode.ExprTypeCase.EXPRTYPE_NOT_SET,
+      null ->
           throw RuntimeException(
               "Found null expr enum when deserializing protobuf logical expression")
     }
   }
+
   @Throws(IllegalStateException::class)
   fun fromProto(schema: Schema): io.andygrove.kquery.datatypes.Schema {
 
@@ -137,11 +139,8 @@ class ProtobufDeserializer {
           org.apache.arrow.vector.types.pojo.Field(it.name, fieldType, listOf())
         }
 
-    return io.andygrove
-        .kquery
-        .datatypes
-        .SchemaConverter
-        .fromArrow(org.apache.arrow.vector.types.pojo.Schema(arrowFields))
+    return io.andygrove.kquery.datatypes.SchemaConverter.fromArrow(
+        org.apache.arrow.vector.types.pojo.Schema(arrowFields))
   }
 
   fun fromProto(action: Action): io.andygrove.kquery.physical.Action {

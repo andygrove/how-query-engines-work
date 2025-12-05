@@ -15,7 +15,6 @@
 package io.andygrove.kquery.executor
 
 import io.andygrove.kquery.execution.ExecutionContext
-import io.andygrove.kquery.logical.format
 import java.lang.IllegalStateException
 import org.apache.arrow.flight.*
 import org.apache.arrow.memory.RootAllocator
@@ -36,11 +35,8 @@ class BallistaFlightProducer : FlightProducer {
     try {
 
       val action =
-          io.andygrove
-              .kquery
-              .protobuf
-              .Action
-              .parseFrom(ticket?.bytes ?: throw IllegalArgumentException())
+          io.andygrove.kquery.protobuf.Action.parseFrom(
+              ticket?.bytes ?: throw IllegalArgumentException())
       val logicalPlan = io.andygrove.kquery.protobuf.ProtobufDeserializer().fromProto(action.query)
       println(logicalPlan.pretty())
 
@@ -176,14 +172,16 @@ class BallistaFlightProducer : FlightProducer {
   }
 
   override fun getFlightInfo(
-      context: FlightProducer.CallContext?, descriptor: FlightDescriptor?
+      context: FlightProducer.CallContext?,
+      descriptor: FlightDescriptor?
   ): FlightInfo {
     TODO("not implemented") // To change body of created functions use File | Settings | File
     // Templates.
   }
 
   override fun listActions(
-      context: FlightProducer.CallContext?, listener: FlightProducer.StreamListener<ActionType>?
+      context: FlightProducer.CallContext?,
+      listener: FlightProducer.StreamListener<ActionType>?
   ) {
     TODO("not implemented") // To change body of created functions use File | Settings | File
     // Templates.

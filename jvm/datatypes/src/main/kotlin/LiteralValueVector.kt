@@ -14,7 +14,6 @@
 
 package io.andygrove.kquery.datatypes
 
-import java.lang.IllegalStateException
 import java.lang.IndexOutOfBoundsException
 import org.apache.arrow.vector.types.pojo.ArrowType
 

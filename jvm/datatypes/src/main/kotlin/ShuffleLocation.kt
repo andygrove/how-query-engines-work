@@ -10,4 +10,8 @@ package io.andygrove.kquery.datatypes
 */
 
 data class ShuffleLocation(
-    val jobUuid: String, val stageId: Int, val partitionId: Int, val executionUuid: String)
+    val jobUuid: String,
+    val stageId: Int,
+    val partitionId: Int,
+    val executionUuid: String
+)

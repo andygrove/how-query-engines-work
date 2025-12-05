@@ -14,15 +14,10 @@
 
 package io.andygrove.kquery.physical
 
-import io.andygrove.kquery.datasource.InMemoryDataSource
-import io.andygrove.kquery.datatypes.ArrowTypes
-import io.andygrove.kquery.datatypes.Field
-import io.andygrove.kquery.datatypes.Schema
-import io.andygrove.kquery.fuzzer.Fuzzer
 import io.andygrove.kquery.logical.*
 import io.andygrove.kquery.physical.expressions.*
 import kotlin.test.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

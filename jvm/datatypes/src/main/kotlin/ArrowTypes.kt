@@ -15,7 +15,7 @@
 package io.andygrove.kquery.datatypes
 
 import org.apache.arrow.vector.types.FloatingPointPrecision
-import org.apache.arrow.vector.types.pojo.ArrowType;
+import org.apache.arrow.vector.types.pojo.ArrowType
 
 object ArrowTypes {
   val BooleanType = ArrowType.Bool()

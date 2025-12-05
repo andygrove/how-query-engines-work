@@ -19,7 +19,8 @@ class Join(
     val duplicateKeys = on.filter { it -> it.first == it.second }.map { it.first }.toSet()
     val fields: List<Field> =
         when (join_type) {
-          JoinType.Inner, JoinType.Left -> {
+          JoinType.Inner,
+          JoinType.Left -> {
             val leftFields = left.schema().fields
             val rightFields =
                 right.schema().fields.filter { it -> !duplicateKeys.contains(it.name) }

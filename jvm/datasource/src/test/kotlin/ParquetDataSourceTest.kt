@@ -18,8 +18,8 @@ import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -36,7 +36,7 @@ class ParquetDataSourceTest {
   }
 
   @Test
-  @Ignore
+  @Disabled
   fun `read parquet file`() {
     val parquet = ParquetDataSource(File(dir, "alltypes_plain.parquet").absolutePath)
     val it = parquet.scan(listOf("id")).iterator()

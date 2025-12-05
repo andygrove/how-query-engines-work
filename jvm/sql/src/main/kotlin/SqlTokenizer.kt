@@ -61,6 +61,7 @@ class SqlTokenizer(val sql: String) {
 
   /**
    * skip whitespace.
+   *
    * @return offset after whitespace skipped
    */
   private fun skipWhitespace(startOffset: Int): Int {
@@ -159,7 +160,8 @@ class SqlTokenizer(val sql: String) {
   }
 
   private inline fun CharSequence.indexOfFirst(
-      startIndex: Int = 0, predicate: (Char) -> Boolean
+      startIndex: Int = 0,
+      predicate: (Char) -> Boolean
   ): Int {
     for (index in startIndex until this.length) {
       if (predicate(this[index])) {

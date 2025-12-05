@@ -203,7 +203,8 @@ class EnhancedRandom(val rand: Random) {
   }
 
   fun nextString(len: Int): String {
-    return (0 until len).map { _ -> rand.nextInt(charPool.size) }
+    return (0 until len)
+        .map { _ -> rand.nextInt(charPool.size) }
         .map(charPool::get)
         .joinToString("")
   }

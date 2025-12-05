@@ -34,9 +34,9 @@ class Executor {
 
       val server =
           FlightServer.builder(
-              RootAllocator(Long.MAX_VALUE),
-              Location.forGrpcInsecure(bindHost, port),
-              BallistaFlightProducer())
+                  RootAllocator(Long.MAX_VALUE),
+                  Location.forGrpcInsecure(bindHost, port),
+                  BallistaFlightProducer())
               .build()
       server.start()
 

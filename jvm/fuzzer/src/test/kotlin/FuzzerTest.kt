@@ -17,7 +17,7 @@ package io.andygrove.kquery.fuzzer
 import io.andygrove.kquery.datasource.CsvDataSource
 import io.andygrove.kquery.logical.*
 import java.io.File
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -36,8 +36,8 @@ class FuzzerTest {
     (0 until 50).forEach {
       println(fuzzer.createPlan(input, 0, 6, 1).logicalPlan().pretty())
 
-    //            val expr = fuzzer.createExpression(input, 0, 5)
-    //            println(expr)
+      //            val expr = fuzzer.createExpression(input, 0, 5)
+      //            println(expr)
     }
   }
 }

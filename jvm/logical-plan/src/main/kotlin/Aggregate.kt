@@ -18,7 +18,9 @@ import io.andygrove.kquery.datatypes.Schema
 
 /** Logical plan representing an aggregate query against an input. */
 class Aggregate(
-    val input: LogicalPlan, val groupExpr: List<LogicalExpr>, val aggregateExpr: List<AggregateExpr>
+    val input: LogicalPlan,
+    val groupExpr: List<LogicalExpr>,
+    val aggregateExpr: List<AggregateExpr>
 ) : LogicalPlan {
 
   override fun schema(): Schema {

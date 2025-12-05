@@ -21,8 +21,7 @@ import io.andygrove.kquery.logical.Scan
 import io.andygrove.kquery.logical.format
 import java.io.File
 import kotlin.test.assertEquals
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

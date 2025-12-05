@@ -39,8 +39,10 @@ class SqlParser(val tokens: TokenStream) : PrattParser {
           Symbol.BANG_EQ,
           Symbol.GT_EQ,
           Symbol.GT -> 40
-          Symbol.PLUS, Symbol.SUB -> 50
-          Symbol.STAR, Symbol.SLASH -> 60
+          Symbol.PLUS,
+          Symbol.SUB -> 50
+          Symbol.STAR,
+          Symbol.SLASH -> 60
           Symbol.LEFT_PAREN -> 70
           else -> 0
         }
@@ -78,7 +80,13 @@ class SqlParser(val tokens: TokenStream) : PrattParser {
     val token = tokens.peek()!!
     val expr =
         when (token.type) {
-          Symbol.PLUS, Symbol.SUB, Symbol.STAR, Symbol.SLASH, Symbol.EQ, Symbol.GT, Symbol.LT -> {
+          Symbol.PLUS,
+          Symbol.SUB,
+          Symbol.STAR,
+          Symbol.SLASH,
+          Symbol.EQ,
+          Symbol.GT,
+          Symbol.LT -> {
             tokens.next() // consume the token
             SqlBinaryExpr(
                 left, token.text, parse(precedence) ?: throw SQLException("Error parsing infix"))
@@ -89,12 +97,14 @@ class SqlParser(val tokens: TokenStream) : PrattParser {
             tokens.next() // consume the token
             SqlAlias(left, parseIdentifier())
           }
-          Keyword.AND, Keyword.OR -> {
+          Keyword.AND,
+          Keyword.OR -> {
             tokens.next() // consume the token
             SqlBinaryExpr(
                 left, token.text, parse(precedence) ?: throw SQLException("Error parsing infix"))
           }
-          Keyword.ASC, Keyword.DESC -> {
+          Keyword.ASC,
+          Keyword.DESC -> {
             tokens.next()
             SqlSort(left, token.type == Keyword.ASC)
           }

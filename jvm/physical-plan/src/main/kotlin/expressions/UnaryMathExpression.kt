@@ -26,7 +26,7 @@ import org.apache.arrow.vector.Float8Vector
 abstract class UnaryMathExpression(private val expr: Expression) : Expression {
 
   override fun evaluate(input: RecordBatch): ColumnVector {
-    val n = expr.evaluate(input);
+    val n = expr.evaluate(input)
     val v = Float8Vector("v", RootAllocator(Long.MAX_VALUE))
     v.allocateNew()
     (0 until n.size()).forEach {

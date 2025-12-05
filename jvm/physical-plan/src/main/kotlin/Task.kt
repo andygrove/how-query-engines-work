@@ -16,4 +16,5 @@ data class Task(
     val stageId: Int,
     val taskId: Int,
     val partitionId: Int,
-    val plan: PhysicalPlan)
+    val plan: PhysicalPlan
+)

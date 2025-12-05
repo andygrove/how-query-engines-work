@@ -23,7 +23,7 @@ import io.andygrove.kquery.logical.DataFrameImpl
 import io.andygrove.kquery.logical.Scan
 import io.andygrove.kquery.optimizer.*
 import kotlin.test.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

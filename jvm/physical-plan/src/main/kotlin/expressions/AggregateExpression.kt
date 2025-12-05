@@ -16,5 +16,6 @@ package io.andygrove.kquery.physical.expressions
 
 interface AggregateExpression {
   fun inputExpression(): Expression
+
   fun createAccumulator(): Accumulator
 }

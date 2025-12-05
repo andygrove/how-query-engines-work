@@ -118,7 +118,9 @@ class CsvDataSource(
 }
 
 class ReaderAsSequence(
-    private val schema: Schema, private val parser: CsvParser, private val batchSize: Int
+    private val schema: Schema,
+    private val parser: CsvParser,
+    private val batchSize: Int
 ) : Sequence<RecordBatch> {
   override fun iterator(): Iterator<RecordBatch> {
     return ReaderIterator(schema, parser, batchSize)
@@ -126,7 +128,9 @@ class ReaderAsSequence(
 }
 
 class ReaderIterator(
-    private val schema: Schema, private val parser: CsvParser, private val batchSize: Int
+    private val schema: Schema,
+    private val parser: CsvParser,
+    private val batchSize: Int
 ) : Iterator<RecordBatch> {
 
   private val logger = Logger.getLogger(CsvDataSource::class.simpleName)

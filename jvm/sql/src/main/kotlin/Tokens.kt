@@ -262,6 +262,7 @@ enum class Keyword : TokenType {
 
   companion object {
     private val keywords = values().associateBy(Keyword::name)
+
     fun textOf(text: String) = keywords[text.toUpperCase()]
   }
 }
@@ -311,7 +312,9 @@ enum class Symbol(val text: String) : TokenType {
   companion object {
     private val symbols = values().associateBy(Symbol::text)
     private val symbolStartSet = values().flatMap { s -> s.text.toList() }.toSet()
+
     fun textOf(text: String) = symbols[text]
+
     fun isSymbol(ch: Char): Boolean {
       return symbolStartSet.contains(ch)
     }
