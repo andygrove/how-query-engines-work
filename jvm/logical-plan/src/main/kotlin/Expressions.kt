@@ -14,10 +14,10 @@
 
 package io.andygrove.kquery.logical
 
-import java.sql.SQLException
-import org.apache.arrow.vector.types.pojo.ArrowType
 import io.andygrove.kquery.datatypes.ArrowTypes
 import io.andygrove.kquery.datatypes.Field
+import java.sql.SQLException
+import org.apache.arrow.vector.types.pojo.ArrowType
 
 /** Logical expression representing a reference to a column by name. */
 class Column(val name: String) : LogicalExpr {

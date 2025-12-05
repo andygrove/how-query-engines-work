@@ -14,13 +14,13 @@
 
 package io.andygrove.kquery.examples;
 
-import kotlin.system.measureTimeMillis
-import org.apache.arrow.vector.types.FloatingPointPrecision
-import org.apache.arrow.vector.types.pojo.ArrowType
 import io.andygrove.kquery.datatypes.ArrowTypes
 import io.andygrove.kquery.execution.ExecutionContext
 import io.andygrove.kquery.logical.*
 import io.andygrove.kquery.optimizer.Optimizer
+import kotlin.system.measureTimeMillis
+import org.apache.arrow.vector.types.FloatingPointPrecision
+import org.apache.arrow.vector.types.pojo.ArrowType
 
 fun main() {
 

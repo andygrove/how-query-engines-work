@@ -14,14 +14,14 @@
 
 package io.andygrove.kquery.physical.expressions
 
-import java.lang.IllegalStateException
-import org.apache.arrow.memory.RootAllocator
-import org.apache.arrow.vector.BitVector
-import org.apache.arrow.vector.types.pojo.ArrowType
 import io.andygrove.kquery.datatypes.ArrowFieldVector
 import io.andygrove.kquery.datatypes.ArrowTypes
 import io.andygrove.kquery.datatypes.ColumnVector
 import io.andygrove.kquery.datatypes.RecordBatch
+import java.lang.IllegalStateException
+import org.apache.arrow.memory.RootAllocator
+import org.apache.arrow.vector.BitVector
+import org.apache.arrow.vector.types.pojo.ArrowType
 
 abstract class BooleanExpression(val l: Expression, val r: Expression) : Expression {
 

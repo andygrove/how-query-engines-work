@@ -14,9 +14,9 @@
 
 package io.andygrove.kquery.execution
 
-import kotlin.test.assertEquals
 import io.andygrove.kquery.logical.format
 import io.andygrove.kquery.physical.*
+import kotlin.test.assertEquals
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance

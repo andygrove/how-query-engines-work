@@ -14,11 +14,11 @@
 
 package io.andygrove.kquery.planner
 
-import java.sql.SQLException
 import io.andygrove.kquery.datatypes.Schema
 import io.andygrove.kquery.logical.*
 import io.andygrove.kquery.physical.*
 import io.andygrove.kquery.physical.expressions.*
+import java.sql.SQLException
 
 /** The query planner creates a physical query plan from a logical query plan. */
 class QueryPlanner {

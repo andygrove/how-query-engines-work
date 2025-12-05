@@ -14,15 +14,15 @@
 
 package io.andygrove.kquery.execution
 
-import java.io.File
-import kotlin.test.assertEquals
-import org.apache.arrow.vector.types.pojo.ArrowType
 import io.andygrove.kquery.datasource.InMemoryDataSource
 import io.andygrove.kquery.datatypes.ArrowTypes
 import io.andygrove.kquery.datatypes.Field
 import io.andygrove.kquery.datatypes.Schema
 import io.andygrove.kquery.fuzzer.Fuzzer
 import io.andygrove.kquery.logical.*
+import java.io.File
+import kotlin.test.assertEquals
+import org.apache.arrow.vector.types.pojo.ArrowType
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 

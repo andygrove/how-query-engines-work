@@ -14,8 +14,6 @@
 
 package io.andygrove.kquery.physical
 
-import org.apache.arrow.memory.RootAllocator
-import org.apache.arrow.vector.VectorSchemaRoot
 import io.andygrove.kquery.datatypes.ArrowFieldVector
 import io.andygrove.kquery.datatypes.ArrowVectorBuilder
 import io.andygrove.kquery.datatypes.RecordBatch
@@ -23,6 +21,8 @@ import io.andygrove.kquery.datatypes.Schema
 import io.andygrove.kquery.physical.expressions.Accumulator
 import io.andygrove.kquery.physical.expressions.AggregateExpression
 import io.andygrove.kquery.physical.expressions.Expression
+import org.apache.arrow.memory.RootAllocator
+import org.apache.arrow.vector.VectorSchemaRoot
 
 class HashAggregateExec(
     val input: PhysicalPlan,

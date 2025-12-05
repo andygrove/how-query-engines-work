@@ -14,12 +14,12 @@
 
 package io.andygrove.kquery.executor
 
+import io.andygrove.kquery.execution.ExecutionContext
+import io.andygrove.kquery.logical.format
 import java.lang.IllegalStateException
 import org.apache.arrow.flight.*
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.*
-import io.andygrove.kquery.execution.ExecutionContext
-import io.andygrove.kquery.logical.format
 
 class BallistaFlightProducer : FlightProducer {
 
@@ -36,7 +36,10 @@ class BallistaFlightProducer : FlightProducer {
     try {
 
       val action =
-          io.andygrove.kquery.protobuf.Action
+          io.andygrove
+              .kquery
+              .protobuf
+              .Action
               .parseFrom(ticket?.bytes ?: throw IllegalArgumentException())
       val logicalPlan = io.andygrove.kquery.protobuf.ProtobufDeserializer().fromProto(action.query)
       println(logicalPlan.pretty())

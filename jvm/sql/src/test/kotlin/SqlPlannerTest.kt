@@ -14,13 +14,13 @@
 
 package io.andygrove.kquery.sql
 
-import java.io.File
-import kotlin.test.assertEquals
 import io.andygrove.kquery.datasource.CsvDataSource
 import io.andygrove.kquery.logical.DataFrameImpl
 import io.andygrove.kquery.logical.LogicalPlan
 import io.andygrove.kquery.logical.Scan
 import io.andygrove.kquery.logical.format
+import java.io.File
+import kotlin.test.assertEquals
 import org.junit.Ignore
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
@@ -94,7 +94,8 @@ class SqlPlannerTest {
 
   @Test
   fun `plan aggregate query with having`() {
-    val plan = plan("SELECT state, MAX(salary) FROM employee GROUP BY state HAVING MAX(salary) > 10")
+    val plan =
+        plan("SELECT state, MAX(salary) FROM employee GROUP BY state HAVING MAX(salary) > 10")
     assertEquals(
         "Selection: MAX(#salary) > 10\n" +
             "\tProjection: #0, #1\n" +

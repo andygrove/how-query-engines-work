@@ -14,13 +14,13 @@
 
 package io.andygrove.kquery.examples
 
+import io.andygrove.kquery.datasource.InMemoryDataSource
+import io.andygrove.kquery.datatypes.RecordBatch
+import io.andygrove.kquery.execution.ExecutionContext
 import kotlin.system.measureTimeMillis
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
-import io.andygrove.kquery.datasource.InMemoryDataSource
-import io.andygrove.kquery.datatypes.RecordBatch
-import io.andygrove.kquery.execution.ExecutionContext
 
 fun main() {
 

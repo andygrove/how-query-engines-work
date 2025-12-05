@@ -14,10 +14,10 @@
 
 package io.andygrove.kquery.physical
 
-import kotlin.test.assertEquals
 import io.andygrove.kquery.datatypes.*
 import io.andygrove.kquery.fuzzer.Fuzzer
 import io.andygrove.kquery.physical.expressions.*
+import kotlin.test.assertEquals
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 

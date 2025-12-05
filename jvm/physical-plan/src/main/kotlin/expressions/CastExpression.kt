@@ -14,9 +14,9 @@
 
 package io.andygrove.kquery.physical.expressions
 
+import io.andygrove.kquery.datatypes.*
 import java.lang.IllegalStateException
 import org.apache.arrow.vector.types.pojo.ArrowType
-import io.andygrove.kquery.datatypes.*
 
 class CastExpression(val expr: Expression, val dataType: ArrowType) : Expression {
 

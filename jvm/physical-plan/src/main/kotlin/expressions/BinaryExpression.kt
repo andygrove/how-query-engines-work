@@ -14,9 +14,9 @@
 
 package io.andygrove.kquery.physical.expressions
 
-import java.lang.IllegalStateException
 import io.andygrove.kquery.datatypes.ColumnVector
 import io.andygrove.kquery.datatypes.RecordBatch
+import java.lang.IllegalStateException
 
 /**
  * For binary expressions we need to evaluate the left and right input expressions and then evaluate

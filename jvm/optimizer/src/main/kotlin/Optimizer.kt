@@ -14,8 +14,8 @@
 
 package io.andygrove.kquery.optimizer
 
-import java.lang.IllegalStateException
 import io.andygrove.kquery.logical.*
+import java.lang.IllegalStateException
 
 class Optimizer() {
 

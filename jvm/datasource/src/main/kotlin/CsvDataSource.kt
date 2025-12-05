@@ -16,12 +16,12 @@ package io.andygrove.kquery.datasource
 
 import com.univocity.parsers.common.record.Record
 import com.univocity.parsers.csv.*
+import io.andygrove.kquery.datatypes.*
 import java.io.*
 import java.lang.IllegalStateException
 import java.util.logging.Logger
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.*
-import io.andygrove.kquery.datatypes.*
 
 /**
  * Simple CSV data source. If no schema is provided then it assumes that the first line contains

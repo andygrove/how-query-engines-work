@@ -14,9 +14,9 @@
 
 package io.andygrove.kquery.optimizer
 
-import kotlin.test.assertEquals
 import io.andygrove.kquery.datasource.CsvDataSource
 import io.andygrove.kquery.logical.*
+import kotlin.test.assertEquals
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 

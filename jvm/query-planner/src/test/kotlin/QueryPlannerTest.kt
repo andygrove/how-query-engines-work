@@ -14,7 +14,6 @@
 
 package io.andygrove.kquery.planner
 
-import kotlin.test.assertEquals
 import io.andygrove.kquery.datasource.InMemoryDataSource
 import io.andygrove.kquery.datatypes.ArrowTypes
 import io.andygrove.kquery.datatypes.Field
@@ -23,6 +22,7 @@ import io.andygrove.kquery.logical.*
 import io.andygrove.kquery.logical.DataFrameImpl
 import io.andygrove.kquery.logical.Scan
 import io.andygrove.kquery.optimizer.*
+import kotlin.test.assertEquals
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 

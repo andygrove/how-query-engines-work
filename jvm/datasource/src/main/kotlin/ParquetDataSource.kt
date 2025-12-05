@@ -14,6 +14,10 @@
 
 package io.andygrove.kquery.datasource
 
+import io.andygrove.kquery.datatypes.ArrowFieldVector
+import io.andygrove.kquery.datatypes.Field
+import io.andygrove.kquery.datatypes.RecordBatch
+import io.andygrove.kquery.datatypes.Schema
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.VectorSchemaRoot
 import org.apache.hadoop.conf.Configuration
@@ -21,10 +25,6 @@ import org.apache.hadoop.fs.Path
 import org.apache.parquet.arrow.schema.SchemaConverter
 import org.apache.parquet.hadoop.ParquetFileReader
 import org.apache.parquet.hadoop.util.HadoopInputFile
-import io.andygrove.kquery.datatypes.ArrowFieldVector
-import io.andygrove.kquery.datatypes.Field
-import io.andygrove.kquery.datatypes.RecordBatch
-import io.andygrove.kquery.datatypes.Schema
 
 class ParquetDataSource(private val filename: String) : DataSource {
 

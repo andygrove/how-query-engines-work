@@ -14,11 +14,11 @@
 
 package io.andygrove.kquery.protobuf.test
 
-import kotlin.test.assertEquals
 import io.andygrove.kquery.datasource.CsvDataSource
 import io.andygrove.kquery.logical.*
 import io.andygrove.kquery.protobuf.ProtobufDeserializer
 import io.andygrove.kquery.protobuf.ProtobufSerializer
+import kotlin.test.assertEquals
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 

@@ -14,9 +14,9 @@
 
 package io.andygrove.kquery.fuzzer
 
-import java.io.File
 import io.andygrove.kquery.datasource.CsvDataSource
 import io.andygrove.kquery.logical.*
+import java.io.File
 import org.junit.Test
 import org.junit.jupiter.api.TestInstance
 
