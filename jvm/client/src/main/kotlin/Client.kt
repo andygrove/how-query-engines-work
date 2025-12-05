@@ -14,14 +14,14 @@
 
 package io.andygrove.kquery.client
 
+import io.andygrove.kquery.logical.LogicalPlan
+import io.andygrove.kquery.protobuf.ProtobufSerializer
 import java.util.concurrent.TimeUnit
 import org.apache.arrow.flight.CallOptions
 import org.apache.arrow.flight.FlightClient
 import org.apache.arrow.flight.Location
 import org.apache.arrow.flight.Ticket
 import org.apache.arrow.memory.RootAllocator
-import io.andygrove.kquery.logical.LogicalPlan
-import io.andygrove.kquery.protobuf.ProtobufSerializer
 
 /** Connection to a Ballista executor. */
 class Client(val host: String, val port: Int) {

@@ -73,7 +73,8 @@ class TokenStream(val tokens: List<Token>) {
   }
 
   override fun toString(): String {
-    return tokens.withIndex()
+    return tokens
+        .withIndex()
         .map { (index, token) ->
           if (index == i) {
             "*$token"

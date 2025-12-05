@@ -12,15 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package io.andygrove.kquery.examples;
+package io.andygrove.kquery.examples
 
-import kotlin.system.measureTimeMillis
-import org.apache.arrow.vector.types.FloatingPointPrecision
-import org.apache.arrow.vector.types.pojo.ArrowType
 import io.andygrove.kquery.datatypes.ArrowTypes
 import io.andygrove.kquery.execution.ExecutionContext
 import io.andygrove.kquery.logical.*
 import io.andygrove.kquery.optimizer.Optimizer
+import kotlin.system.measureTimeMillis
 
 fun main() {
 
@@ -49,31 +47,30 @@ fun main() {
   congestion_surcharge: Utf8
   */
 
-  val time =
-      measureTimeMillis {
-        val df =
-            ctx.csv("/mnt/nyctaxi/csv/year=2019/yellow_tripdata_2019-01.csv")
-                .aggregate(
-                    listOf(col("passenger_count")),
-                    listOf(max(cast(col("fare_amount"), ArrowTypes.FloatType))))
+  val time = measureTimeMillis {
+    val df =
+        ctx.csv("/mnt/nyctaxi/csv/year=2019/yellow_tripdata_2019-01.csv")
+            .aggregate(
+                listOf(col("passenger_count")),
+                listOf(max(cast(col("fare_amount"), ArrowTypes.FloatType))))
 
-        println("Logical Plan:\t${format(df.logicalPlan())}")
+    println("Logical Plan:\t${format(df.logicalPlan())}")
 
-        //        var results = ctx.execute(df.logicalPlan())
-        //        results.forEach {
-        //            println(it.schema)
-        //            println(it.toCSV())
-        //        }
+    //        var results = ctx.execute(df.logicalPlan())
+    //        results.forEach {
+    //            println(it.schema)
+    //            println(it.toCSV())
+    //        }
 
-        val optimizedPlan = Optimizer().optimize(df.logicalPlan())
-        println("Optimized Plan:\t${format(optimizedPlan)}")
+    val optimizedPlan = Optimizer().optimize(df.logicalPlan())
+    println("Optimized Plan:\t${format(optimizedPlan)}")
 
-        val results = ctx.execute(optimizedPlan)
-        results.forEach {
-          println(it.schema)
-          println(it.toCSV())
-        }
-      }
+    val results = ctx.execute(optimizedPlan)
+    results.forEach {
+      println(it.schema)
+      println(it.toCSV())
+    }
+  }
 
   println("Query took $time ms")
 }

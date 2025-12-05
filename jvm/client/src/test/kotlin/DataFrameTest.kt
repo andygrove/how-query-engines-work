@@ -16,13 +16,15 @@ package io.andygrove.kquery.client
 
 import io.andygrove.kquery.datasource.CsvDataSource
 import io.andygrove.kquery.logical.*
-import org.junit.Test
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DataFrameTest {
 
   @Test
+  @Disabled("Requires running server")
   fun test() {
 
     val df = DataFrameImpl(Scan("", CsvDataSource("", null, true, 0), listOf()))

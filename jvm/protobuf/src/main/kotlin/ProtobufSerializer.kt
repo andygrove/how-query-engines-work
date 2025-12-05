@@ -19,7 +19,6 @@ import io.andygrove.kquery.datasource.ParquetDataSource
 import io.andygrove.kquery.logical.*
 import io.andygrove.kquery.logical.JoinType
 
-
 /** Utility to convert between logical plan and protobuf representation. */
 class ProtobufSerializer {
 
@@ -30,30 +29,28 @@ class ProtobufSerializer {
         val ds = plan.dataSource
         when (ds) {
           is CsvDataSource -> {
-            val projectionColumns = ProjectionColumns.newBuilder()
-              .addAllColumns(plan.projection)
-              .build()
+            val projectionColumns =
+                ProjectionColumns.newBuilder().addAllColumns(plan.projection).build()
             LogicalPlanNode.newBuilder()
-                    .setCsvScan(
-                            CsvTableScanNode.newBuilder()
-                                    .setPath(plan.path)
-                                    .setProjection(projectionColumns)
-                                    .build()
-                    ).build()
+                .setCsvScan(
+                    CsvTableScanNode.newBuilder()
+                        .setPath(plan.path)
+                        .setProjection(projectionColumns)
+                        .build())
+                .build()
           }
-            is ParquetDataSource ->{
-                val projectionColumns = ProjectionColumns.newBuilder()
-                        .addAllColumns(plan.projection)
-                        .build()
+          is ParquetDataSource -> {
+            val projectionColumns =
+                ProjectionColumns.newBuilder().addAllColumns(plan.projection).build()
 
-                LogicalPlanNode.newBuilder()
-                        .setParquetScan(
-                                ParquetTableScanNode.newBuilder()
-                                        .setPath(plan.path)
-                                        .setProjection(projectionColumns)
-                                        .build()
-                        ).build()
-            }
+            LogicalPlanNode.newBuilder()
+                .setParquetScan(
+                    ParquetTableScanNode.newBuilder()
+                        .setPath(plan.path)
+                        .setProjection(projectionColumns)
+                        .build())
+                .build()
+          }
           else -> throw UnsupportedOperationException("Unsupported datasource used in scan")
         }
       }
@@ -86,24 +83,25 @@ class ProtobufSerializer {
                     .build())
             .build()
       }
-        is Join ->{
-            val joinType = when(plan.join_type){
-                JoinType.Inner ->io.andygrove.kquery.protobuf.JoinType.INNER
-                JoinType.Left -> io.andygrove.kquery.protobuf.JoinType.LEFT
-                JoinType.Right -> io.andygrove.kquery.protobuf.JoinType.RIGHT
+      is Join -> {
+        val joinType =
+            when (plan.join_type) {
+              JoinType.Inner -> io.andygrove.kquery.protobuf.JoinType.INNER
+              JoinType.Left -> io.andygrove.kquery.protobuf.JoinType.LEFT
+              JoinType.Right -> io.andygrove.kquery.protobuf.JoinType.RIGHT
             }
 
-            LogicalPlanNode.newBuilder()
-                    .setJoin(
-                            JoinNode.newBuilder()
-                                    .setJoinType( joinType)
-                                    .setLeft(toProto(plan.left))
-                                    .setRight(toProto(plan.right))
-                                    .addAllLeftJoinColumn(plan.on.map{it.first})
-                                    .addAllRightJoinColumn(plan.on.map{it.second})
-                                    .build()
-                    ).build()
-        }
+        LogicalPlanNode.newBuilder()
+            .setJoin(
+                JoinNode.newBuilder()
+                    .setJoinType(joinType)
+                    .setLeft(toProto(plan.left))
+                    .setRight(toProto(plan.right))
+                    .addAllLeftJoinColumn(plan.on.map { it.first })
+                    .addAllRightJoinColumn(plan.on.map { it.second })
+                    .build())
+            .build()
+      }
       else ->
           throw IllegalStateException(
               "Cannot serialize logical operator to protobuf: ${plan.javaClass.name}")
@@ -119,9 +117,9 @@ class ProtobufSerializer {
       is LiteralString -> {
         LogicalExprNode.newBuilder().setLiteralString(expr.str).build()
       }
-        is LiteralFloat -> {
-            LogicalExprNode.newBuilder().setLiteralF32(expr.n).build()
-        }
+      is LiteralFloat -> {
+        LogicalExprNode.newBuilder().setLiteralF32(expr.n).build()
+      }
       is LiteralDouble -> {
         LogicalExprNode.newBuilder().setLiteralF64(expr.n).build()
       }

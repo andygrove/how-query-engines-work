@@ -14,16 +14,16 @@
 
 package io.andygrove.kquery.fuzzer
 
-import java.lang.IllegalStateException
-import kotlin.random.Random
-import org.apache.arrow.memory.RootAllocator
-import org.apache.arrow.vector.*
-import org.apache.arrow.vector.types.pojo.ArrowType
 import io.andygrove.kquery.datatypes.ArrowFieldVector
 import io.andygrove.kquery.datatypes.ArrowTypes
 import io.andygrove.kquery.datatypes.RecordBatch
 import io.andygrove.kquery.datatypes.Schema
 import io.andygrove.kquery.logical.*
+import java.lang.IllegalStateException
+import kotlin.random.Random
+import org.apache.arrow.memory.RootAllocator
+import org.apache.arrow.vector.*
+import org.apache.arrow.vector.types.pojo.ArrowType
 
 class Fuzzer {
 
@@ -203,7 +203,8 @@ class EnhancedRandom(val rand: Random) {
   }
 
   fun nextString(len: Int): String {
-    return (0 until len).map { _ -> rand.nextInt(charPool.size) }
+    return (0 until len)
+        .map { _ -> rand.nextInt(charPool.size) }
         .map(charPool::get)
         .joinToString("")
   }

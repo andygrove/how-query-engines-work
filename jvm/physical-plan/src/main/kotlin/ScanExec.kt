@@ -30,7 +30,7 @@ class ScanExec(val ds: DataSource, val projection: List<String>) : PhysicalPlan 
   }
 
   override fun execute(): Sequence<RecordBatch> {
-    return ds.scan(projection);
+    return ds.scan(projection)
   }
 
   override fun toString(): String {

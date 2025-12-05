@@ -16,12 +16,12 @@ package io.andygrove.kquery.datasource
 
 import com.univocity.parsers.common.record.Record
 import com.univocity.parsers.csv.*
+import io.andygrove.kquery.datatypes.*
 import java.io.*
 import java.lang.IllegalStateException
 import java.util.logging.Logger
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.*
-import io.andygrove.kquery.datatypes.*
 
 /**
  * Simple CSV data source. If no schema is provided then it assumes that the first line contains
@@ -118,7 +118,9 @@ class CsvDataSource(
 }
 
 class ReaderAsSequence(
-    private val schema: Schema, private val parser: CsvParser, private val batchSize: Int
+    private val schema: Schema,
+    private val parser: CsvParser,
+    private val batchSize: Int
 ) : Sequence<RecordBatch> {
   override fun iterator(): Iterator<RecordBatch> {
     return ReaderIterator(schema, parser, batchSize)
@@ -126,7 +128,9 @@ class ReaderAsSequence(
 }
 
 class ReaderIterator(
-    private val schema: Schema, private val parser: CsvParser, private val batchSize: Int
+    private val schema: Schema,
+    private val parser: CsvParser,
+    private val batchSize: Int
 ) : Iterator<RecordBatch> {
 
   private val logger = Logger.getLogger(CsvDataSource::class.simpleName)

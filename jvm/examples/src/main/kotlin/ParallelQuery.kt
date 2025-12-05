@@ -14,13 +14,12 @@
 
 package io.andygrove.kquery.examples
 
-import kotlin.system.measureTimeMillis
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.runBlocking
 import io.andygrove.kquery.datasource.InMemoryDataSource
 import io.andygrove.kquery.datatypes.RecordBatch
 import io.andygrove.kquery.execution.ExecutionContext
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 
 fun main() {
 
@@ -59,7 +58,7 @@ fun main() {
 }
 
 fun executeQuery(path: String, month: Int, sql: String): List<RecordBatch> {
-  val monthStr = String.format("%02d", month);
+  val monthStr = String.format("%02d", month)
   val filename = "$path/yellow_tripdata_2019-$monthStr.csv"
   val ctx = ExecutionContext(mapOf())
   ctx.registerCsv("tripdata", filename)

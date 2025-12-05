@@ -14,14 +14,14 @@
 
 package io.andygrove.kquery.benchmarks
 
+import io.andygrove.kquery.datasource.InMemoryDataSource
+import io.andygrove.kquery.datatypes.RecordBatch
+import io.andygrove.kquery.execution.ExecutionContext
 import java.io.File
 import java.io.FileWriter
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
-import io.andygrove.kquery.datasource.InMemoryDataSource
-import io.andygrove.kquery.datatypes.RecordBatch
-import io.andygrove.kquery.execution.ExecutionContext
 
 /** Designed to be run from Docker. See top-level benchmarks folder for more info. */
 class Benchmarks {

@@ -14,11 +14,10 @@
 
 package io.andygrove.kquery.execution
 
-import kotlin.test.assertEquals
 import io.andygrove.kquery.logical.format
 import io.andygrove.kquery.physical.*
-import org.junit.Ignore
-import org.junit.Test
+import kotlin.test.assertEquals
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

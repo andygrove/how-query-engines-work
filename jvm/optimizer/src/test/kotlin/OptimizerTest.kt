@@ -14,10 +14,10 @@
 
 package io.andygrove.kquery.optimizer
 
-import kotlin.test.assertEquals
 import io.andygrove.kquery.datasource.CsvDataSource
 import io.andygrove.kquery.logical.*
-import org.junit.Test
+import kotlin.test.assertEquals
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -46,11 +46,11 @@ class OptimizerTest {
             .filter(col("state") eq lit("CO"))
             .project(listOf(col("id"), col("first_name"), col("last_name")))
 
-    println(df.logicalPlan().pretty());
+    println(df.logicalPlan().pretty())
 
     val rule = ProjectionPushDownRule()
     val optimizedPlan = rule.optimize(df.logicalPlan())
-    println(optimizedPlan.pretty());
+    println(optimizedPlan.pretty())
 
     val expected =
         "Projection: #id, #first_name, #last_name\n" +
@@ -66,8 +66,8 @@ class OptimizerTest {
     val df =
         csv()
             .aggregate(
-            listOf(col("state")),
-            listOf(Min(col("salary")), Max(col("salary")), Count(col("salary"))))
+                listOf(col("state")),
+                listOf(Min(col("salary")), Max(col("salary")), Count(col("salary"))))
 
     val rule = ProjectionPushDownRule()
     val optimizedPlan = rule.optimize(df.logicalPlan())

@@ -14,7 +14,7 @@
 
 package io.andygrove.kquery.protobuf;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class ProtoTest {
 

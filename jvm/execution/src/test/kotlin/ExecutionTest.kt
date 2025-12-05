@@ -14,16 +14,16 @@
 
 package io.andygrove.kquery.execution
 
-import java.io.File
-import kotlin.test.assertEquals
-import org.apache.arrow.vector.types.pojo.ArrowType
 import io.andygrove.kquery.datasource.InMemoryDataSource
 import io.andygrove.kquery.datatypes.ArrowTypes
 import io.andygrove.kquery.datatypes.Field
 import io.andygrove.kquery.datatypes.Schema
 import io.andygrove.kquery.fuzzer.Fuzzer
 import io.andygrove.kquery.logical.*
-import org.junit.Test
+import java.io.File
+import kotlin.test.assertEquals
+import org.apache.arrow.vector.types.pojo.ArrowType
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -121,7 +121,7 @@ class ExecutionTest {
     val input =
         Fuzzer()
             .createRecordBatch(
-            schema, listOf(listOf("a", "a", "b", "b"), listOf(1.0f, 2.0f, 4.0f, 3.0f)))
+                schema, listOf(listOf("a", "a", "b", "b"), listOf(1.0f, 2.0f, 4.0f, 3.0f)))
 
     val dataSource = InMemoryDataSource(schema, listOf(input))
 
@@ -146,7 +146,7 @@ class ExecutionTest {
     val input =
         Fuzzer()
             .createRecordBatch(
-            schema, listOf(listOf(1.0f, 2.0f, 4.0f, 3.0f), listOf(11.0f, 22.0f, 44.0f, 33.0f)))
+                schema, listOf(listOf(1.0f, 2.0f, 4.0f, 3.0f), listOf(11.0f, 22.0f, 44.0f, 33.0f)))
 
     val dataSource = InMemoryDataSource(schema, listOf(input))
 
@@ -154,11 +154,11 @@ class ExecutionTest {
     val logicalPlan =
         DataFrameImpl(Scan("", dataSource, listOf()))
             .project(
-            listOf(
-                Add(col("a"), col("b")),
-                Subtract(col("a"), col("b")),
-                Multiply(col("a"), col("b")),
-                Divide(col("a"), col("b"))))
+                listOf(
+                    Add(col("a"), col("b")),
+                    Subtract(col("a"), col("b")),
+                    Multiply(col("a"), col("b")),
+                    Divide(col("a"), col("b"))))
             .logicalPlan()
 
     val batches = ctx.execute(logicalPlan).asSequence().toList()
@@ -181,7 +181,7 @@ class ExecutionTest {
     val input =
         Fuzzer()
             .createRecordBatch(
-            schema, listOf(listOf(false, false, true, true), listOf(false, true, false, true)))
+                schema, listOf(listOf(false, false, true, true), listOf(false, true, false, true)))
 
     val dataSource = InMemoryDataSource(schema, listOf(input))
 

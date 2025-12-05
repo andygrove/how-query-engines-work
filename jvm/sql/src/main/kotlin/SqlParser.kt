@@ -26,17 +26,23 @@ class SqlParser(val tokens: TokenStream) : PrattParser {
     val precedence =
         when (token.type) {
           // Keywords
-          Keyword.AS, Keyword.ASC, Keyword.DESC -> 10
+          Keyword.AS,
+          Keyword.ASC,
+          Keyword.DESC -> 10
           Keyword.OR -> 20
           Keyword.AND -> 30
 
           // Symbols
-          Symbol.LT, Symbol.LT_EQ, Symbol.EQ,
-          Symbol.BANG_EQ, Symbol.GT_EQ, Symbol.GT -> 40
-
-          Symbol.PLUS, Symbol.SUB -> 50
-          Symbol.STAR, Symbol.SLASH -> 60
-
+          Symbol.LT,
+          Symbol.LT_EQ,
+          Symbol.EQ,
+          Symbol.BANG_EQ,
+          Symbol.GT_EQ,
+          Symbol.GT -> 40
+          Symbol.PLUS,
+          Symbol.SUB -> 50
+          Symbol.STAR,
+          Symbol.SLASH -> 60
           Symbol.LEFT_PAREN -> 70
           else -> 0
         }
@@ -52,7 +58,6 @@ class SqlParser(val tokens: TokenStream) : PrattParser {
           // Keywords
           Keyword.SELECT -> parseSelect()
           Keyword.CAST -> parseCast()
-
           Keyword.MAX -> SqlIdentifier(token.text)
 
           // type
@@ -75,8 +80,13 @@ class SqlParser(val tokens: TokenStream) : PrattParser {
     val token = tokens.peek()!!
     val expr =
         when (token.type) {
-          Symbol.PLUS, Symbol.SUB, Symbol.STAR, Symbol.SLASH,
-          Symbol.EQ, Symbol.GT, Symbol.LT -> {
+          Symbol.PLUS,
+          Symbol.SUB,
+          Symbol.STAR,
+          Symbol.SLASH,
+          Symbol.EQ,
+          Symbol.GT,
+          Symbol.LT -> {
             tokens.next() // consume the token
             SqlBinaryExpr(
                 left, token.text, parse(precedence) ?: throw SQLException("Error parsing infix"))
@@ -87,21 +97,17 @@ class SqlParser(val tokens: TokenStream) : PrattParser {
             tokens.next() // consume the token
             SqlAlias(left, parseIdentifier())
           }
-
-          Keyword.AND, Keyword.OR -> {
+          Keyword.AND,
+          Keyword.OR -> {
             tokens.next() // consume the token
             SqlBinaryExpr(
-                left,
-                token.text,
-                parse(precedence) ?: throw SQLException("Error parsing infix"))
+                left, token.text, parse(precedence) ?: throw SQLException("Error parsing infix"))
           }
-
-          Keyword.ASC, Keyword.DESC -> {
+          Keyword.ASC,
+          Keyword.DESC -> {
             tokens.next()
             SqlSort(left, token.type == Keyword.ASC)
           }
-
-
           Symbol.LEFT_PAREN -> {
             if (left is SqlIdentifier) {
               tokens.next() // consume the token
@@ -122,11 +128,13 @@ class SqlParser(val tokens: TokenStream) : PrattParser {
     val sortList = mutableListOf<SqlSort>()
     var sort = parseExpr()
     while (sort != null) {
-      sort = when (sort) {
-        is SqlIdentifier -> SqlSort(sort, true)
-        is SqlSort -> sort
-        else -> throw java.lang.IllegalStateException("Unexpected expression $sort after order by.")
-      }
+      sort =
+          when (sort) {
+            is SqlIdentifier -> SqlSort(sort, true)
+            is SqlSort -> sort
+            else ->
+                throw java.lang.IllegalStateException("Unexpected expression $sort after order by.")
+          }
       sortList.add(sort)
 
       if (tokens.peek()?.type == Symbol.COMMA) {

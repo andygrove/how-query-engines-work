@@ -14,9 +14,9 @@
 
 package io.andygrove.kquery.execution
 
-import kotlin.test.assertEquals
 import io.andygrove.kquery.logical.*
-import org.junit.Test
+import kotlin.test.assertEquals
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 /** Example source code for README in this repo. */

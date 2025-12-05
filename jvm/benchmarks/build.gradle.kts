@@ -1,11 +1,11 @@
 plugins {
-    kotlin("plugin.serialization") version "1.3.61"
+    kotlin("plugin.serialization") version "1.9.22"
     scala
     application
 }
 
 application {
-    mainClassName = "io.andygrove.kquery.benchmarks.Benchmarks"
+    mainClass.set("io.andygrove.kquery.benchmarks.Benchmarks")
 }
 
 dependencies {
@@ -19,5 +19,4 @@ dependencies {
     implementation(project(":sql"))
 
     implementation("org.apache.arrow:arrow-vector:0.17.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.4")
 }

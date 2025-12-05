@@ -48,5 +48,6 @@ class LiteralStringExpression(val value: String) : Expression {
 
 interface Accumulator {
   fun accumulate(value: Any?)
+
   fun finalValue(): Any?
 }

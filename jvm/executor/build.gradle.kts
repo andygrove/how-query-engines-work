@@ -1,12 +1,12 @@
 description = "Ballista query executor"
 
 plugins {
-    kotlin("plugin.serialization") version "1.3.61"
+    kotlin("plugin.serialization") version "1.9.22"
     application
 }
 
 application {
-    mainClassName = "io.andygrove.kquery.executor.Executor"
+    mainClass.set("io.andygrove.kquery.executor.Executor")
 }
 
 dependencies {

@@ -15,7 +15,7 @@
 package io.andygrove.kquery.sql
 
 import kotlin.test.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -75,10 +75,10 @@ class SqlParserTest {
   @Test
   fun `parse Select With Order`() {
     val select = parseSelect("SELECT state, salary FROM employee ORDER BY salary desc, state")
-    assertEquals(listOf(SqlIdentifier("state"),SqlIdentifier("salary")), select.projection)
+    assertEquals(listOf(SqlIdentifier("state"), SqlIdentifier("salary")), select.projection)
     assertEquals(
-            listOf(SqlSort(SqlIdentifier("salary"), false), SqlSort(SqlIdentifier("state"), true)),
-            select.orderBy)
+        listOf(SqlSort(SqlIdentifier("salary"), false), SqlSort(SqlIdentifier("state"), true)),
+        select.orderBy)
   }
 
   @Test
@@ -103,8 +103,10 @@ class SqlParserTest {
 
   @Test
   fun `parse SELECT with aggregates and HAVING`() {
-    val select = parseSelect("SELECT state, MAX(salary) AS top_wage FROM employee " +
-        "GROUP BY state HAVING MAX(salary) > 10 AND MAX(salary) < 100")
+    val select =
+        parseSelect(
+            "SELECT state, MAX(salary) AS top_wage FROM employee " +
+                "GROUP BY state HAVING MAX(salary) > 10 AND MAX(salary) < 100")
     val max = SqlFunction("MAX", listOf(SqlIdentifier("salary")))
     val alias = SqlAlias(max, SqlIdentifier("top_wage"))
     assertEquals(listOf(SqlIdentifier("state"), alias), select.projection)

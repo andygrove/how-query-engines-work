@@ -14,6 +14,9 @@
 
 package io.andygrove.kquery.datasource
 
+import io.andygrove.kquery.datatypes.ArrowFieldVector
+import io.andygrove.kquery.datatypes.RecordBatch
+import io.andygrove.kquery.datatypes.Schema
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.VectorSchemaRoot
 import org.apache.hadoop.conf.Configuration
@@ -21,10 +24,6 @@ import org.apache.hadoop.fs.Path
 import org.apache.parquet.arrow.schema.SchemaConverter
 import org.apache.parquet.hadoop.ParquetFileReader
 import org.apache.parquet.hadoop.util.HadoopInputFile
-import io.andygrove.kquery.datatypes.ArrowFieldVector
-import io.andygrove.kquery.datatypes.Field
-import io.andygrove.kquery.datatypes.RecordBatch
-import io.andygrove.kquery.datatypes.Schema
 
 class ParquetDataSource(private val filename: String) : DataSource {
 
@@ -58,7 +57,8 @@ class ParquetScan(filename: String, private val columns: List<String>) :
 }
 
 class ParquetIterator(
-    private val reader: ParquetFileReader, private val projectedColumns: List<String>
+    private val reader: ParquetFileReader,
+    private val projectedColumns: List<String>
 ) : Iterator<RecordBatch> {
 
   val schema = reader.footer.fileMetaData.schema
@@ -66,12 +66,8 @@ class ParquetIterator(
   val arrowSchema = SchemaConverter().fromParquet(schema).arrowSchema
 
   val projectedArrowSchema =
-      org.apache
-          .arrow
-          .vector
-          .types
-          .pojo
-          .Schema(projectedColumns.map { name -> arrowSchema.fields.find { it.name == name } })
+      org.apache.arrow.vector.types.pojo.Schema(
+          projectedColumns.map { name -> arrowSchema.fields.find { it.name == name } })
 
   var batch: RecordBatch? = null
 

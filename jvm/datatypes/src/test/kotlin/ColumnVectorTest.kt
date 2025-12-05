@@ -17,7 +17,7 @@ package io.andygrove.kquery.datatypes
 import kotlin.test.assertEquals
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.IntVector
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

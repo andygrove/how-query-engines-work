@@ -15,7 +15,7 @@
 package io.andygrove.kquery.datasource
 
 import java.io.File
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
