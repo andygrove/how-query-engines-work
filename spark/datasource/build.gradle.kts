@@ -1,4 +1,4 @@
-description = "Ballista Spark Datasource"
+description = "KQuery Spark Datasource"
 
 plugins {
     scala
