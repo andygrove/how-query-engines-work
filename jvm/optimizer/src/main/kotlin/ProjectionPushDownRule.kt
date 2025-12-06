@@ -42,6 +42,10 @@ class ProjectionPushDownRule : OptimizerRule {
         val input = pushDown(plan.input, columnNames)
         Aggregate(input, plan.groupExpr, plan.aggregateExpr)
       }
+      is Limit -> {
+        val input = pushDown(plan.input, columnNames)
+        Limit(input, plan.limit)
+      }
       is Scan -> {
         val validFieldNames = plan.dataSource.schema().fields.map { it.name }.toSet()
         val pushDown = validFieldNames.filter { columnNames.contains(it) }.toSet().sorted()

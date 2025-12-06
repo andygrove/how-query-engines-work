@@ -127,6 +127,32 @@ class SqlParserTest {
     assertEquals("employee", select.tableName)
   }
 
+  @Test
+  fun `parse SELECT with LIMIT`() {
+    val select = parseSelect("SELECT id, first_name FROM employee LIMIT 10")
+    assertEquals(listOf(SqlIdentifier("id"), SqlIdentifier("first_name")), select.projection)
+    assertEquals(10, select.limit)
+    assertEquals("employee", select.tableName)
+  }
+
+  @Test
+  fun `parse SELECT with WHERE and LIMIT`() {
+    val select = parseSelect("SELECT id, first_name FROM employee WHERE state = 'CO' LIMIT 5")
+    assertEquals(listOf(SqlIdentifier("id"), SqlIdentifier("first_name")), select.projection)
+    assertEquals(SqlBinaryExpr(SqlIdentifier("state"), "=", SqlString("CO")), select.selection)
+    assertEquals(5, select.limit)
+    assertEquals("employee", select.tableName)
+  }
+
+  @Test
+  fun `parse SELECT with ORDER BY and LIMIT`() {
+    val select = parseSelect("SELECT id, salary FROM employee ORDER BY salary DESC LIMIT 3")
+    assertEquals(listOf(SqlIdentifier("id"), SqlIdentifier("salary")), select.projection)
+    assertEquals(listOf(SqlSort(SqlIdentifier("salary"), false)), select.orderBy)
+    assertEquals(3, select.limit)
+    assertEquals("employee", select.tableName)
+  }
+
   private fun parseSelect(sql: String): SqlSelect {
     return parse(sql) as SqlSelect
   }

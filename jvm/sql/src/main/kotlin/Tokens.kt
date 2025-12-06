@@ -124,6 +124,7 @@ enum class Keyword : TokenType {
   /** select */
   SELECT,
   DISTINCT,
+  LIMIT,
   AS,
   CASE,
   WHEN,

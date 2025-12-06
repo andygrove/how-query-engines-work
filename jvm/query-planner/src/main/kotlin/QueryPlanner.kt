@@ -56,6 +56,10 @@ class QueryPlanner {
             }
         HashAggregateExec(input, groupExpr, aggregateExpr, plan.schema())
       }
+      is Limit -> {
+        val input = createPhysicalPlan(plan.input)
+        LimitExec(input, plan.limit)
+      }
       else -> throw IllegalStateException(plan.javaClass.toString())
     }
   }

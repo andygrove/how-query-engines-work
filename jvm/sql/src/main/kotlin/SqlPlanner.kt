@@ -78,6 +78,9 @@ class SqlPlanner {
       if (select.having != null) {
         plan = plan.filter(createLogicalExpr(select.having, plan))
       }
+      if (select.limit != null) {
+        plan = plan.limit(select.limit)
+      }
       return plan
     }
   }
@@ -101,7 +104,11 @@ class SqlPlanner {
 
     var plan = df
     if (select.selection == null) {
-      return plan.project(projectionExpr)
+      plan = plan.project(projectionExpr)
+      if (select.limit != null) {
+        plan = plan.limit(select.limit)
+      }
+      return plan
     }
 
     val missing = (columnNamesInSelection - columnNamesInProjection)
@@ -128,6 +135,10 @@ class SqlPlanner {
       // drop the columns that were added for the selection
       val expr = (0 until n).map { i -> Column(plan.schema().fields[i].name) }
       plan = plan.project(expr)
+    }
+
+    if (select.limit != null) {
+      plan = plan.limit(select.limit)
     }
 
     return plan
