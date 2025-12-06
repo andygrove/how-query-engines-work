@@ -14,6 +14,7 @@
 
 package io.andygrove.kquery.fuzzer
 
+import io.andygrove.kquery.datatypes.ArrowAllocator
 import io.andygrove.kquery.datatypes.ArrowFieldVector
 import io.andygrove.kquery.datatypes.ArrowTypes
 import io.andygrove.kquery.datatypes.RecordBatch
@@ -21,7 +22,6 @@ import io.andygrove.kquery.datatypes.Schema
 import io.andygrove.kquery.logical.*
 import java.lang.IllegalStateException
 import kotlin.random.Random
-import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.*
 import org.apache.arrow.vector.types.pojo.ArrowType
 
@@ -56,7 +56,7 @@ class Fuzzer {
 
     val rowCount = columns[0].size
 
-    val root = VectorSchemaRoot.create(schema.toArrow(), RootAllocator(Long.MAX_VALUE))
+    val root = VectorSchemaRoot.create(schema.toArrow(), ArrowAllocator.rootAllocator)
     root.allocateNew()
 
     (0 until rowCount).forEach { row ->

@@ -14,9 +14,9 @@
 
 package io.andygrove.kquery.executor
 
+import io.andygrove.kquery.datatypes.ArrowAllocator
 import org.apache.arrow.flight.FlightServer
 import org.apache.arrow.flight.Location
-import org.apache.arrow.memory.RootAllocator
 
 class Executor {
   companion object {
@@ -34,7 +34,7 @@ class Executor {
 
       val server =
           FlightServer.builder(
-                  RootAllocator(Long.MAX_VALUE),
+                  ArrowAllocator.rootAllocator,
                   Location.forGrpcInsecure(bindHost, port),
                   BallistaFlightProducer())
               .build()

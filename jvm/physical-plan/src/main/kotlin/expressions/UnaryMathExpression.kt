@@ -14,12 +14,12 @@
 
 package io.andygrove.kquery.physical.expressions
 
+import io.andygrove.kquery.datatypes.ArrowAllocator
 import io.andygrove.kquery.datatypes.ArrowFieldVector
 import io.andygrove.kquery.datatypes.ColumnVector
 import io.andygrove.kquery.datatypes.RecordBatch
 import kotlin.math.ln
 import kotlin.math.sqrt
-import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.Float8Vector
 
 /** Base class for unary math expressions */
@@ -27,7 +27,7 @@ abstract class UnaryMathExpression(private val expr: Expression) : Expression {
 
   override fun evaluate(input: RecordBatch): ColumnVector {
     val n = expr.evaluate(input)
-    val v = Float8Vector("v", RootAllocator(Long.MAX_VALUE))
+    val v = Float8Vector("v", ArrowAllocator.rootAllocator)
     v.allocateNew()
     (0 until n.size()).forEach {
       val nv = n.getValue(it)
