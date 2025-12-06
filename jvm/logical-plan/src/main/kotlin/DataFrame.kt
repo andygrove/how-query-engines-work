@@ -27,6 +27,9 @@ interface DataFrame {
   /** Aggregate */
   fun aggregate(groupBy: List<LogicalExpr>, aggregateExpr: List<AggregateExpr>): DataFrame
 
+  /** Limit the number of rows */
+  fun limit(n: Int): DataFrame
+
   /** Returns the schema of the data that will be produced by this DataFrame. */
   fun schema(): Schema
 
@@ -49,6 +52,10 @@ class DataFrameImpl(private val plan: LogicalPlan) : DataFrame {
       aggregateExpr: List<AggregateExpr>
   ): DataFrame {
     return DataFrameImpl(Aggregate(plan, groupBy, aggregateExpr))
+  }
+
+  override fun limit(n: Int): DataFrame {
+    return DataFrameImpl(Limit(plan, n))
   }
 
   override fun schema(): Schema {

@@ -189,7 +189,18 @@ class SqlParser(val tokens: TokenStream) : PrattParser {
         orderBy = parseOrder()
       }
 
-      return SqlSelect(projection, filterExpr, groupBy, orderBy, havingExpr, table.id)
+      // parse optional LIMIT clause
+      var limit: Int? = null
+      if (tokens.consumeKeyword("LIMIT")) {
+        val limitExpr = parseExpr() ?: throw SQLException("Expected limit value after LIMIT")
+        limit =
+            when (limitExpr) {
+              is SqlLong -> limitExpr.value.toInt()
+              else -> throw SQLException("LIMIT must be a numeric value")
+            }
+      }
+
+      return SqlSelect(projection, filterExpr, groupBy, orderBy, havingExpr, limit, table.id)
     } else {
       throw IllegalStateException("Expected FROM keyword, found ${tokens.peek()}")
     }

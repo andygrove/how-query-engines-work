@@ -197,4 +197,55 @@ class ExecutionTest {
     val batch = batches.first()
     assertEquals("false,false\n" + "false,true\n" + "false,true\n" + "true,true\n", batch.toCSV())
   }
+
+  @Test
+  fun `limit using DataFrame`() {
+    val ctx = ExecutionContext(mapOf())
+
+    val df =
+        ctx.csv(employeeCsv)
+            .project(listOf(col("id"), col("first_name"), col("last_name")))
+            .limit(2)
+
+    val batches = ctx.execute(df).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    assertEquals(2, batch.rowCount())
+    assertEquals("1,Bill,Hopkins\n" + "2,Gregg,Langford\n", batch.toCSV())
+  }
+
+  @Test
+  fun `limit using SQL`() {
+    val ctx = ExecutionContext(mapOf())
+
+    val employee = ctx.csv(employeeCsv)
+    ctx.register("employee", employee)
+
+    val df = ctx.sql("SELECT id, first_name, last_name FROM employee LIMIT 2")
+
+    val batches = ctx.execute(df).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    assertEquals(2, batch.rowCount())
+    assertEquals("1,Bill,Hopkins\n" + "2,Gregg,Langford\n", batch.toCSV())
+  }
+
+  @Test
+  fun `limit with filter using SQL`() {
+    val ctx = ExecutionContext(mapOf())
+
+    val employee = ctx.csv(employeeCsv)
+    ctx.register("employee", employee)
+
+    val df = ctx.sql("SELECT id, first_name, last_name FROM employee WHERE state = 'CO' LIMIT 1")
+
+    val batches = ctx.execute(df).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    assertEquals(1, batch.rowCount())
+    assertEquals("2,Gregg,Langford\n", batch.toCSV())
+  }
 }
