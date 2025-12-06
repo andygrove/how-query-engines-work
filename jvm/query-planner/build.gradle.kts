@@ -1,4 +1,4 @@
-description = "Ballista query planner"
+description = "KQuery query planner"
 
 plugins {
     kotlin("plugin.serialization") version "1.3.61"

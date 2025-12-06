@@ -1,4 +1,4 @@
-description = "Ballista query execution"
+description = "KQuery query execution"
 
 plugins {
     kotlin("plugin.serialization") version "1.3.61"

@@ -1,6 +1,6 @@
 import com.google.protobuf.gradle.*
 
-description = "Ballista protocol buffer format"
+description = "KQuery protocol buffer format"
 
 plugins {
     java

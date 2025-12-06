@@ -1,4 +1,4 @@
-description = "Ballista query optimizer"
+description = "KQuery query optimizer"
 
 dependencies {
     implementation(project(":datatypes"))

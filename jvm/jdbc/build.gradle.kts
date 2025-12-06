@@ -1,4 +1,4 @@
-description = "Ballista JDBC Driver"
+description = "KQuery JDBC Driver"
 
 plugins {
     java

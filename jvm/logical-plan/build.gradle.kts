@@ -1,4 +1,4 @@
-description = "Ballista logical plan"
+description = "KQuery logical plan"
 
 dependencies {
     implementation(project(":datatypes"))

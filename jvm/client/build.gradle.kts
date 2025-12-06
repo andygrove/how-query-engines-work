@@ -1,4 +1,4 @@
-description = "Ballista client"
+description = "KQuery client"
 
 dependencies {
 
