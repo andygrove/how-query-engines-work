@@ -23,6 +23,6 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
       - name: Build and run JVM tests with Gradle
-        run: cd jvm && ./gradlew build
+        run: cd jvm && ./gradlew publishToMaven
       - name: Build and run Spark tests with Gradle
         run: cd spark && ./gradlew clean assemble test

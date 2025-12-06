@@ -52,8 +52,14 @@ Install to local Maven repository:
 
 ## Sample Data
 
-Some of the examples in the book use the following data set.
+Some of the examples in the book use the `yellow_tripdata_2019-12.csv` data set. The original data set
+is no longer available from the [original location] (because the data is now, quite sensibly, provided
+in Parquet format), but copies can be still be found on the internet.
 
-```bash
-wget https://nyc-tlc.s3.amazonaws.com/trip+data/yellow_tripdata_2019-12.csv
-```
+[original location]: https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page
+
+As of December 2025, copies can be found at the following locations:
+
+- https://github.com/DataTalksClub/nyc-tlc-data/releases
+- https://catalog.data.gov/dataset/2019-yellow-taxi-trip-data
+- https://www.kaggle.com/code/haydenbailey/newyork-yellow-taxi
