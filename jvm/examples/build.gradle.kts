@@ -14,6 +14,6 @@ dependencies {
     implementation(project(":execution"))
     implementation(project(":sql"))
 
-    implementation("org.apache.arrow:arrow-vector:0.17.0")
+    implementation("org.apache.arrow:arrow-vector:18.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.4")
 }
