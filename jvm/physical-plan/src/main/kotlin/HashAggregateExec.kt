@@ -49,36 +49,39 @@ class HashAggregateExec(
 
     // for each batch from the input executor
     input.execute().iterator().forEach { batch ->
+      try {
+        // evaluate the grouping expressions
+        val groupKeys = groupExpr.map { it.evaluate(batch) }
 
-      // evaluate the grouping expressions
-      val groupKeys = groupExpr.map { it.evaluate(batch) }
+        // evaluate the expressions that are inputs to the aggregate functions
+        val aggrInputValues = aggregateExpr.map { it.inputExpression().evaluate(batch) }
 
-      // evaluate the expressions that are inputs to the aggregate functions
-      val aggrInputValues = aggregateExpr.map { it.inputExpression().evaluate(batch) }
+        // for each row in the batch
+        (0 until batch.rowCount()).forEach { rowIndex ->
 
-      // for each row in the batch
-      (0 until batch.rowCount()).forEach { rowIndex ->
-
-        // create the key for the hash map
-        val rowKey =
-            groupKeys.map {
-              val value = it.getValue(rowIndex)
-              when (value) {
-                is ByteArray -> String(value)
-                else -> value
+          // create the key for the hash map
+          val rowKey =
+              groupKeys.map {
+                val value = it.getValue(rowIndex)
+                when (value) {
+                  is ByteArray -> String(value)
+                  else -> value
+                }
               }
-            }
 
-        // println(rowKey)
+          // println(rowKey)
 
-        // get or create accumulators for this grouping key
-        val accumulators = map.getOrPut(rowKey) { aggregateExpr.map { it.createAccumulator() } }
+          // get or create accumulators for this grouping key
+          val accumulators = map.getOrPut(rowKey) { aggregateExpr.map { it.createAccumulator() } }
 
-        // perform accumulation
-        accumulators.withIndex().forEach { accum ->
-          val value = aggrInputValues[accum.index].getValue(rowIndex)
-          accum.value.accumulate(value)
+          // perform accumulation
+          accumulators.withIndex().forEach { accum ->
+            val value = aggrInputValues[accum.index].getValue(rowIndex)
+            accum.value.accumulate(value)
+          }
         }
+      } finally {
+        batch.close()
       }
     }
 
