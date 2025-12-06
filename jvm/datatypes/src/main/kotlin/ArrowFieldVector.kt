@@ -15,24 +15,29 @@
 package io.andygrove.kquery.datatypes
 
 import java.lang.IllegalStateException
+import org.apache.arrow.memory.BufferAllocator
 import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.*
 import org.apache.arrow.vector.types.pojo.ArrowType
 
+/** Shared Arrow memory allocator for the entire application. */
+object ArrowAllocator {
+  val rootAllocator: BufferAllocator = RootAllocator(Long.MAX_VALUE)
+}
+
 object FieldVectorFactory {
 
   fun create(arrowType: ArrowType, initialCapacity: Int): FieldVector {
-    val rootAllocator = RootAllocator(Long.MAX_VALUE)
     val fieldVector: FieldVector =
         when (arrowType) {
-          ArrowTypes.BooleanType -> BitVector("v", rootAllocator)
-          ArrowTypes.Int8Type -> TinyIntVector("v", rootAllocator)
-          ArrowTypes.Int16Type -> SmallIntVector("v", rootAllocator)
-          ArrowTypes.Int32Type -> IntVector("v", rootAllocator)
-          ArrowTypes.Int64Type -> BigIntVector("v", rootAllocator)
-          ArrowTypes.FloatType -> Float4Vector("v", rootAllocator)
-          ArrowTypes.DoubleType -> Float8Vector("v", rootAllocator)
-          ArrowTypes.StringType -> VarCharVector("v", rootAllocator)
+          ArrowTypes.BooleanType -> BitVector("v", ArrowAllocator.rootAllocator)
+          ArrowTypes.Int8Type -> TinyIntVector("v", ArrowAllocator.rootAllocator)
+          ArrowTypes.Int16Type -> SmallIntVector("v", ArrowAllocator.rootAllocator)
+          ArrowTypes.Int32Type -> IntVector("v", ArrowAllocator.rootAllocator)
+          ArrowTypes.Int64Type -> BigIntVector("v", ArrowAllocator.rootAllocator)
+          ArrowTypes.FloatType -> Float4Vector("v", ArrowAllocator.rootAllocator)
+          ArrowTypes.DoubleType -> Float8Vector("v", ArrowAllocator.rootAllocator)
+          ArrowTypes.StringType -> VarCharVector("v", ArrowAllocator.rootAllocator)
           else -> throw IllegalStateException()
         }
     if (initialCapacity != 0) {
@@ -88,5 +93,9 @@ class ArrowFieldVector(val field: FieldVector) : ColumnVector {
 
   override fun size(): Int {
     return field.valueCount
+  }
+
+  override fun close() {
+    field.close()
   }
 }

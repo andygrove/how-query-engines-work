@@ -14,6 +14,7 @@
 
 package io.andygrove.kquery.physical
 
+import io.andygrove.kquery.datatypes.ArrowAllocator
 import io.andygrove.kquery.datatypes.ArrowFieldVector
 import io.andygrove.kquery.datatypes.ArrowVectorBuilder
 import io.andygrove.kquery.datatypes.RecordBatch
@@ -21,7 +22,6 @@ import io.andygrove.kquery.datatypes.Schema
 import io.andygrove.kquery.physical.expressions.Accumulator
 import io.andygrove.kquery.physical.expressions.AggregateExpression
 import io.andygrove.kquery.physical.expressions.Expression
-import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.VectorSchemaRoot
 
 class HashAggregateExec(
@@ -83,7 +83,7 @@ class HashAggregateExec(
     }
 
     // create result batch containing final aggregate values
-    val root = VectorSchemaRoot.create(schema.toArrow(), RootAllocator(Long.MAX_VALUE))
+    val root = VectorSchemaRoot.create(schema.toArrow(), ArrowAllocator.rootAllocator)
     root.allocateNew()
     root.rowCount = map.size
 

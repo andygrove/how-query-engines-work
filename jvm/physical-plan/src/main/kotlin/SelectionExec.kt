@@ -17,13 +17,12 @@ package io.andygrove.kquery.physical
 import io.andygrove.kquery.datatypes.ArrowFieldVector
 import io.andygrove.kquery.datatypes.ArrowVectorBuilder
 import io.andygrove.kquery.datatypes.ColumnVector
+import io.andygrove.kquery.datatypes.FieldVectorFactory
 import io.andygrove.kquery.datatypes.RecordBatch
 import io.andygrove.kquery.datatypes.Schema
 import io.andygrove.kquery.physical.expressions.Expression
-import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.BitVector
 import org.apache.arrow.vector.FieldVector
-import org.apache.arrow.vector.VarCharVector
 
 /** Execute a selection. */
 class SelectionExec(val input: PhysicalPlan, val expr: Expression) : PhysicalPlan {
@@ -49,16 +48,23 @@ class SelectionExec(val input: PhysicalPlan, val expr: Expression) : PhysicalPla
   }
 
   private fun filter(v: ColumnVector, selection: BitVector): FieldVector {
-    val filteredVector = VarCharVector("v", RootAllocator(Long.MAX_VALUE))
-    filteredVector.allocateNew()
-
-    val builder = ArrowVectorBuilder(filteredVector)
-
+    // Count selected rows first to allocate correct capacity
     var count = 0
     (0 until selection.valueCount).forEach {
       if (selection.get(it) == 1) {
-        builder.set(count, v.getValue(it))
         count++
+      }
+    }
+
+    // Create vector of the same type as input
+    val filteredVector = FieldVectorFactory.create(v.getType(), count)
+    val builder = ArrowVectorBuilder(filteredVector)
+
+    var index = 0
+    (0 until selection.valueCount).forEach {
+      if (selection.get(it) == 1) {
+        builder.set(index, v.getValue(it))
+        index++
       }
     }
     filteredVector.valueCount = count

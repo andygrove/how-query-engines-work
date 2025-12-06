@@ -14,12 +14,12 @@
 
 package io.andygrove.kquery.physical.expressions
 
+import io.andygrove.kquery.datatypes.ArrowAllocator
 import io.andygrove.kquery.datatypes.ArrowFieldVector
 import io.andygrove.kquery.datatypes.ArrowTypes
 import io.andygrove.kquery.datatypes.ColumnVector
 import io.andygrove.kquery.datatypes.RecordBatch
 import java.lang.IllegalStateException
-import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.BitVector
 import org.apache.arrow.vector.types.pojo.ArrowType
 
@@ -37,7 +37,7 @@ abstract class BooleanExpression(val l: Expression, val r: Expression) : Express
   }
 
   fun compare(l: ColumnVector, r: ColumnVector): ColumnVector {
-    val v = BitVector("v", RootAllocator(Long.MAX_VALUE))
+    val v = BitVector("v", ArrowAllocator.rootAllocator)
     v.allocateNew()
     (0 until l.size()).forEach {
       val value = evaluate(l.getValue(it), r.getValue(it), l.getType())
