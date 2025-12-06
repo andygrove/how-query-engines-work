@@ -1,5 +1,7 @@
 # How Query Engines Work
 
+> **Note:** The `main` branch contains content for the **second edition** of *How Query Engines Work*, due to be published in 2026. For the original project from the first edition, please see the [`first-edition`](https://github.com/andygrove/how-query-engines-work/tree/first-edition) branch.
+
 This is the companion repository for the book [How Query Engines Work](https://leanpub.com/how-query-engines-work)
 and contains source code for a simple in-memory query engine implemented in Kotlin.
 
