@@ -58,7 +58,11 @@ class SqlParser(val tokens: TokenStream) : PrattParser {
           // Keywords
           Keyword.SELECT -> parseSelect()
           Keyword.CAST -> parseCast()
-          Keyword.MAX -> SqlIdentifier(token.text)
+          Keyword.MIN,
+          Keyword.MAX,
+          Keyword.SUM,
+          Keyword.AVG,
+          Keyword.COUNT -> SqlIdentifier(token.text)
 
           // type
           Keyword.INT -> SqlIdentifier(token.text)
