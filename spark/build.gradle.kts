@@ -8,7 +8,7 @@ plugins {
 
 group = "io.andygrove.kquery.spark"
 version = "0.4.0-SNAPSHOT"
-description = "Ballista Spark Support"
+description = "KQuery Spark Support"
 
 allprojects {
     repositories {
