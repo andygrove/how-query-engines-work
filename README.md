@@ -50,6 +50,28 @@ Install to local Maven repository:
 ./gradlew publishToMavenLocal
 ``` 
 
+## Running Benchmarks
+
+The benchmark runs an aggregate SQL query against NYC taxi trip CSV files in parallel.
+
+Build the benchmark:
+```bash
+cd jvm
+./gradlew :benchmarks:installDist
+```
+
+Run the benchmark:
+```bash
+BENCH_PATH=/path/to/csv/files \
+BENCH_RESULT_FILE=/path/to/results.csv \
+./benchmarks/build/install/benchmarks/bin/benchmarks
+```
+
+- `BENCH_PATH` - Directory containing NYC taxi trip CSV files
+- `BENCH_RESULT_FILE` - Output file for benchmark timing results
+
+There is also a Docker-based benchmark setup in the `docker/` directory.
+
 ## Sample Data
 
 Some of the examples in the book use the `yellow_tripdata_2019-12.csv` data set. The original data set
