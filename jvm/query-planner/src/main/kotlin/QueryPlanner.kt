@@ -49,6 +49,8 @@ class QueryPlanner {
                 is Max -> MaxExpression(createPhysicalExpr(it.expr, plan.input))
                 is Min -> MinExpression(createPhysicalExpr(it.expr, plan.input))
                 is Sum -> SumExpression(createPhysicalExpr(it.expr, plan.input))
+                is Avg -> AvgExpression(createPhysicalExpr(it.expr, plan.input))
+                is Count -> CountExpression(createPhysicalExpr(it.expr, plan.input))
                 else -> throw java.lang.IllegalStateException("Unsupported aggregate function: $it")
               }
             }
