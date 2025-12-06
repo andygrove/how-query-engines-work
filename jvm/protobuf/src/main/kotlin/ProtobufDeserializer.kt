@@ -148,12 +148,6 @@ class ProtobufDeserializer {
       action.hasQuery() -> {
         QueryAction(fromProto(action.query))
       }
-      action.hasFetchShuffle() -> {
-        throw NotImplementedError("Shuffle not found")
-      }
-      action.hasTask() -> {
-        throw NotImplementedError("Kotlin executor doesn't yet support any physical plans")
-      }
       else -> {
         throw NotImplementedError("Action is not implemented $action")
       }
