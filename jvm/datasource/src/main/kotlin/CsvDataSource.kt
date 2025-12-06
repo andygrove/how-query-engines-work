@@ -20,7 +20,6 @@ import io.andygrove.kquery.datatypes.*
 import java.io.*
 import java.lang.IllegalStateException
 import java.util.logging.Logger
-import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.*
 
 /**
@@ -181,7 +180,7 @@ class ReaderIterator(
   }
 
   private fun createBatch(rows: ArrayList<Record>): RecordBatch {
-    val root = VectorSchemaRoot.create(schema.toArrow(), RootAllocator(Long.MAX_VALUE))
+    val root = VectorSchemaRoot.create(schema.toArrow(), ArrowAllocator.rootAllocator)
     root.fieldVectors.forEach { it.setInitialCapacity(rows.size) }
     root.allocateNew()
 

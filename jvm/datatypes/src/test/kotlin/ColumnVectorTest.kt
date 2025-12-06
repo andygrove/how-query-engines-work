@@ -15,7 +15,6 @@
 package io.andygrove.kquery.datatypes
 
 import kotlin.test.assertEquals
-import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.IntVector
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -26,7 +25,7 @@ class ColumnVectorTest {
   @Test
   fun `build int vector`() {
     val size = 10
-    val fieldVector = IntVector("foo", RootAllocator(Long.MAX_VALUE))
+    val fieldVector = IntVector("foo", ArrowAllocator.rootAllocator)
     fieldVector.allocateNew(size)
     fieldVector.valueCount = size
     val b = ArrowVectorBuilder(fieldVector)

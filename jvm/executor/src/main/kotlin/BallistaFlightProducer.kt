@@ -14,10 +14,10 @@
 
 package io.andygrove.kquery.executor
 
+import io.andygrove.kquery.datatypes.ArrowAllocator
 import io.andygrove.kquery.execution.ExecutionContext
 import java.lang.IllegalStateException
 import org.apache.arrow.flight.*
-import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.*
 
 class BallistaFlightProducer : FlightProducer {
@@ -50,9 +50,7 @@ class BallistaFlightProducer : FlightProducer {
 
       val results = ctx.execute(logicalPlan)
 
-      val allocator = RootAllocator(Long.MAX_VALUE)
-
-      val root = VectorSchemaRoot.create(schema.toArrow(), allocator)
+      val root = VectorSchemaRoot.create(schema.toArrow(), ArrowAllocator.rootAllocator)
       listener.start(root, null)
 
       // val loader = VectorLoader(root)

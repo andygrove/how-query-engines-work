@@ -14,10 +14,10 @@
 
 package io.andygrove.kquery.datasource
 
+import io.andygrove.kquery.datatypes.ArrowAllocator
 import io.andygrove.kquery.datatypes.ArrowFieldVector
 import io.andygrove.kquery.datatypes.RecordBatch
 import io.andygrove.kquery.datatypes.Schema
-import org.apache.arrow.memory.RootAllocator
 import org.apache.arrow.vector.VectorSchemaRoot
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
@@ -95,7 +95,7 @@ class ParquetIterator(
     val rows = pages.rowCount.toInt()
     println("Reading $rows rows")
 
-    val root = VectorSchemaRoot.create(projectedArrowSchema, RootAllocator(Long.MAX_VALUE))
+    val root = VectorSchemaRoot.create(projectedArrowSchema, ArrowAllocator.rootAllocator)
     root.allocateNew()
     root.rowCount = rows
 
