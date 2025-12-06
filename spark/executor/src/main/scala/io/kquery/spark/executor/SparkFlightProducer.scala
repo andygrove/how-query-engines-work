@@ -18,9 +18,7 @@ import java.util
 import java.util.{ArrayList, List}
 
 import scala.collection.JavaConverters._
-import io.netty.buffer.ArrowBuf
-
-import scala.collection.JavaConverters._
+import org.apache.arrow.memory.ArrowBuf
 import org.apache.arrow.flight.{
   Action,
   ActionType,
@@ -170,7 +168,7 @@ class SparkFlightProducer(spark: SparkSession) extends FlightProducer {
     for (vector <- root.getFieldVectors.asScala) {
       appendNodes(vector, nodes, buffers)
     }
-    new ArrowRecordBatch(root.getRowCount, nodes, buffers, true)
+    new ArrowRecordBatch(root.getRowCount, nodes, buffers)
   }
 
   private def appendNodes(

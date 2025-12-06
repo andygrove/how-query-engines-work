@@ -25,6 +25,15 @@ subprojects {
         plugin("com.diffplug.gradle.spotless")
     }
 
+    configurations.all {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "com.google.guava" && requested.name == "guava") {
+                useVersion("32.1.3-jre")
+                because("Force consistent Guava version to resolve variant conflicts between Arrow Flight and Spark/Hadoop")
+            }
+        }
+    }
+
     spotless {
         scala {
             scalafmt()
@@ -47,8 +56,7 @@ subprojects {
         implementation("io.andygrove.kquery:protobuf:0.4.0-SNAPSHOT")
         implementation("io.andygrove.kquery:executor:0.4.0-SNAPSHOT")
 
-        implementation("org.apache.arrow:flight-core:0.17.0")
-        implementation("org.apache.arrow:flight-grpc:0.17.0")
+        implementation("org.apache.arrow:flight-core:18.3.0")
 
         implementation("org.apache.spark:spark-core_2.12:3.0.0")
         implementation("org.apache.spark:spark-sql_2.12:3.0.0")

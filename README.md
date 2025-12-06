@@ -35,11 +35,16 @@ The following expressions are supported:
 - Boolean expressions (AND, OR, NOT)
 - Simple math expressions (+, -, *, /)
 
+## Prerequisites
+
+- **Java 11+**
+
 ## Building
 
 ```bash
 cd jvm
-./gradlew build
+./gradlew build    # Linux/macOS
+gradlew.bat build  # Windows
 ```
 
 Run tests:
