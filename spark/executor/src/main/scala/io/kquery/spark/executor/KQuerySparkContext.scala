@@ -17,21 +17,21 @@ package io.andygrove.kquery.spark.executor
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.util.{ArrowUtils, ArrowUtilsAccessor}
 import org.apache.spark.sql.{Column, DataFrame, SparkSession}
-import io.andygrove.kquery.{logical => ballista}
+import io.andygrove.kquery.{logical => kquery}
 
 import scala.collection.JavaConverters._
 
-class BallistaSparkContext(spark: SparkSession) {
+class KQuerySparkContext(spark: SparkSession) {
 
   /** Translate Ballista logical plan step into a DataFrame transformation */
   def createDataFrame(
-      plan: ballista.LogicalPlan,
+      plan: kquery.LogicalPlan,
       input: Option[DataFrame]
   ): DataFrame = {
 
     plan match {
 
-      case s: ballista.Scan =>
+      case s: kquery.Scan =>
         assert(input.isEmpty)
 
         val sparkSchema = ArrowUtilsAccessor.fromArrowSchema(s.schema().toArrow)
@@ -51,21 +51,21 @@ class BallistaSparkContext(spark: SparkSession) {
           df.select(projection.head, projection.tail: _*)
         }
 
-      case p: ballista.Projection =>
+      case p: kquery.Projection =>
         val df = createDataFrame(p.getInput, input)
         val projectionExpr = p.getExpr.asScala.map(e => createExpression(e, df))
         df.select(projectionExpr: _*)
 
-      case s: ballista.Selection =>
+      case s: kquery.Selection =>
         val df = createDataFrame(s.getInput, input)
         val filterExpr = createExpression(s.getExpr, df)
         df.filter(filterExpr)
 
-      case l: ballista.Limit =>
+      case l: kquery.Limit =>
         val df = createDataFrame(l.getInput, input)
         df.limit(l.getLimit)
 
-      case a: ballista.Aggregate =>
+      case a: kquery.Aggregate =>
         val df = createDataFrame(a.getInput, input)
         val groupExpr = a.getGroupExpr.asScala.map(e => createExpression(e, df))
         val dfGrouped = df.groupBy(groupExpr: _*)
@@ -97,14 +97,14 @@ class BallistaSparkContext(spark: SparkSession) {
   }
 
   /** Translate Ballista logical expression into a Spark logical expression */
-  def createExpression(expr: ballista.LogicalExpr, input: DataFrame): Column = {
+  def createExpression(expr: kquery.LogicalExpr, input: DataFrame): Column = {
     expr match {
 
-      case c: ballista.LiteralDouble => lit(c.getN)
-      case c: ballista.LiteralLong   => lit(c.getN)
-      case c: ballista.LiteralString => lit(c.getStr)
+      case c: kquery.LiteralDouble => lit(c.getN)
+      case c: kquery.LiteralLong   => lit(c.getN)
+      case c: kquery.LiteralString => lit(c.getStr)
 
-      case c: ballista.Column =>
+      case c: kquery.Column =>
         input.col(c.getName)
 
       case b: io.andygrove.kquery.logical.BinaryExpr =>
@@ -112,20 +112,20 @@ class BallistaSparkContext(spark: SparkSession) {
         val r = createExpression(b.getR, input)
         b match {
 
-          case _: ballista.Add      => l.plus(r)
-          case _: ballista.Subtract => l.minus(r)
-          case _: ballista.Multiply => l.multiply(r)
-          case _: ballista.Divide   => l.divide(r)
+          case _: kquery.Add      => l.plus(r)
+          case _: kquery.Subtract => l.minus(r)
+          case _: kquery.Multiply => l.multiply(r)
+          case _: kquery.Divide   => l.divide(r)
 
-          case _: ballista.Eq   => l.equalTo(r)
-          case _: ballista.Neq  => l.notEqual(r)
-          case _: ballista.Gt   => l > r
-          case _: ballista.GtEq => l >= r
-          case _: ballista.Lt   => l < r
-          case _: ballista.LtEq => l <= r
+          case _: kquery.Eq   => l.equalTo(r)
+          case _: kquery.Neq  => l.notEqual(r)
+          case _: kquery.Gt   => l > r
+          case _: kquery.GtEq => l >= r
+          case _: kquery.Lt   => l < r
+          case _: kquery.LtEq => l <= r
 
-          case _: ballista.And => l.and(r)
-          case _: ballista.Or  => l.or(r)
+          case _: kquery.And => l.and(r)
+          case _: kquery.Or  => l.or(r)
 
           case other =>
             throw new UnsupportedOperationException(
