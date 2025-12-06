@@ -1,4 +1,4 @@
-description = "Ballista logical query plan fuzzer utility"
+description = "KQuery logical query plan fuzzer utility"
 
 dependencies {
     implementation(project(":datatypes"))

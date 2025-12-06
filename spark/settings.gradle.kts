@@ -7,7 +7,7 @@
  * in the user manual at https://docs.gradle.org/5.6.4/userguide/multi_project_builds.html
  */
 
-rootProject.name = "ballista-spark"
+rootProject.name = "kquery-spark"
 
 include("datasource")
 include("executor")

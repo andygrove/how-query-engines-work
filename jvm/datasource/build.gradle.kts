@@ -1,4 +1,4 @@
-description = "Ballista data sources"
+description = "KQuery data sources"
 
 dependencies {
 

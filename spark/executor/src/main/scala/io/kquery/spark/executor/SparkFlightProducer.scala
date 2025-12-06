@@ -66,7 +66,7 @@ class SparkFlightProducer(spark: SparkSession) extends FlightProducer {
 
       println(s"Ballista logical plan:\n${logicalPlan.pretty()}")
 
-      val ctx = new BallistaSparkContext(spark)
+      val ctx = new KQuerySparkContext(spark)
       val df = ctx.createDataFrame(logicalPlan, None)
       df.explain()
 

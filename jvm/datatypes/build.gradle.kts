@@ -1,4 +1,4 @@
-description = "Ballista data types"
+description = "KQuery data types"
 
 dependencies {
     implementation("org.apache.arrow:arrow-memory:0.17.0")

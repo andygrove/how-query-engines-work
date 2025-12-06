@@ -7,9 +7,9 @@
  * in the user manual at https://docs.gradle.org/5.6.4/userguide/multi_project_builds.html
  */
 
-rootProject.name = "ballista-jvm"
+rootProject.name = "kquery"
 
-// Ballista JVM Query Engine
+// JVM Query Engine
 include("datatypes")
 include("datasource")
 include("logical-plan")
@@ -25,7 +25,7 @@ include("fuzzer")
 include("benchmarks")
 include("examples")
 
-// Ballista JVM Connectors
+// JVM Connectors
 include("client")
 include("jdbc")
 

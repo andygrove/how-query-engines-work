@@ -1,4 +1,4 @@
-description = "Ballista Spark Benchmarks"
+description = "KQuery Spark Benchmarks"
 
 plugins {
     scala

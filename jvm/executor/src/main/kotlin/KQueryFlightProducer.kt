@@ -20,7 +20,7 @@ import java.lang.IllegalStateException
 import org.apache.arrow.flight.*
 import org.apache.arrow.vector.*
 
-class BallistaFlightProducer : FlightProducer {
+class KQueryFlightProducer : FlightProducer {
 
   override fun getStream(
       context: FlightProducer.CallContext?,

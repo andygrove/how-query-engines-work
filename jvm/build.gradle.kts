@@ -116,9 +116,9 @@ subprojects {
                 version = rootProject.version as String?
 
                 pom {
-                    name.set("Ballista Compute")
+                    name.set("KQuery")
                     description.set("JVM query engine based on Apache Arrow")
-                    url.set("https://github.com/ballista-compute/ballista")
+                    url.set("https://github.com/andygrove/how-query-engines-work")
                     licenses {
                         license {
                             name.set("The Apache License, Version 2.0")
@@ -133,9 +133,9 @@ subprojects {
                         }
                     }
                     scm {
-                        connection.set("scm:git:git://github.com/ballista-compute/ballista.git")
-                        developerConnection.set("scm:git:ssh://github.com/ballista-compute/ballista.git")
-                        url.set("https://github.com/ballista-compute/ballista/")
+                        connection.set("scm:git:git://github.com/andygrove/how-query-engines-work.git")
+                        developerConnection.set("scm:git:ssh://github.com/andygrove/how-query-engines-work.git")
+                        url.set("https://github.com/andygrove/how-query-engines/")
                     }
                 }
 

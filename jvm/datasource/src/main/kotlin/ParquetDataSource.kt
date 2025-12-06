@@ -99,10 +99,9 @@ class ParquetIterator(
     root.allocateNew()
     root.rowCount = rows
 
-    val ballistaSchema =
-        io.andygrove.kquery.datatypes.SchemaConverter.fromArrow(projectedArrowSchema)
+    val schema = io.andygrove.kquery.datatypes.SchemaConverter.fromArrow(projectedArrowSchema)
 
-    batch = RecordBatch(ballistaSchema, root.fieldVectors.map { ArrowFieldVector(it) })
+    batch = RecordBatch(schema, root.fieldVectors.map { ArrowFieldVector(it) })
 
     // TODO we really want to read directly as columns not rows
     //        val columnIO = ColumnIOFactory().getColumnIO(schema)

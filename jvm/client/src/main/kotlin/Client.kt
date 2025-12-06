@@ -23,7 +23,7 @@ import org.apache.arrow.flight.FlightClient
 import org.apache.arrow.flight.Location
 import org.apache.arrow.flight.Ticket
 
-/** Connection to a Ballista executor. */
+/** Connection to an executor. */
 class Client(val host: String, val port: Int) {
 
   var client =

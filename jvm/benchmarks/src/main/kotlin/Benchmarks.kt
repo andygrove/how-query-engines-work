@@ -55,7 +55,7 @@ class Benchmarks {
       val path = System.getenv("BENCH_PATH")
       val resultFile = System.getenv("BENCH_RESULT_FILE")
 
-      val settings = mapOf(Pair("ballista.csv.batchSize", "1024"))
+      val settings = mapOf(Pair("kquery.csv.batchSize", "1024"))
 
       // TODO iterations
 

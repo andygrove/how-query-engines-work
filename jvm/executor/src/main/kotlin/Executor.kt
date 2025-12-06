@@ -36,7 +36,7 @@ class Executor {
           FlightServer.builder(
                   ArrowAllocator.rootAllocator,
                   Location.forGrpcInsecure(bindHost, port),
-                  BallistaFlightProducer())
+                  KQueryFlightProducer())
               .build()
       server.start()
 

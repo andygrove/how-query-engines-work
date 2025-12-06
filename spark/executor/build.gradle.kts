@@ -1,4 +1,4 @@
-description = "Ballista Spark Executor"
+description = "KQuery Spark Executor"
 
 plugins {
     scala
