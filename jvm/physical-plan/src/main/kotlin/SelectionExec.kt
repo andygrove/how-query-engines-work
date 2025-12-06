@@ -38,12 +38,16 @@ class SelectionExec(val input: PhysicalPlan, val expr: Expression) : PhysicalPla
   override fun execute(): Sequence<RecordBatch> {
     val input = input.execute()
     return input.map { batch ->
-      val result = (expr.evaluate(batch) as ArrowFieldVector).field as BitVector
-      val schema = batch.schema
-      val columnCount = batch.schema.fields.size
-      val filteredFields = (0 until columnCount).map { filter(batch.field(it), result) }
-      val fields = filteredFields.map { ArrowFieldVector(it) }
-      RecordBatch(schema, fields)
+      try {
+        val result = (expr.evaluate(batch) as ArrowFieldVector).field as BitVector
+        val schema = batch.schema
+        val columnCount = batch.schema.fields.size
+        val filteredFields = (0 until columnCount).map { filter(batch.field(it), result) }
+        val fields = filteredFields.map { ArrowFieldVector(it) }
+        RecordBatch(schema, fields)
+      } finally {
+        batch.close()
+      }
     }
   }
 
