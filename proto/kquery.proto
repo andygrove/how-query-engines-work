@@ -7,7 +7,7 @@ option java_package = "io.andygrove.kquery.protobuf";
 option java_outer_classname = "KQueryProto";
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Ballista Logical Plan
+// Logical Plan
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // logical expressions
@@ -201,70 +201,7 @@ message LimitNode {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// Ballista Physical Plan
-///////////////////////////////////////////////////////////////////////////////////////////////////
-
-// PhysicalPlanNode is a nested type
-message PhysicalPlanNode {
-
-  PhysicalPlanNode input = 1;
-
-  ScanExecNode scan = 10;
-  ProjectionExecNode projection = 20;
-  SelectionExecNode selection = 21;
-  GlobalLimitExecNode global_limit = 22;
-  LocalLimitExecNode local_limit = 23;
-  HashAggregateExecNode hash_aggregate = 30;
-  ShuffleReaderExecNode shuffle_reader = 40;
-}
-
-message ScanExecNode {
-  string path = 1;
-  repeated uint32 projection = 2;
-  Schema schema = 3;
-  string file_format = 4; // parquet or csv
-  bool has_header = 5; // csv specific
-  uint32 batch_size = 6;
-
-  // partition filenames
-  repeated string filename = 8;
-}
-
-message ProjectionExecNode {
-  repeated LogicalExprNode expr = 1;
-}
-
-message SelectionExecNode {
-  LogicalExprNode expr = 2;
-}
-
-enum AggregateMode {
-  PARTIAL = 0;
-  FINAL = 1;
-  COMPLETE = 2;
-}
-
-message HashAggregateExecNode {
-  repeated LogicalExprNode group_expr = 1;
-  repeated LogicalExprNode aggr_expr = 2;
-  AggregateMode mode = 3;
-}
-
-message ShuffleReaderExecNode {
-  repeated ShuffleId shuffle_id = 1;
-  Schema schema = 2;
-}
-
-message GlobalLimitExecNode {
-  uint32 limit = 1;
-}
-
-message LocalLimitExecNode {
-  uint32 limit = 1;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Ballista Scheduling
+// Scheduling
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 message KeyValuePair {
@@ -276,41 +213,8 @@ message Action {
   // interactive query
   LogicalPlanNode query = 1;
 
-  // Execute query and store resulting shuffle partition in memory
-  Task task = 2;
-
-  // Fetch a shuffle partition from an executor
-  ShuffleId fetch_shuffle = 3;
-
   // configuration settings
   repeated KeyValuePair settings = 100;
-}
-
-message Task {
-  string job_uuid = 1;
-  uint32 stage_id = 2;
-  uint32 task_id = 3;
-  uint32 partition_id = 4;
-  PhysicalPlanNode plan = 5;
-  // The task could need to read shuffle output from another task
-  repeated ShuffleLocation shuffle_loc = 6;
-}
-
-// Mapping from shuffle id to executor id
-message ShuffleLocation {
-  string job_uuid = 1;
-  uint32 stage_id = 2;
-  uint32 partition_id = 4;
-  string executor_id = 5;
-  string executor_host = 6;
-  uint32 executor_port = 7;
-}
-
-// Mapping from shuffle id to executor id
-message ShuffleId {
-  string job_uuid = 1;
-  uint32 stage_id = 2;
-  uint32 partition_id = 4;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

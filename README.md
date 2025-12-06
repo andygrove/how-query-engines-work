@@ -50,6 +50,29 @@ Install to local Maven repository:
 ./gradlew publishToMavenLocal
 ``` 
 
+## Running the Flight Server Example
+
+The query engine includes an Arrow Flight server that allows remote query execution via gRPC.
+
+**Start the executor (server):**
+```bash
+cd jvm
+./gradlew :executor:run
+```
+
+This starts the Flight server listening on `0.0.0.0:50051`.
+
+**Client usage:**
+
+The client module provides a `Client` class that can connect to the executor and submit logical plans:
+
+```kotlin
+val client = Client("localhost", 50051)
+client.execute(logicalPlan)
+```
+
+The client serializes the logical plan to protobuf, sends it to the server via Arrow Flight, and receives results as Arrow record batches.
+
 ## Running Benchmarks
 
 The benchmark runs an aggregate SQL query against NYC taxi trip CSV files in parallel.
