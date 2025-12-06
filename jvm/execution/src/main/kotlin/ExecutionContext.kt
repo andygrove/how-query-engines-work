@@ -28,7 +28,7 @@ import io.andygrove.kquery.sql.SqlTokenizer
 /** Execution context */
 class ExecutionContext(val settings: Map<String, String>) {
 
-  val batchSize: Int = settings.getOrDefault("ballista.csv.batchSize", "1024").toInt()
+  val batchSize: Int = settings.getOrDefault("kquery.csv.batchSize", "1024").toInt()
 
   /** Tables registered with this context */
   private val tables = mutableMapOf<String, DataFrame>()
