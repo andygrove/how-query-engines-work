@@ -15,7 +15,7 @@
 package io.andygrove.kquery.datatypes
 
 /** Batch of data organized in columns. */
-class RecordBatch(val schema: Schema, val fields: List<ColumnVector>) {
+class RecordBatch(val schema: Schema, val fields: List<ColumnVector>) : AutoCloseable {
 
   fun rowCount() = fields.first().size()
 
@@ -53,5 +53,9 @@ class RecordBatch(val schema: Schema, val fields: List<ColumnVector>) {
 
   override fun toString(): String {
     return toCSV()
+  }
+
+  override fun close() {
+    fields.forEach { it.close() }
   }
 }

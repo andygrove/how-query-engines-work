@@ -94,4 +94,8 @@ class ArrowFieldVector(val field: FieldVector) : ColumnVector {
   override fun size(): Int {
     return field.valueCount
   }
+
+  override fun close() {
+    field.close()
+  }
 }

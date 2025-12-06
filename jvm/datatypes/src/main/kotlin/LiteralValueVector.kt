@@ -34,4 +34,8 @@ class LiteralValueVector(val arrowType: ArrowType, val value: Any?, val size: In
   override fun size(): Int {
     return size
   }
+
+  override fun close() {
+    // No resources to release for literal values
+  }
 }
