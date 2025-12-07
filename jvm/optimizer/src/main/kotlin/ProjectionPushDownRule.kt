@@ -46,6 +46,21 @@ class ProjectionPushDownRule : OptimizerRule {
         val input = pushDown(plan.input, columnNames)
         Limit(input, plan.limit)
       }
+      is Join -> {
+        // If no columns are requested yet (join is at root), request all columns
+        if (columnNames.isEmpty()) {
+          plan.left.schema().fields.forEach { columnNames.add(it.name) }
+          plan.right.schema().fields.forEach { columnNames.add(it.name) }
+        }
+        // Add join key columns to the required columns
+        plan.on.forEach { (leftCol, rightCol) ->
+          columnNames.add(leftCol)
+          columnNames.add(rightCol)
+        }
+        val left = pushDown(plan.left, columnNames)
+        val right = pushDown(plan.right, columnNames)
+        Join(left, right, plan.join_type, plan.on)
+      }
       is Scan -> {
         val validFieldNames = plan.dataSource.schema().fields.map { it.name }.toSet()
         val pushDown = validFieldNames.filter { columnNames.contains(it) }.toSet().sorted()

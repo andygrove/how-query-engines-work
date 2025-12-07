@@ -30,6 +30,9 @@ interface DataFrame {
   /** Limit the number of rows */
   fun limit(n: Int): DataFrame
 
+  /** Join with another DataFrame */
+  fun join(right: DataFrame, joinType: JoinType, on: List<Pair<String, String>>): DataFrame
+
   /** Returns the schema of the data that will be produced by this DataFrame. */
   fun schema(): Schema
 
@@ -56,6 +59,14 @@ class DataFrameImpl(private val plan: LogicalPlan) : DataFrame {
 
   override fun limit(n: Int): DataFrame {
     return DataFrameImpl(Limit(plan, n))
+  }
+
+  override fun join(
+      right: DataFrame,
+      joinType: JoinType,
+      on: List<Pair<String, String>>
+  ): DataFrame {
+    return DataFrameImpl(Join(plan, right.logicalPlan(), joinType, on))
   }
 
   override fun schema(): Schema {

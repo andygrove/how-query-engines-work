@@ -60,6 +60,48 @@ class QueryPlanner {
         val input = createPhysicalPlan(plan.input)
         LimitExec(input, plan.limit)
       }
+      is Join -> {
+        val leftPlan = createPhysicalPlan(plan.left)
+        val rightPlan = createPhysicalPlan(plan.right)
+        val leftSchema = plan.left.schema()
+        val rightSchema = plan.right.schema()
+
+        // Find column indices for join keys
+        val leftKeys =
+            plan.on.map { (leftCol, _) ->
+              leftSchema.fields
+                  .indexOfFirst { it.name == leftCol }
+                  .also {
+                    if (it == -1) throw SQLException("No column named '$leftCol' in left input")
+                  }
+            }
+        val rightKeys =
+            plan.on.map { (_, rightCol) ->
+              rightSchema.fields
+                  .indexOfFirst { it.name == rightCol }
+                  .also {
+                    if (it == -1) throw SQLException("No column named '$rightCol' in right input")
+                  }
+            }
+
+        // Find right columns to exclude (duplicate key columns with same name)
+        val duplicateKeyNames = plan.on.filter { it.first == it.second }.map { it.second }.toSet()
+        val rightColumnsToExclude =
+            rightSchema.fields
+                .mapIndexedNotNull { index, field ->
+                  if (duplicateKeyNames.contains(field.name)) index else null
+                }
+                .toSet()
+
+        HashJoinExec(
+            leftPlan,
+            rightPlan,
+            plan.join_type,
+            leftKeys,
+            rightKeys,
+            plan.schema(),
+            rightColumnsToExclude)
+      }
       else -> throw IllegalStateException(plan.javaClass.toString())
     }
   }
