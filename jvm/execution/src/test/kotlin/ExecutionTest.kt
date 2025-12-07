@@ -248,4 +248,69 @@ class ExecutionTest {
     assertEquals(1, batch.rowCount())
     assertEquals("2,Gregg,Langford\n", batch.toCSV())
   }
+
+  @Test
+  fun `inner join using DataFrame`() {
+    val leftSchema =
+        Schema(listOf(Field("id", ArrowTypes.Int32Type), Field("name", ArrowTypes.StringType)))
+    val rightSchema =
+        Schema(listOf(Field("id", ArrowTypes.Int32Type), Field("dept", ArrowTypes.StringType)))
+
+    val leftData =
+        Fuzzer()
+            .createRecordBatch(leftSchema, listOf(listOf(1, 2, 3), listOf("Alice", "Bob", "Carol")))
+    val rightData =
+        Fuzzer()
+            .createRecordBatch(
+                rightSchema, listOf(listOf(1, 2, 4), listOf("Engineering", "Sales", "Marketing")))
+
+    val leftSource = InMemoryDataSource(leftSchema, listOf(leftData))
+    val rightSource = InMemoryDataSource(rightSchema, listOf(rightData))
+
+    val ctx = ExecutionContext(mapOf())
+
+    val leftDf = DataFrameImpl(Scan("left", leftSource, listOf()))
+    val rightDf = DataFrameImpl(Scan("right", rightSource, listOf()))
+
+    val joinedDf = leftDf.join(rightDf, JoinType.Inner, listOf("id" to "id"))
+
+    val batches = ctx.execute(joinedDf).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    assertEquals(2, batch.rowCount())
+    assertEquals("1,Alice,Engineering\n2,Bob,Sales\n", batch.toCSV())
+  }
+
+  @Test
+  fun `left join using DataFrame`() {
+    val leftSchema =
+        Schema(listOf(Field("id", ArrowTypes.Int32Type), Field("name", ArrowTypes.StringType)))
+    val rightSchema =
+        Schema(listOf(Field("id", ArrowTypes.Int32Type), Field("dept", ArrowTypes.StringType)))
+
+    val leftData =
+        Fuzzer()
+            .createRecordBatch(leftSchema, listOf(listOf(1, 2, 3), listOf("Alice", "Bob", "Carol")))
+    val rightData =
+        Fuzzer()
+            .createRecordBatch(rightSchema, listOf(listOf(1, 2), listOf("Engineering", "Sales")))
+
+    val leftSource = InMemoryDataSource(leftSchema, listOf(leftData))
+    val rightSource = InMemoryDataSource(rightSchema, listOf(rightData))
+
+    val ctx = ExecutionContext(mapOf())
+
+    val leftDf = DataFrameImpl(Scan("left", leftSource, listOf()))
+    val rightDf = DataFrameImpl(Scan("right", rightSource, listOf()))
+
+    val joinedDf = leftDf.join(rightDf, JoinType.Left, listOf("id" to "id"))
+
+    val batches = ctx.execute(joinedDf).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    assertEquals(3, batch.rowCount())
+    assertEquals("1,Alice,Engineering\n2,Bob,Sales\n3,Carol,null\n", batch.toCSV())
+  }
 }
