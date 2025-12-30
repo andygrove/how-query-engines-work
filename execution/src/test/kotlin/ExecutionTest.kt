@@ -1,0 +1,415 @@
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package io.andygrove.kquery.execution
+
+import io.andygrove.kquery.datasource.InMemoryDataSource
+import io.andygrove.kquery.datatypes.ArrowTypes
+import io.andygrove.kquery.datatypes.Field
+import io.andygrove.kquery.datatypes.Schema
+import io.andygrove.kquery.fuzzer.Fuzzer
+import io.andygrove.kquery.logical.*
+import java.io.File
+import kotlin.test.assertEquals
+import org.apache.arrow.vector.types.pojo.ArrowType
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class ExecutionTest {
+
+  val dir = "../testdata"
+
+  val employeeCsv = File(dir, "employee.csv").absolutePath
+
+  @Test
+  fun `employees in CO using DataFrame`() {
+    // Create a context
+    val ctx = ExecutionContext(mapOf())
+
+    // Construct a query using the DataFrame API
+    val df =
+        ctx.csv(employeeCsv)
+            .filter(col("state") eq lit("CO"))
+            .project(listOf(col("id"), col("first_name"), col("last_name")))
+
+    val batches = ctx.execute(df).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    assertEquals("2,Gregg,Langford\n" + "3,John,Travis\n", batch.toCSV())
+  }
+
+  @Test
+  fun `employees in CA using SQL`() {
+    // Create a context
+    val ctx = ExecutionContext(mapOf())
+
+    val employee = ctx.csv(employeeCsv)
+    ctx.register("employee", employee)
+
+    // Construct a query using the DataFrame API
+    val df =
+        ctx.sql(
+            "SELECT id, first_name, last_name FROM employee WHERE state = 'CA'")
+
+    val batches = ctx.execute(df).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    assertEquals("1,Bill,Hopkins\n", batch.toCSV())
+  }
+
+  @Test
+  fun `aggregate query`() {
+    // Create a context
+    val ctx = ExecutionContext(mapOf())
+
+    // construct a query using the DataFrame API
+    val df =
+        ctx.csv(employeeCsv)
+            .aggregate(
+                listOf(col("state")),
+                listOf(Max(cast(col("salary"), ArrowType.Int(32, true)))))
+
+    val batches = ctx.execute(df).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    val expected = "CO,11500\n" + "CA,12000\n" + ",11500\n"
+    assertEquals(expected, batch.toCSV())
+  }
+
+  @Test
+  fun `bonuses in CA using SQL and DataFrame`() {
+    // Create a context
+    val ctx = ExecutionContext(mapOf())
+
+    // construct a query using the DataFrame API
+    val caEmployees =
+        ctx.csv(employeeCsv)
+            .filter(col("state") eq lit("CA"))
+            .project(
+                listOf(
+                    col("id"),
+                    col("first_name"),
+                    col("last_name"),
+                    col("salary")))
+
+    // register the DataFrame as a table
+    ctx.register("ca_employees", caEmployees)
+
+    // Construct a query using the DataFrame API
+    val df =
+        ctx.sql("SELECT id, first_name, last_name, salary FROM ca_employees")
+    // val df = ctx.sql("SELECT id, first_name, last_name, salary * 0.1 AS bonus FROM ca_employees")
+
+    val batches = ctx.execute(df).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    assertEquals("1,Bill,Hopkins,12000\n", batch.toCSV())
+  }
+
+  @Test
+  fun `min max sum float`() {
+    val schema =
+        Schema(
+            listOf(
+                Field("a", ArrowTypes.StringType),
+                Field("b", ArrowTypes.FloatType)))
+
+    // val batch = Fuzzer().createRecordBatch(schema, 1024)
+    val input =
+        Fuzzer()
+            .createRecordBatch(
+                schema,
+                listOf(
+                    listOf("a", "a", "b", "b"), listOf(1.0f, 2.0f, 4.0f, 3.0f)))
+
+    val dataSource = InMemoryDataSource(schema, listOf(input))
+
+    val ctx = ExecutionContext(mapOf())
+    val logicalPlan =
+        DataFrameImpl(Scan("", dataSource, listOf()))
+            .aggregate(
+                listOf(col("a")),
+                listOf(Min(col("b")), Max(col("b")), Sum(col("b"))))
+            .logicalPlan()
+
+    val batches = ctx.execute(logicalPlan).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    assertEquals("a,1.0,2.0,3.0\n" + "b,3.0,4.0,7.0\n", batch.toCSV())
+  }
+
+  @Test
+  fun `float math`() {
+    val schema =
+        Schema(
+            listOf(
+                Field("a", ArrowTypes.FloatType),
+                Field("b", ArrowTypes.FloatType)))
+
+    // val batch = Fuzzer().createRecordBatch(schema, 1024)
+    val input =
+        Fuzzer()
+            .createRecordBatch(
+                schema,
+                listOf(
+                    listOf(1.0f, 2.0f, 4.0f, 3.0f),
+                    listOf(11.0f, 22.0f, 44.0f, 33.0f)))
+
+    val dataSource = InMemoryDataSource(schema, listOf(input))
+
+    val ctx = ExecutionContext(mapOf())
+    val logicalPlan =
+        DataFrameImpl(Scan("", dataSource, listOf()))
+            .project(
+                listOf(
+                    Add(col("a"), col("b")),
+                    Subtract(col("a"), col("b")),
+                    Multiply(col("a"), col("b")),
+                    Divide(col("a"), col("b"))))
+            .logicalPlan()
+
+    val batches = ctx.execute(logicalPlan).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    assertEquals(
+        "12.0,-10.0,11.0,0.09090909\n" +
+            "24.0,-20.0,44.0,0.09090909\n" +
+            "48.0,-40.0,176.0,0.09090909\n" +
+            "36.0,-30.0,99.0,0.09090909\n",
+        batch.toCSV())
+  }
+
+  @Test
+  fun `boolean expressions`() {
+    val schema =
+        Schema(
+            listOf(
+                Field("a", ArrowTypes.BooleanType),
+                Field("b", ArrowTypes.BooleanType)))
+
+    val input =
+        Fuzzer()
+            .createRecordBatch(
+                schema,
+                listOf(
+                    listOf(false, false, true, true),
+                    listOf(false, true, false, true)))
+
+    val dataSource = InMemoryDataSource(schema, listOf(input))
+
+    val ctx = ExecutionContext(mapOf())
+    val logicalPlan =
+        DataFrameImpl(Scan("", dataSource, listOf()))
+            .project(listOf(And(col("a"), col("b")), Or(col("a"), col("b"))))
+            .logicalPlan()
+
+    val batches = ctx.execute(logicalPlan).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    assertEquals(
+        "false,false\n" + "false,true\n" + "false,true\n" + "true,true\n",
+        batch.toCSV())
+  }
+
+  @Test
+  fun `limit using DataFrame`() {
+    val ctx = ExecutionContext(mapOf())
+
+    val df =
+        ctx.csv(employeeCsv)
+            .project(listOf(col("id"), col("first_name"), col("last_name")))
+            .limit(2)
+
+    val batches = ctx.execute(df).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    assertEquals(2, batch.rowCount())
+    assertEquals("1,Bill,Hopkins\n" + "2,Gregg,Langford\n", batch.toCSV())
+  }
+
+  @Test
+  fun `limit using SQL`() {
+    val ctx = ExecutionContext(mapOf())
+
+    val employee = ctx.csv(employeeCsv)
+    ctx.register("employee", employee)
+
+    val df = ctx.sql("SELECT id, first_name, last_name FROM employee LIMIT 2")
+
+    val batches = ctx.execute(df).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    assertEquals(2, batch.rowCount())
+    assertEquals("1,Bill,Hopkins\n" + "2,Gregg,Langford\n", batch.toCSV())
+  }
+
+  @Test
+  fun `limit with filter using SQL`() {
+    val ctx = ExecutionContext(mapOf())
+
+    val employee = ctx.csv(employeeCsv)
+    ctx.register("employee", employee)
+
+    val df =
+        ctx.sql(
+            "SELECT id, first_name, last_name FROM employee WHERE state = 'CO' LIMIT 1")
+
+    val batches = ctx.execute(df).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    assertEquals(1, batch.rowCount())
+    assertEquals("2,Gregg,Langford\n", batch.toCSV())
+  }
+
+  @Test
+  fun `inner join using DataFrame`() {
+    val leftSchema =
+        Schema(
+            listOf(
+                Field("id", ArrowTypes.Int32Type),
+                Field("name", ArrowTypes.StringType)))
+    val rightSchema =
+        Schema(
+            listOf(
+                Field("id", ArrowTypes.Int32Type),
+                Field("dept", ArrowTypes.StringType)))
+
+    val leftData =
+        Fuzzer()
+            .createRecordBatch(
+                leftSchema,
+                listOf(listOf(1, 2, 3), listOf("Alice", "Bob", "Carol")))
+    val rightData =
+        Fuzzer()
+            .createRecordBatch(
+                rightSchema,
+                listOf(
+                    listOf(1, 2, 4),
+                    listOf("Engineering", "Sales", "Marketing")))
+
+    val leftSource = InMemoryDataSource(leftSchema, listOf(leftData))
+    val rightSource = InMemoryDataSource(rightSchema, listOf(rightData))
+
+    val ctx = ExecutionContext(mapOf())
+
+    val leftDf = DataFrameImpl(Scan("left", leftSource, listOf()))
+    val rightDf = DataFrameImpl(Scan("right", rightSource, listOf()))
+
+    val joinedDf = leftDf.join(rightDf, JoinType.Inner, listOf("id" to "id"))
+
+    val batches = ctx.execute(joinedDf).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    assertEquals(2, batch.rowCount())
+    assertEquals("1,Alice,Engineering\n2,Bob,Sales\n", batch.toCSV())
+  }
+
+  @Test
+  fun `date and interval arithmetic`() {
+    // Create test data with dates stored as days since epoch
+    val schema =
+        Schema(
+            listOf(
+                Field("id", ArrowTypes.Int32Type),
+                Field("ship_date", ArrowTypes.DateDayType) // days since epoch
+                ))
+
+    // 1998-12-01 is 10561 days since epoch (1970-01-01)
+    // 1998-09-01 is 10470 days since epoch (91 days before 1998-12-01)
+    // 1998-10-01 is 10500 days since epoch (61 days before 1998-12-01)
+    // 1998-11-01 is 10531 days since epoch (30 days before 1998-12-01)
+    val dec1 = java.time.LocalDate.parse("1998-12-01").toEpochDay().toInt()
+    val sep1 = java.time.LocalDate.parse("1998-09-01").toEpochDay().toInt()
+    val oct1 = java.time.LocalDate.parse("1998-10-01").toEpochDay().toInt()
+    val nov1 = java.time.LocalDate.parse("1998-11-01").toEpochDay().toInt()
+
+    val input =
+        Fuzzer()
+            .createRecordBatch(
+                schema,
+                listOf(listOf(1, 2, 3, 4), listOf(sep1, oct1, nov1, dec1)))
+
+    val dataSource = InMemoryDataSource(schema, listOf(input))
+
+    val ctx = ExecutionContext(mapOf())
+    ctx.register("orders", DataFrameImpl(Scan("orders", dataSource, listOf())))
+
+    // Test: l_shipdate <= date '1998-12-01' - interval '68 days'
+    // 1998-12-01 - 68 days = 1998-09-24 (epoch day 10484)
+    // Only sep1 (10470) should be <= 10484
+    val df =
+        ctx.sql(
+            "SELECT id FROM orders WHERE ship_date <= date '1998-12-01' - interval '68 days'")
+
+    val batches = ctx.execute(df).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    assertEquals(1, batch.rowCount())
+    assertEquals("1\n", batch.toCSV())
+  }
+
+  @Test
+  fun `left join using DataFrame`() {
+    val leftSchema =
+        Schema(
+            listOf(
+                Field("id", ArrowTypes.Int32Type),
+                Field("name", ArrowTypes.StringType)))
+    val rightSchema =
+        Schema(
+            listOf(
+                Field("id", ArrowTypes.Int32Type),
+                Field("dept", ArrowTypes.StringType)))
+
+    val leftData =
+        Fuzzer()
+            .createRecordBatch(
+                leftSchema,
+                listOf(listOf(1, 2, 3), listOf("Alice", "Bob", "Carol")))
+    val rightData =
+        Fuzzer()
+            .createRecordBatch(
+                rightSchema,
+                listOf(listOf(1, 2), listOf("Engineering", "Sales")))
+
+    val leftSource = InMemoryDataSource(leftSchema, listOf(leftData))
+    val rightSource = InMemoryDataSource(rightSchema, listOf(rightData))
+
+    val ctx = ExecutionContext(mapOf())
+
+    val leftDf = DataFrameImpl(Scan("left", leftSource, listOf()))
+    val rightDf = DataFrameImpl(Scan("right", rightSource, listOf()))
+
+    val joinedDf = leftDf.join(rightDf, JoinType.Left, listOf("id" to "id"))
+
+    val batches = ctx.execute(joinedDf).asSequence().toList()
+    assertEquals(1, batches.size)
+
+    val batch = batches.first()
+    assertEquals(3, batch.rowCount())
+    assertEquals(
+        "1,Alice,Engineering\n2,Bob,Sales\n3,Carol,null\n", batch.toCSV())
+  }
+}
