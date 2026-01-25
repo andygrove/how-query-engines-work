@@ -1,0 +1,7 @@
+build
+target
+.DS_Store
+.idea
+*.tgz
+.gradle
+data
