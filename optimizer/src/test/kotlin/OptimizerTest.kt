@@ -80,6 +80,81 @@ class OptimizerTest {
         format(optimizedPlan))
   }
 
+    @Test
+    fun `predicate push down`() {
+
+        val df =
+            csv().project(listOf(col("id"), col("first_name"), col("last_name")))
+
+        val rule = PredicatePushDownRule()
+        val optimizedPlan = rule.optimize(df.logicalPlan())
+
+        val expected =
+            "Projection: #id, #first_name, #last_name\n" +
+                    "\tScan: employee; projection=None\n"
+
+        assertEquals(expected, optimizedPlan.pretty())
+    }
+
+    @Test
+    fun `predicate push down over projection`() {
+        val df =
+            csv()
+                .project(listOf(col("id"), col("first_name"), col("state")))
+                .filter(col("state") eq lit("CO"))
+
+        val rule = PredicatePushDownRule()
+        val optimizedPlan = rule.optimize(df.logicalPlan())
+
+        val expected =
+            "Projection: #id, #first_name, #state\n" +
+                    "\tSelection: #state = 'CO'\n" +
+                    "\t\tScan: employee; projection=None\n"
+
+        assertEquals(expected, optimizedPlan.pretty())
+    }
+
+    @Test
+    fun `predicate push down over aggregate`() {
+        val df =
+            csv()
+                .aggregate(
+                    listOf(col("state")),
+                    listOf(
+                        Min(col("salary")),
+                        Max(col("salary")),
+                        Count(col("salary"))))
+                .filter(col("state") eq lit("CO"))
+
+        val rule = PredicatePushDownRule()
+        val optimizedPlan = rule.optimize(df.logicalPlan())
+
+        val expected =
+            "Aggregate: groupExpr=[#state], aggregateExpr=[MIN(#salary), MAX(#salary), COUNT(#salary)]\n" +
+                    "\tSelection: #state = 'CO'\n" +
+                    "\t\tScan: employee; projection=None\n"
+
+        assertEquals(expected, optimizedPlan.pretty())
+    }
+
+    @Test
+    fun `predicate push down filter stops on filter`() {
+        val df =
+            csv()
+                .filter(col("id") eq lit(2))
+                .filter(col("state") eq lit("CO"))
+
+        val rule = PredicatePushDownRule()
+        val optimizedPlan = rule.optimize(df.logicalPlan())
+
+        val expected =
+            "Selection: #state = 'CO'\n" +
+                    "\tSelection: #id = 2\n" +
+                    "\t\tScan: employee; projection=None\n"
+
+        assertEquals(expected, optimizedPlan.pretty())
+    }
+
   private fun csv(): DataFrame {
     val employeeCsv = "../testdata/employee.csv"
     return DataFrameImpl(

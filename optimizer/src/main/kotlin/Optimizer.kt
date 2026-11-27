@@ -29,6 +29,15 @@ interface OptimizerRule {
 }
 
 fun extractColumns(
+    expr: LogicalExpr,
+    input: LogicalPlan,
+): Set<String> {
+    val accum = mutableSetOf<String>()
+    extractColumns(expr, input, accum)
+    return accum.toSet()
+}
+
+fun extractColumns(
     expr: List<LogicalExpr>,
     input: LogicalPlan,
     accum: MutableSet<String>
